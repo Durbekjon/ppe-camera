@@ -7,7 +7,7 @@ Type=simple
 User=ppe
 WorkingDirectory=/opt/ppe-camera
 EnvironmentFile=/opt/ppe-camera/.env
-ExecStart=/opt/ppe-camera/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log
+ExecStart=/opt/ppe-camera/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000 --no-access-log --timeout-graceful-shutdown 3
 Restart=always
 RestartSec=5s
 

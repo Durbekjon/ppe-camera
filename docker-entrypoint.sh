@@ -15,4 +15,4 @@ if [ -f data/certs/cert.pem ] && [ -f data/certs/key.pem ]; then
   SSL_ARGS="--ssl-certfile data/certs/cert.pem --ssl-keyfile data/certs/key.pem"
 fi
 
-exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}" $SSL_ARGS --no-access-log
+exec uvicorn app.main:app --host 0.0.0.0 --port "${PORT:-8000}" $SSL_ARGS --no-access-log --timeout-graceful-shutdown 3

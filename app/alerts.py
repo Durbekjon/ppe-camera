@@ -174,8 +174,16 @@ def send_daily_summary(date=None):
     return ok, text if ok else err
 
 
+class DeliveryHealth:
+    """The outcome of recent deliveries, since this start."""
+
+    ok_at = error_at = None
+    error = ""
+
+
 class AlertManager:
     def __init__(self):
+        self.health = DeliveryHealth()
         SNAPSHOTS.mkdir(parents=True, exist_ok=True)
         self._wake, self._closed = threading.Event(), threading.Event()
         self._sender = threading.Thread(target=self._worker, daemon=True, name="telegram")
@@ -257,9 +265,11 @@ class AlertManager:
             return False
         ok, err = deliver(rows)
         if ok:
+            self.health.ok_at = time.time()
             outbox.delivered(rows)
             log.info("Telegram xabari yuborildi (%d ta hodisa)", len(rows))
         else:
+            self.health.error_at, self.health.error = time.time(), err
             outbox.failed(rows, err, now)
             log.error("Telegram xabari yuborilmadi (%d ta hodisa): %s. Qayta urinib ko'riladi, navbatda: %d",
                       len(rows), err, outbox.pending())

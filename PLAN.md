@@ -110,6 +110,15 @@ Qabul mezonlari:
 
 *Natija:* testlar soxta Telegram bilan o'tgan.
 
+### PPE-010 · Dashboard'da tizim holati · P2 · 2 SP · Durbek (Jarayonda: haqiqiy ishga tushirishda tekshirish kutilmoqda)
+
+Qabul mezonlari:
+
+- Telegram holati (navbat, oxirgi muvaffaqiyat va xato), tugmalar, skelet, maxfiylik va karnay sozlamalari ko'rinadi.
+- Hech narsa yuborilmaguncha "ishlayapti" deyilmaydi; token, chat ID va kamera manzili ko'rsatilmaydi.
+
+*Natija:* testlar o'tgan. Qo'shimcha tuzatish: ochiq video oqimi ilovaning to'xtashiga xalaqit berardi (ishlayotgan va o'chiq kamerada 10 s dan keyin ham to'xtamagan); uvicorn'ga 3 s chegara qo'yilgach, sinovda 3.2–3.5 s da to'xtadi.
+
 ### PPE-001 · Webcam va telefon oqimida sinov · P0 · 2 SP · O'tkirbek (Jarayonda: dastlabki sinovlar o'tkazildi)
 
 Qabul mezonlari:

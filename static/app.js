@@ -108,7 +108,6 @@ async function poll() {
     chip('chip-camera', 'Kamera: ' + (s.camera ? 'ulangan' : 'uzilgan'), s.camera ? 'ok' : 'bad');
     chip('chip-fps', 'FPS: ' + s.fps);
     chip('chip-people', `Ishchilar: ${s.people} · Qoidabuzarlar: ${s.violators}`, s.violators ? 'bad' : '');
-    chip('chip-telegram', 'Telegram: ' + (s.telegram ? 'ulangan' : 'sozlanmagan'), s.telegram ? 'ok' : '');
     $('demo').checked = s.demo;
     // voice warnings (including reminders) are separate from new incidents
     if (lastVoice !== null && s.voice.seq !== lastVoice && s.voice.seq > 0) playAlert(s.voice);
@@ -409,6 +408,48 @@ getJSON('/api/me').then((u) => {
   $('user-name').textContent = `${u.username} (${u.role === 'admin' ? 'admin' : 'nazoratchi'})`;
 });
 $('btn-logout').onclick = async () => { await getJSON('/api/logout', { method: 'POST' }); location.href = '/login'; };
+
+// ---------- system status ----------
+function ago(seconds) {
+  if (seconds === null || seconds === undefined) return '';
+  if (seconds < 60) return `${seconds} soniya oldin`;
+  return seconds < 3600 ? `${Math.floor(seconds / 60)} daqiqa oldin` : `${Math.floor(seconds / 3600)} soat oldin`;
+}
+
+async function loadSystem() {
+  let s;
+  try { s = await getJSON('/api/system'); }
+  catch (err) { $('system-age').textContent = '(yangilanmadi)'; return; }  // old rows stay, marked as stale
+  $('system-age').textContent = '';
+  const t = s.telegram, details = [];
+  if (t.level !== 'off') {
+    details.push(`navbatda: ${t.waiting}`);
+    if (t.last_ok_s !== null) details.push(`oxirgi yuborilgan: ${ago(t.last_ok_s)}`);
+    if (t.last_error) details.push(`xato (${ago(t.last_error_s)}): ${t.last_error}`);
+  }
+  const rows = [
+    [t.level, 'Telegram', [t.text, ...details].join(' · ')],
+    [s.buttons.level, 'Telegram tugmalari', s.buttons.text],
+    [s.skeleton ? 'ok' : 'off', 'Skelet rejimi', s.skeleton ? 'yoqilgan' : "o'chirilgan"],
+    [s.blur_faces ? 'ok' : 'warn', 'Yuzni xiralashtirish', s.blur_faces ? 'yoqilgan (saqlanadigan suratlarda)' : "o'chirilgan"],
+    [s.retention_days > 0 ? 'ok' : 'warn', 'Suratlar saqlanishi', s.retention_days > 0 ? `${s.retention_days} kun` : "cheklanmagan"],
+    [s.local_audio ? 'ok' : 'off', 'Kompyuter karnayi', s.local_audio ? 'yoqilgan' : "o'chirilgan"],
+  ];
+  $('system').replaceChildren(...rows.map(([level, name, text]) => {
+    const li = document.createElement('li');
+    li.className = level;
+    const b = document.createElement('b'); b.textContent = name;
+    const span = document.createElement('span'); span.textContent = text;
+    li.append(b, span);
+    return li;
+  }));
+  // the header chip must not say "connected" while deliveries fail
+  chip('chip-telegram', 'Telegram: ' + (t.level === 'off' ? 'sozlanmagan' : t.level === 'bad' ? `xato (navbatda ${t.waiting})`
+    : t.level === 'warn' ? `qayta yuborilmoqda (${t.retrying})` : 'sozlangan'),
+  t.level === 'bad' ? 'bad' : t.level === 'ok' ? 'ok' : '');
+}
+loadSystem();
+setInterval(loadSystem, 5000);
 
 poll();
 setInterval(poll, 500);

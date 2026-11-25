@@ -37,6 +37,10 @@ _default_model = ROOT / "models" / "ppe_yolov8s.pt"
 if not _default_model.exists() and (ROOT / "models" / "ppe_yolov8n_alt.pt").exists():
     _default_model = ROOT / "models" / "ppe_yolov8n_alt.pt"
 MODEL_PATH = os.getenv("MODEL_PATH", str(_default_model))
+# Skeleton model: only people with a skeleton are judged, and any body part in a zone counts as inside it.
+SKELETON = _flag("SKELETON", "1")
+POSE_MODEL_PATH = os.getenv("POSE_MODEL_PATH", str(ROOT / "models" / "yolo11n-pose.pt"))
+POSE_IMG_SIZE = int(os.getenv("POSE_IMG_SIZE", "480"))
 IMG_SIZE = int(os.getenv("IMG_SIZE", "480"))
 CONF = float(os.getenv("CONF", "0.4"))  # people and "no helmet" detections
 GEAR_CONF = float(os.getenv("GEAR_CONF", "0.25"))  # helmets and vests

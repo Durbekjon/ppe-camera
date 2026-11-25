@@ -14,6 +14,7 @@ Loyiha doirasida ishlatilayotgan barcha tashqi modellar, datasetlar, sinov tasvi
 |---|---|---|---|---|
 | **YOLOv8s PPE** (Asosiy) | `models/ppe_yolov8s.pt`<br>Manba: [`killuminati1/construction-ppe-yolov8`](https://huggingface.co/killuminati1/construction-ppe-yolov8) | **Apache-2.0** | Roboflow va GitHub ochiq datasetlari asosida | Muallif individual tasvirlar litsenziyasini ko'rsatmagan. Ultralytics talqinida AGPL-3.0 bilan to'qnashuv bo'lishi mumkin. |
 | **YOLOv8n PPE** (Alternativ) | `models/ppe_yolov8n_alt.pt`<br>Manba: [`Hansung-Cho/yolov8-ppe-detection`](https://huggingface.co/Hansung-Cho/yolov8-ppe-detection) | **MIT** | Roboflow PPE dataset | Tijoriy va ochiq loyihalar uchun ruxsat berilgan, biroq Ultralytics AGPL talablari inobatga olinishi lozim. |
+| **YOLO11n-pose** (Skelet) | `models/yolo11n-pose.pt`<br>Manba: [`ultralytics/assets` v8.4.0](https://github.com/ultralytics/assets/releases/tag/v8.4.0) | **AGPL-3.0** yoki Enterprise ([Ultralytics](https://www.ultralytics.com/license)) | COCO keypoints; shartlari tekshirilmagan | Odamni tasdiqlash va zona tekshiruvi (PPE-007). |
 | **YuNet Face Detector** (Maxfiylik) | `models/face_yunet_2023mar.onnx`<br>Manba: [`opencv/opencv_zoo`](https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet) / Shiqi Yu | **MIT** | Tekshirilmagan | Yuzlarni topish va xiralashtirish (PPE-504). Litsenziya manbasi: model papkasidagi [`LICENSE`](https://github.com/opencv/opencv_zoo/blob/main/models/face_detection_yunet/LICENSE) fayli. |
 
 ---

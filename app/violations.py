@@ -5,6 +5,7 @@ Pure logic (no OpenCV, no clock): the caller passes `now`, which keeps it easy t
 from dataclasses import dataclass, field
 
 from .detector import HELMET, NO_HELMET, PERSON, VEST
+from .pose import body_samples
 from .tracker import PersonTracker
 from .zones import NO_ENTRY_RULE
 
@@ -65,6 +66,8 @@ class Track:
     confirmed: bool = False  # violation has persisted past the debounce
     in_zone: bool = False
     zone_name: str = ""
+    human: bool = True  # False until a skeleton has been seen (when skeletons are required)
+    keypoints: tuple = None  # this frame's skeleton
     first_seen: float = 0.0
     first_box: tuple = ()
     episode: "Episode" = None
@@ -97,7 +100,8 @@ class Event:
 
 class ViolationEngine:
     def __init__(self, debounce=1.5, cooldown=15.0, require_vest=False, helmet_rule="missing", person_conf=0.4,
-                 resolve=5.0, rejoin=10.0):
+                 resolve=5.0, rejoin=10.0, require_skeleton=False):
+        self.require_skeleton = require_skeleton
         self.resolve = resolve  # seconds of compliance that end a violation episode
         self.rejoin = rejoin  # longest disappearance after which a new ID can continue an episode
         self.person_conf = person_conf
@@ -120,12 +124,23 @@ class ViolationEngine:
         keep = max(self.rejoin, TRACK_MAX_AGE) + self.debounce + 1
         self._episodes = [ep for ep in self._episodes if now - ep.last_seen <= keep]
         events = []
+        by_box = {p.box: p.keypoints for p in persons}
         for t in visible:
+            t.keypoints = by_box.get(t.box)
+            if self.require_skeleton:
+                # Once seen, the skeleton may drop out for a while: a real worker must not vanish.
+                t.human = t.human or t.keypoints is not None
+                if not t.human:  # a poster, a coat stand, a plant: not judged at all
+                    t.missing, t.in_zone, t.confirmed, t.violating_since = (), False, False, None
+                    continue
             t.missing = self._missing(t.box, detections)
             fx, fy = (t.box[0] + t.box[2]) / 2, min(t.box[3], h - 1)  # feet point, kept inside the frame
-            points = [(fx, fy)]
-            if t.box[3] >= (1 - CUT_OFF_MARGIN) * h:  # feet not visible (e.g. close to the camera)
-                points.append(_center(t.box))
+            if t.keypoints:  # any joint or bone inside the zone counts
+                points = body_samples(t.keypoints)
+            else:  # no skeleton: the feet point
+                points = [(fx, fy)]
+                if t.box[3] >= (1 - CUT_OFF_MARGIN) * h:  # feet not visible (e.g. close to the camera)
+                    points.append(_center(t.box))
             inside = [
                 z for z in self.zones
                 if z.active(clock) and any(point_in_polygon(x / w, y / h, z.points) for x, y in points)
@@ -136,6 +151,7 @@ class ViolationEngine:
             if inside and inside[0].rule == NO_ENTRY_RULE:
                 t.missing += (ENTRY,)
             self._debounce(t, now)
+        visible = [t for t in visible if t.human]
         visible_ids = {t.id for t in visible}
         for t in visible:
             event = self._follow_episode(t, now, visible_ids)
@@ -208,7 +224,8 @@ class ViolationEngine:
         known = {t.id: t for t in self.tracks if now - t.last_seen <= TRACK_MAX_AGE}
         visible = []
         for track_id, p in self._tracker.update(persons):
-            t = known.get(track_id) or Track(track_id, p.box, now, first_seen=now, first_box=p.box)
+            t = known.get(track_id) or Track(track_id, p.box, now, first_seen=now, first_box=p.box,
+                                               human=not self.require_skeleton)
             t.box, t.last_seen = p.box, now
             known[track_id] = t
             visible.append(t)

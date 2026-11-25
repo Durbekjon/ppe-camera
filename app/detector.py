@@ -28,6 +28,7 @@ class Detection:
     role: str
     conf: float
     box: tuple  # x1, y1, x2, y2 in frame pixels
+    keypoints: tuple = None  # people only: 17 (x, y, confidence), see pose.py
 
 
 class Detector:

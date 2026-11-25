@@ -77,6 +77,19 @@ Qabul mezonlari:
 
 *Natija:* haqiqiy ishga tushirishda Wi-Fi uzilishidan keyin yuborish tekshirildi; navbat saqlanishi va muddat tugashi testlar bilan tekshirilgan.
 
+### PPE-007 · Skelet bo'yicha odamni tasdiqlash va zona tekshiruvi · P1 · 5 SP · Durbek (Jarayonda: kamera sinovi kutilmoqda)
+
+**Muammo:** gul yoki kiyim ilgichi "kaskasiz odam" deb olinishi mumkin; zona faqat oyoq nuqtasi bo'yicha tekshirilardi.
+
+Qabul mezonlari:
+
+- Skeleti hech qachon topilmagan ramka baholanmaydi; bir marta tasdiqlangan odam skelet vaqtincha yo'qolsa ham baholanadi.
+- Istalgan bo'g'im yoki suyak chizig'i zonaga kirsa, signal beriladi.
+- Tezlik o'lchanadi.
+- Haqiqiy kamerada tekshiriladi: odam bo'lmagan obyekt va zonaga qo'l kiritish.
+
+*Natija:* testlar o'tgan. Chizma kiyim ilgichi baholanmadi (0 hodisa). `data/demo.mp4`: skelet bilan va skeletsiz 9 hodisa, 22 ID. Sukut sozlamada (skelet modeli 480) joriy model topgan odam ramkalarining 97% ida (410 tadan; har 10-kadr) kamida 3 nuqtali skelet mos keldi. Apple M5 Pro: aniqlash va mantiq 19.3 → 29.0 ms; har kamerada 1 kamera 30.0, 2 — 21.4, 3 — 14.8 FPS (demo video).
+
 ### PPE-001 · Webcam va telefon oqimida sinov · P0 · 2 SP · O'tkirbek (Jarayonda: dastlabki sinovlar o'tkazildi)
 
 Qabul mezonlari:

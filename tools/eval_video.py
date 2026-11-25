@@ -6,6 +6,7 @@ import sys, time
 import cv2
 from app import config
 from app.detector import Detector
+from app.pose import SkeletonDetector
 from app.violations import ViolationEngine
 
 path = sys.argv[1]
@@ -13,7 +14,9 @@ save = sys.argv[3] if len(sys.argv) > 3 and sys.argv[2] == "--save-dir" else Non
 cap = cv2.VideoCapture(path)
 fps = cap.get(cv2.CAP_PROP_FPS) or 25
 det = Detector(config.MODEL_PATH, config.IMG_SIZE, config.CONF, config.GEAR_CONF)
-eng = ViolationEngine(config.DEBOUNCE_S, config.COOLDOWN_S, config.REQUIRE_VEST, config.HELMET_RULE, config.CONF, config.RESOLVE_S, config.REJOIN_S)
+if config.SKELETON:
+    det = SkeletonDetector(det, config.POSE_MODEL_PATH, config.POSE_IMG_SIZE)
+eng = ViolationEngine(config.DEBOUNCE_S, config.COOLDOWN_S, config.REQUIRE_VEST, config.HELMET_RULE, config.CONF, config.RESOLVE_S, config.REJOIN_S, config.SKELETON)
 n, spent, events, reminders = 0, 0.0, 0, 0
 ids = set()
 while True:

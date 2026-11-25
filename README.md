@@ -60,6 +60,7 @@ Demo mode plays `data/demo.mp4` in a loop and needs no internet.
 | `RETENTION_DAYS` | `30` | Snapshots older than this are deleted at start-up and hourly; incident rows stay. `0` keeps everything. Stored raw frames and exports follow the same two rules |
 | `SAVE_RAW` | `1` | Keep a clean, blurred frame per incident (`data/raw/`) so marked false alarms can be exported; same retention as snapshots |
 | `LOCAL_AUDIO` | `0` | Play voice warnings on the speaker of the computer running the app (needs `afplay` on macOS, or `mpg123` / `ffplay`; `paplay` only if it can read MP3). A zone warning interrupts an ordinary one. An open dashboard with sound on will also play them. Not tested on Linux or in Docker (a container needs access to the audio device) |
+| `SKELETON` / `POSE_IMG_SIZE` | `1` / `480` | Skeleton model (`models/yolo11n-pose.pt`, Ultralytics, AGPL-3.0): see **Skeletons**. `0` uses boxes only |
 | `PORT` | `8000` | Dashboard port |
 
 **Phone as camera.** iPhone: with Continuity Camera the phone appears as a webcam (try `VIDEO_SOURCE=1`).
@@ -116,6 +117,17 @@ Press **Noto'g'ri signal** on an incident (admin or supervisor; it can be undone
 report. `.venv/bin/python -m tools.export_false_alarms` copies their clean frames and the model's detections to
 `data/exports/` (export before the retention period ends). Faces are blurred; where no face was found the head
 area is blurred too, which makes such frames less useful for helmet training.
+
+## Skeletons
+
+With `SKELETON=1` a second model finds 17 body points.
+- **Only people are judged.** A box the main model calls a person is ignored until a skeleton (3 or more
+  trusted points) has been seen on it. After that it stays a person even if the skeleton drops out. A real
+  worker on whom no skeleton is ever found (far away, mostly hidden) is **missed**.
+- **Zones:** a zone alert is raised if any joint or bone is inside the polygon (fingers and toes are not part of
+  the model). Without a skeleton in a frame, the feet-point rule is used. The check is made in the picture:
+  an arm that only passes in front of a zone, nearer to the camera, also counts. Draw zones tightly around the
+  hazard and place the camera so that depth overlap is small.
 
 ## Model evaluation
 

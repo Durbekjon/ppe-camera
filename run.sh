@@ -30,4 +30,8 @@ elif [ "$HOST" != "127.0.0.1" ] && [ "$HOST" != "localhost" ] && [ "$HOST" != ":
   echo "Tarmoqqa ochish (HOST=$HOST) uchun HTTPS shart: tools/make_cert.sh <IP>" >&2
   exit 1
 fi
+# macOS: keep the computer and the display awake while the app runs (the demo must not fall asleep).
+if command -v caffeinate >/dev/null 2>&1 && [ "${NO_CAFFEINATE:-0}" != "1" ]; then
+  caffeinate -dimsu -w $$ &
+fi
 exec .venv/bin/uvicorn "$@"

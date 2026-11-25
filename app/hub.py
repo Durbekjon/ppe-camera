@@ -14,7 +14,7 @@ log = logging.getLogger("hub")
 
 ZONE_FILE = config.DATA / "zones.json"
 LEGACY_ZONE_FILE = config.DATA / "zone.json"
-SEVERITY = ("zone", "danger", "offline", "safe")  # worst first
+SEVERITY = ("zone", "danger", "blocked", "offline", "safe")  # worst first
 
 
 class SharedDetector:

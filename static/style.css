@@ -72,3 +72,9 @@ body.role-supervisor .admin-only { display:none !important; }
 #incidents li.false-alarm { border-left-color:var(--line); }
 #incidents li.false-alarm img, #incidents li.false-alarm .what { opacity:.45; }
 #incidents .mark { font-size:12px; padding:3px 8px; margin-top:4px; }
+.cameras { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:8px; margin-bottom:10px; }
+.tile { padding:4px; display:flex; flex-direction:column; gap:4px; border:2px solid var(--line); }
+.tile img { width:100%; aspect-ratio:16/9; object-fit:contain; background:#000; border-radius:4px; }
+.tile span { font-size:12px; }
+.tile.selected { border-color:var(--text); }
+.tile.danger { background:#3a2c10; } .tile.zone { background:#4a1618; } .tile.offline span { color:var(--muted); }

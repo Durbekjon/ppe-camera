@@ -26,6 +26,7 @@ def init(path=None):
     columns = {r["name"] for r in _conn.execute("PRAGMA table_info(incidents)")}
     for name, definition in (
         ("zone_name", "TEXT NOT NULL DEFAULT ''"),
+        ("camera", "TEXT NOT NULL DEFAULT ''"),
         ("false_alarm", "INTEGER NOT NULL DEFAULT 0"),
         ("raw", "TEXT NOT NULL DEFAULT ''"),  # clean frame file name, for retraining
         ("detections", "TEXT NOT NULL DEFAULT ''"),  # JSON: what the model saw in that frame
@@ -52,12 +53,12 @@ def query(sql, params=()):
         return _conn.execute(sql, params).fetchall()
 
 
-def add_incident(ts, missing, zone, track_id, snapshot, zone_name="", raw="", detections=""):
+def add_incident(ts, missing, zone, track_id, snapshot, zone_name="", raw="", detections="", camera=""):
     with _lock:
         cur = _conn.execute(
-            "INSERT INTO incidents (ts, missing, zone, track_id, snapshot, zone_name, raw, detections) "
-            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-            (ts, ",".join(missing), int(zone), track_id, snapshot, zone_name, raw, detections),
+            "INSERT INTO incidents (ts, missing, zone, track_id, snapshot, zone_name, raw, detections, camera) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            (ts, ",".join(missing), int(zone), track_id, snapshot, zone_name, raw, detections, camera),
         )
         _conn.commit()
         return cur.lastrowid
@@ -66,7 +67,7 @@ def add_incident(ts, missing, zone, track_id, snapshot, zone_name="", raw="", de
 def list_incidents(limit=30):
     with _lock:
         rows = _conn.execute(
-            "SELECT id, ts, missing, zone, track_id, snapshot, zone_name, false_alarm "
+            "SELECT id, ts, missing, zone, track_id, snapshot, zone_name, false_alarm, camera "
             "FROM incidents ORDER BY id DESC LIMIT ?", (limit,)
         ).fetchall()
     return [dict(r) for r in rows]

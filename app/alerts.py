@@ -121,7 +121,9 @@ class AlertManager:
         """
         now = datetime.now()
         ts = now.strftime("%Y-%m-%d %H:%M:%S")
-        name = f"{now.strftime('%Y%m%d_%H%M%S')}_{event.track_id}.jpg"
+        # Track IDs repeat between cameras, so the camera number keeps file names apart.
+        camera = f"c{event.camera_index}_" if event.camera_index else ""
+        name = f"{now.strftime('%Y%m%d_%H%M%S')}_{camera}{event.track_id}.jpg"
         # The same blurred file goes to the dashboard and to Telegram.
         cv2.imwrite(str(SNAPSHOTS / name), privacy.anonymize(frame, regions))
         raw, seen = "", ""
@@ -132,10 +134,11 @@ class AlertManager:
                 seen = json.dumps([
                     {"role": d.role, "conf": round(d.conf, 3), "box": [round(v, 1) for v in d.box]} for d in detections
                 ])
-        incident_id = db.add_incident(ts, event.missing, event.zone, event.track_id, name, event.zone_name, raw, seen)
+        incident_id = db.add_incident(ts, event.missing, event.zone, event.track_id, name, event.zone_name, raw, seen, event.camera)
         what = describe(event.missing)
         where = f" — zona: {event.zone_name}" if event.zone else ""
-        log.warning("HODISA #%d: ishchi %s%s", incident_id, what, where)
+        source = f" [{event.camera}]" if event.camera else ""
+        log.warning("HODISA #%d%s: ishchi %s%s", incident_id, source, what, where)
         if telegram_configured():
             if "entry" in event.missing:
                 head = "🚨 TAQIQLANGAN HUDUDGA KIRILDI!"
@@ -143,9 +146,10 @@ class AlertManager:
                 head = "🚨 XAVFLI ZONA! Ishchi himoyasiz"
             else:
                 head = "⚠️ Xavfsizlik qoidasi buzildi"
-            place = f"\nZona: {event.zone_name}" if event.zone_name else ""
+            place = f"\nKamera: {event.camera}" if event.camera else ""
+            place += f"\nZona: {event.zone_name}" if event.zone_name else ""
             caption = f"{head}\nHolat: ishchi {what}{place}\nVaqt: {ts}\nHodisa №{incident_id}"
-            line = f"№{incident_id} — ishchi {what}, {ts}"
+            line = f"№{incident_id}{source} — ishchi {what}, {ts}"
             try:
                 self._queue.put_nowait((event.zone, (caption, str(SNAPSHOTS / name), line)))
             except queue.Full:

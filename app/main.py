@@ -12,26 +12,33 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 from . import alerts, auth, config, db, tts
-from .pipeline import Pipeline
+from .hub import Hub
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(name)-8s %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger("app")
 
-pipeline: Pipeline = None
+hub: Hub = None
+
+
+def camera_or_404(name: str):
+    try:
+        return hub.get(name)
+    except KeyError:
+        raise HTTPException(404, "Bunday kamera yo'q")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global pipeline
+    global hub
     db.init()
     if not auth.has_users():
         log.warning("Foydalanuvchi yo'q. Yarating: .venv/bin/python -m tools.create_user NOM --role admin")
     await tts.ensure_audio()
-    pipeline = Pipeline()
-    pipeline.start()
-    log.info("Tayyor, port %d  (demo rejimi: %s)", config.PORT, "ha" if pipeline.demo else "yo'q")
+    hub = Hub()
+    hub.start()
+    log.info("Tayyor, port %d  (kameralar: %s)", config.PORT, ", ".join(hub.cameras))
     yield
-    pipeline.stop()
+    hub.stop()
 
 
 app = FastAPI(lifespan=lifespan)
@@ -109,8 +116,9 @@ def index():
 
 
 @app.get("/video")
-def video(request: Request):
+def video(request: Request, camera: str = ""):
     token = request.cookies.get(COOKIE)
+    pipeline = camera_or_404(camera)
 
     def frames():
         seq, checked = 0, time.monotonic()
@@ -126,19 +134,34 @@ def video(request: Request):
     return StreamingResponse(frames(), media_type="multipart/x-mixed-replace; boundary=frame")
 
 
+@app.get("/api/frame")
+def frame(camera: str = ""):
+    """The newest picture of one camera, for the small live tiles (many streams would exhaust the browser)."""
+    pipeline = camera_or_404(camera)
+    if not pipeline.jpeg or not pipeline.video.connected:
+        raise HTTPException(503, "Kadr yo'q")
+    return Response(pipeline.jpeg, media_type="image/jpeg")
+
+
 @app.get("/api/status")
-def status():
-    camera = pipeline.video.connected
-    state = pipeline.state if camera else {"status": "offline", "people": 0, "violators": 0}
+def status(camera: str = ""):
+    pipeline = camera_or_404(camera)
+    summary = pipeline.summary()
+    cameras, overall = hub.summary()
     return {
-        **state,
-        "camera": camera,
-        "fps": round(pipeline.fps, 1) if camera else 0,
+        "status": summary["status"],
+        "people": summary["people"],
+        "violators": summary["violators"],
+        "camera": summary["connected"],
+        "fps": summary["fps"],
+        "name": pipeline.name,
         "demo": pipeline.demo,
+        "cameras": cameras,
+        "overall": overall,
         "telegram": alerts.telegram_configured(),
         "require_vest": config.REQUIRE_VEST,
         "last_incident_id": db.last_id(),
-        "voice": pipeline.voice,
+        "voice": hub.voice.latest,
     }
 
 
@@ -178,17 +201,18 @@ class Zones(BaseModel):
 
 
 @app.get("/api/zones")
-def get_zones():
-    return {"zones": [asdict(z) for z in pipeline.engine.zones]}
+def get_zones(camera: str = ""):
+    return {"zones": [asdict(z) for z in camera_or_404(camera).engine.zones]}
 
 
 @app.post("/api/zones")
-def set_zones(body: Zones):
+def set_zones(body: Zones, camera: str = ""):
+    camera_or_404(camera)
     try:
-        pipeline.set_zones([z.model_dump() for z in body.zones])
+        hub.set_zones(camera, [z.model_dump() for z in body.zones])
     except ValueError as e:
         raise HTTPException(400, str(e))
-    return get_zones()
+    return get_zones(camera)
 
 
 class Demo(BaseModel):
@@ -196,7 +220,8 @@ class Demo(BaseModel):
 
 
 @app.post("/api/demo")
-def set_demo(demo: Demo):
+def set_demo(demo: Demo, camera: str = ""):
+    pipeline = camera_or_404(camera)
     try:
         pipeline.set_demo(demo.on)
     except FileNotFoundError:

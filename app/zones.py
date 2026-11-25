@@ -2,6 +2,7 @@
 import json
 import os
 import re
+import shutil
 from dataclasses import asdict, dataclass
 
 HELMET_RULE, NO_ENTRY_RULE = "helmet", "no_entry"
@@ -61,21 +62,29 @@ def parse(items):
     return zones
 
 
-def save(path, zones):
+def save_all(path, by_camera):
+    """Write {camera name: [Zone, ...]}."""
     path.parent.mkdir(exist_ok=True)
     tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps([asdict(z) for z in zones], ensure_ascii=False, indent=1))
+    data = {name: [asdict(z) for z in items] for name, items in by_camera.items()}
+    tmp.write_text(json.dumps(data, ensure_ascii=False, indent=1))
     os.replace(tmp, path)  # never leave a half-written file
 
 
-def load(path, legacy_path):
-    """Read zones; on first run convert the old single-zone file (which is left untouched)."""
+def load_all(path, legacy_path, first_camera):
+    """Read every camera's zones. Older single-camera files are assigned to the first camera."""
     if path.exists():
-        return parse(json.loads(path.read_text()))
-    if legacy_path.exists():
+        data = json.loads(path.read_text())
+        if isinstance(data, list):  # one-camera format
+            shutil.copyfile(path, path.with_name(path.name + ".single.bak"))
+            by_camera = {first_camera: parse(data)}
+            save_all(path, by_camera)
+            return by_camera
+        return {name: parse(items) for name, items in data.items()}
+    if legacy_path.exists():  # the original single polygon; the file is left untouched
         points = json.loads(legacy_path.read_text())
         if len(points) >= 3:
-            zones = parse([{"name": "Zona 1", "points": points}])
-            save(path, zones)
-            return zones
-    return []
+            by_camera = {first_camera: parse([{"name": "Zona 1", "points": points}])}
+            save_all(path, by_camera)
+            return by_camera
+    return {}

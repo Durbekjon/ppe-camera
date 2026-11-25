@@ -91,6 +91,8 @@ class Event:
     box: tuple
     record: bool = True  # False: voice reminder only, no new incident
     zone_name: str = ""
+    camera: str = ""  # filled in by the camera's pipeline
+    camera_index: int = 0
 
 
 class ViolationEngine:

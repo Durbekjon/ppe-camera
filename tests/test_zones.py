@@ -84,11 +84,21 @@ def test_duplicate_names_are_rejected():
 def test_old_zone_file_is_converted_and_kept(tmp_path):
     old, new = tmp_path / "zone.json", tmp_path / "zones.json"
     old.write_text(json.dumps(SQUARE))
-    loaded = zones.load(new, old)
-    assert [(z.name, z.rule, z.points) for z in loaded] == [("Zona 1", "helmet", SQUARE)]
+    loaded = zones.load_all(new, old, "Kirish")
+    assert [(z.name, z.rule, z.points) for z in loaded["Kirish"]] == [("Zona 1", "helmet", SQUARE)]
     assert new.exists() and json.loads(old.read_text()) == [list(p) for p in SQUARE]
-    zones.save(new, [])  # deleting every zone must not bring the old one back
-    assert zones.load(new, old) == []
+    zones.save_all(new, {"Kirish": []})  # deleting every zone must not bring the old one back
+    assert zones.load_all(new, old, "Kirish") == {"Kirish": []}
+
+
+def test_single_camera_zone_list_moves_to_the_first_camera_with_a_backup(tmp_path):
+    new = tmp_path / "zones.json"
+    original = json.dumps([{"name": "Kran", "points": SQUARE, "rule": NO_ENTRY_RULE}])
+    new.write_text(original)
+    loaded = zones.load_all(new, tmp_path / "none.json", "Kirish")
+    assert list(loaded) == ["Kirish"] and loaded["Kirish"][0].rule == NO_ENTRY_RULE
+    assert (tmp_path / "zones.json.single.bak").read_text() == original
+    assert zones.load_all(new, tmp_path / "none.json", "Boshqa") == loaded  # converted only once
 
 
 def test_old_database_keeps_its_incidents(tmp_path):

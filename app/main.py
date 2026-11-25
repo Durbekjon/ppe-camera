@@ -27,7 +27,7 @@ async def lifespan(app: FastAPI):
     await tts.ensure_audio()
     pipeline = Pipeline()
     pipeline.start()
-    log.info("Tayyor: http://localhost:%d  (demo rejimi: %s)", config.PORT, "ha" if pipeline.demo else "yo'q")
+    log.info("Tayyor, port %d  (demo rejimi: %s)", config.PORT, "ha" if pipeline.demo else "yo'q")
     yield
     pipeline.stop()
 
@@ -39,11 +39,15 @@ COOKIE = "session"
 PUBLIC = {"/login", "/api/login", "/static/style.css", "/static/login.js"}
 # Any request that changes something needs the admin role, except signing out.
 ANY_ROLE_POSTS = {"/api/logout"}
+LOOPBACK = {"127.0.0.1", "::1"}
 
 
 @app.middleware("http")
 async def require_login(request: Request, call_next):
     path = request.url.path
+    # Backstop for any way of starting the server: from the network, only HTTPS is served.
+    if request.url.scheme != "https" and (request.client is None or request.client.host not in LOOPBACK):
+        return JSONResponse({"detail": "Tarmoq orqali faqat HTTPS bilan kiring"}, status_code=403)
     if path not in PUBLIC:
         user = auth.user_for(request.cookies.get(COOKIE))
         if not user:

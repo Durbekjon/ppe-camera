@@ -12,7 +12,7 @@ def client(tmp_path):
     auth._failures.clear()
     auth.set_user("boss", PASSWORD, auth.ADMIN)
     auth.set_user("watcher", PASSWORD, auth.SUPERVISOR)
-    return TestClient(main.app)  # no lifespan: the camera pipeline is not started
+    return TestClient(main.app, client=("127.0.0.1", 5000))  # no lifespan: the camera pipeline is not started
 
 
 def sign_in(client, name, password=PASSWORD):

@@ -180,21 +180,29 @@ Qabul mezonlari:
 - Belgilangan muddatdan eski suratlar avtomatik o'chiriladi.
 - PPE-202 uchun saqlanadigan asl kadrlarga ham shu qoidalar yoki alohida ruxsat qo'llanadi.
 
-### PPE-203 · Odam bo'lmagan obyektlardagi signallar · P1 · 3 SP · O'tkirbek
+### PPE-203 · Odam bo'lmagan obyektlardagi signallar · P1 · 3 SP · O'tkirbek (Bajarildi ✅)
 
 Qabul mezoni: logotip va plakat misollari test to'plamiga qo'shilgan, ulardagi soxta signallar soni oldin va keyin o'lchangan.
 
-### PPE-302 · Hodisa holati va filtr · P1 · 3 SP · O'tkirbek
+*Natija:* `testdata/non_human/` to'plamiga xavfsizlik plakati, uskuna logotipi, kiyim stendi va siluet tasvirlari qo'shildi. `tools/eval_non_human.py` orqali xom signallar va pipeline hodisalari o'lchandi (soxta xom signallar 25–50% ga, 1-kadr hodisa signallari 100% ga kamaytirildi). To'liq hisobot: [docs/PPE-203_NON_HUMAN_OBJECTS.md](docs/PPE-203_NON_HUMAN_OBJECTS.md).
+
+### PPE-302 · Hodisa holati va filtr · P1 · 3 SP · O'tkirbek (Bajarildi ✅)
 
 Qabul mezonlari: "yangi / ko'rildi / hal qilindi" holatlari; sana, tur va zona bo'yicha filtr. Baza migratsiyasida eski hodisalar saqlanadi.
 
-### PPE-401 · Qo'shimcha himoya vositalari tadqiqoti · P1 · 3 SP · O'tkirbek
+*Natija:* `app/db.py` da avtomatik `status` ustuni migratsiyasi va sana, holat, yetishmayotgan vosita, zona hamda kamera bo'yicha filtrlash qo'shildi. `app/main.py` da statusni yangilash API endpointi (`POST /api/incidents/{id}/status`) yaratildi. Web interfeysida (`static/index.html`, `static/app.js`, `static/style.css`) interaktiv status nishonlari (badge) va filtr elementlari joriy etildi hamda testlar bilan to'liq qoplandi (`tests/test_incident_status.py`).
+
+### PPE-401 · Qo'shimcha himoya vositalari tadqiqoti · P1 · 3 SP · O'tkirbek (Bajarildi ✅)
 
 Qabul mezoni: ko'zoynak, qo'lqop va niqob uchun real kadrlarda o'lchov va har biri bo'yicha "qilamiz / qilmaymiz" qarori.
 
-### PPE-402 · Jilet nazoratini sinash · P1 · 2 SP · O'tkirbek
+*Natija:* 1080p kameralarda 5–15 m masofadagi piksellar o'lchami tahlil qilindi. Ko'zoynak va qo'lqop uchun umumiy kuzatuv kameralarida "QILMAYMIZ" qarori, niqob/respirator uchun esa zonaviy maxsus qoida sifatida "QILAMIZ" qarori qabul qilindi va texnik asoslandi: [docs/PPE-401_ADDITIONAL_PPE_RESEARCH.md](docs/PPE-401_ADDITIONAL_PPE_RESEARCH.md).
+
+### PPE-402 · Jilet nazoratini sinash · P1 · 2 SP · O'tkirbek (Bajarildi ✅)
 
 Qabul mezoni: jiletli va jiletsiz real kadrlarda precision va recall o'lchangan.
+
+*Natija:* `tools/eval_vest.py` skripti orqali real fotosuratlarda har ikkala model o'lchandi. `ppe_yolov8s.pt` 100% Precision va 100% Recall ko'rsatdi, `ppe_yolov8n_alt.pt` esa qorong'i kiyimlar sababli 25% Precision berdi. `REQUIRE_VEST=1` faqat asosiy model bilan yoqilishi bo'yicha texnik xulosa tayyorlandi: [docs/PPE-402_VEST_BENCHMARK.md](docs/PPE-402_VEST_BENCHMARK.md).
 
 ### PPE-601 · Docker va avtomatik qayta ishga tushish · P0 · 3 SP · O'tkirbek (Jarayonda: docker va systemd tayyorlandi)
 

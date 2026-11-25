@@ -127,8 +127,19 @@ async function poll() {
 }
 
 // ---------- incidents ----------
+const STATUS_LABEL = { "yangi": "Yangi", "ko'rildi": "Ko'rildi", "hal_qilindi": "Hal qilindi" };
+const NEXT_STATUS = { "yangi": "ko'rildi", "ko'rildi": "hal_qilindi", "hal_qilindi": "yangi" };
+
 async function loadIncidents() {
-  const list = await getJSON('/api/incidents?limit=30');
+  const st = $('filter-status')?.value || '';
+  const ms = $('filter-missing')?.value || '';
+  const dt = $('filter-date')?.value || '';
+  let url = '/api/incidents?limit=50';
+  if (st) url += '&status=' + encodeURIComponent(st);
+  if (ms) url += '&missing=' + encodeURIComponent(ms);
+  if (dt) url += '&date=' + encodeURIComponent(dt);
+
+  const list = await getJSON(url);
   const ul = $('incidents');
   ul.replaceChildren();
   if (!list.length) {
@@ -156,6 +167,23 @@ async function loadIncidents() {
     what.className = 'what';
     what.textContent = it.missing.split(',').map((m) => LABEL[m] || m).join(', ');
     if (it.zone) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = it.zone_name || 'XAVFLI ZONA'; what.append(b); }
+
+    const stBadge = document.createElement('span');
+    const curSt = it.status || 'yangi';
+    stBadge.className = 'status-badge status-' + (curSt === "ko'rildi" ? "korildi" : curSt);
+    stBadge.textContent = STATUS_LABEL[curSt] || curSt;
+    stBadge.title = "Holatni o'zgartirish uchun bosing";
+    stBadge.onclick = async () => {
+      const next = NEXT_STATUS[curSt] || 'yangi';
+      try {
+        await getJSON(`/api/incidents/${it.id}/status`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: next })
+        });
+        await loadIncidents();
+      } catch (err) { $('hint').textContent = err.message; }
+    };
+    what.append(stBadge);
+
     const when = document.createElement('div');
     when.className = 'when'; when.textContent = `№${it.id} · ${it.ts}` + (cameraNames.length > 1 && it.camera ? ` · ${it.camera}` : '');
     const mark = document.createElement('button');
@@ -179,6 +207,10 @@ async function loadIncidents() {
   $('incident-count').textContent = list.length ? `(oxirgi ${list.length} ta)` : '';
   return list;
 }
+
+$('filter-status').onchange = loadIncidents;
+$('filter-missing').onchange = loadIncidents;
+$('filter-date').onchange = loadIncidents;
 
 // ---------- report ----------
 function today() { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }

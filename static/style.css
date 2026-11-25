@@ -78,3 +78,12 @@ body.role-supervisor .admin-only { display:none !important; }
 .tile span { font-size:12px; }
 .tile.selected { border-color:var(--text); }
 .tile.danger { background:#3a2c10; } .tile.zone { background:#4a1618; } .tile.offline span { color:var(--muted); }
+.incidents-head { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:12px; }
+.incidents-head h2 { margin:0; }
+.filters { display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.filters select, .filters input[type=date] { background:#232b36; color:var(--text); border:1px solid var(--line); border-radius:6px; padding:4px 8px; font-size:13px; color-scheme:dark; }
+.status-badge { display:inline-block; font-size:11px; font-weight:700; border-radius:4px; padding:1px 6px; margin-left:6px; cursor:pointer; }
+.status-yangi { background:#2a4365; color:#90cdf4; border:1px solid #3182ce; }
+.status-korildi { background:#744210; color:#fbd38d; border:1px solid #d69e2e; }
+.status-hal_qilindi { background:#22543d; color:#9ae6b4; border:1px solid #38a169; }
+.incident-actions { display:flex; gap:6px; align-items:center; margin-top:4px; flex-wrap:wrap; }

@@ -30,6 +30,7 @@ def init(path=None):
         ("false_alarm", "INTEGER NOT NULL DEFAULT 0"),
         ("raw", "TEXT NOT NULL DEFAULT ''"),  # clean frame file name, for retraining
         ("detections", "TEXT NOT NULL DEFAULT ''"),  # JSON: what the model saw in that frame
+        ("status", "TEXT NOT NULL DEFAULT 'yangi'"),  # 'yangi', 'ko''rildi', 'hal_qilindi'
     ):
         if name not in columns:
             _conn.execute(f"ALTER TABLE incidents ADD COLUMN {name} {definition}")  # keeps old rows
@@ -69,13 +70,62 @@ def add_incident(ts, missing, zone, track_id, snapshot, zone_name="", raw="", de
         return cur.lastrowid
 
 
-def list_incidents(limit=30):
+STATUSES = ("yangi", "ko'rildi", "hal_qilindi")
+STATUS_ALIASES = {
+    "yangi": "yangi",
+    "new": "yangi",
+    "ko'rildi": "ko'rildi",
+    "korildi": "ko'rildi",
+    "reviewed": "ko'rildi",
+    "hal_qilindi": "hal_qilindi",
+    "resolved": "hal_qilindi",
+}
+
+
+def list_incidents(limit=30, status="", date="", missing="", zone="", camera=""):
+    clauses, params = [], []
+    if status:
+        st = STATUS_ALIASES.get(status.lower().strip(), status)
+        clauses.append("status = ?")
+        params.append(st)
+    if date:
+        clauses.append("substr(ts, 1, 10) = ?")
+        params.append(date)
+    if missing:
+        clauses.append("missing LIKE ?")
+        params.append(f"%{missing}%")
+    if zone != "":
+        if str(zone).lower() in ("1", "true"):
+            clauses.append("zone = 1")
+        elif str(zone).lower() in ("0", "false"):
+            clauses.append("zone = 0")
+        else:
+            clauses.append("zone_name = ?")
+            params.append(zone)
+    if camera:
+        clauses.append("camera = ?")
+        params.append(camera)
+
+    where = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    sql = (
+        f"SELECT id, ts, missing, zone, track_id, snapshot, zone_name, false_alarm, camera, status "
+        f"FROM incidents {where} ORDER BY id DESC LIMIT ?"
+    )
+    params.append(limit)
     with _lock:
-        rows = _conn.execute(
-            "SELECT id, ts, missing, zone, track_id, snapshot, zone_name, false_alarm, camera "
-            "FROM incidents ORDER BY id DESC LIMIT ?", (limit,)
-        ).fetchall()
+        rows = _conn.execute(sql, params).fetchall()
     return [dict(r) for r in rows]
+
+
+def set_status(incident_id, status):
+    """Update incident status ('yangi', 'ko''rildi', 'hal_qilindi'). Returns False if invalid or not found."""
+    status_clean = STATUS_ALIASES.get(str(status).lower().strip())
+    if not status_clean:
+        return False
+    with _lock:
+        cur = _conn.execute("UPDATE incidents SET status = ? WHERE id = ?", (status_clean, incident_id))
+        _conn.commit()
+        return cur.rowcount == 1
 
 
 def set_false_alarm(incident_id, value):

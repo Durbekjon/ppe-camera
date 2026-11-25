@@ -78,7 +78,7 @@ PUBLIC = {"/login", "/api/login", "/static/style.css", "/static/login.js", "/api
 # Any request that changes something needs the admin role, except signing out.
 ANY_ROLE_POSTS = {"/api/logout"}
 # Reviewing alerts is the supervisor's job, so this change is open to both roles.
-REVIEW_PATH = re.compile(r"/api/incidents/\d+/false-alarm")
+REVIEW_PATH = re.compile(r"/api/incidents/\d+/(false-alarm|status)")
 LOOPBACK = {"127.0.0.1", "::1"}
 
 
@@ -218,8 +218,20 @@ def status(camera: str = ""):
 
 
 @app.get("/api/incidents")
-def incidents(limit: int = 30):
-    return db.list_incidents(min(limit, 200))
+def incidents(limit: int = 30, status: str = "", date: str = "", missing: str = "", zone: str = "", camera: str = ""):
+    return db.list_incidents(min(limit, 200), status=status, date=date, missing=missing, zone=zone, camera=camera)
+
+
+class IncidentStatus(BaseModel):
+    status: str
+
+
+@app.post("/api/incidents/{incident_id}/status")
+def update_incident_status(incident_id: int, body: IncidentStatus, request: Request):
+    if not db.set_status(incident_id, body.status):
+        raise HTTPException(400, "Noto'g'ri holat yoki hodisa topilmadi")
+    log.info("Hodisa #%d holati '%s' ga o'zgartirildi (%s)", incident_id, body.status, request.state.user["username"])
+    return {"id": incident_id, "status": db.STATUS_ALIASES.get(body.status.lower().strip(), body.status)}
 
 
 class FalseAlarm(BaseModel):

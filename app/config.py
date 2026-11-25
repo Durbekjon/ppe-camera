@@ -58,6 +58,8 @@ TELEGRAM_GROUP_S = float(os.getenv("TELEGRAM_GROUP_S", "5"))
 
 # Privacy: faces in saved and sent snapshots are blurred; snapshots expire after this many days (0 = keep).
 BLUR_FACES = _flag("BLUR_FACES", "1")
+# Play voice warnings on the server's local speaker even when no browser is open.
+LOCAL_AUDIO = _flag("LOCAL_AUDIO", "0")
 RETENTION_DAYS = int(os.getenv("RETENTION_DAYS", "30"))
 
 # Keep a clean (blurred) frame per incident so false alarms can be exported for retraining.

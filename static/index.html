@@ -92,6 +92,17 @@
         <div class="chart-title">Soatlar bo'yicha buzilishlar</div>
         <div id="chart" class="chart"></div>
       </div>
+      <div class="chart-wrap" style="margin-top:16px">
+        <div class="report-head" style="margin-bottom:8px">
+          <div class="chart-title" style="margin:0">Trend grafigi</div>
+          <select id="trend-days">
+            <option value="7">Oxirgi 7 kun</option>
+            <option value="30">Oxirgi 30 kun</option>
+          </select>
+          <a id="btn-export-xlsx" class="btn" href="/api/export.xlsx?days=7" download>Excel (.xlsx)</a>
+        </div>
+        <div id="trend-chart" class="chart"></div>
+      </div>
     </div>
   </section>
 </main>

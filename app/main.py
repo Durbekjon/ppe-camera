@@ -5,14 +5,14 @@ import re
 import time
 from contextlib import asynccontextmanager
 from dataclasses import asdict
-from datetime import date as date_cls, datetime
+from datetime import date as date_cls, datetime, timedelta
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import alerts, auth, config, db, tts
+from . import alerts, auth, config, db, export, tts
 from .hub import Hub
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(name)-8s %(message)s", datefmt="%H:%M:%S")
@@ -310,6 +310,34 @@ def telegram_test():
 def telegram_summary(date: str = ""):
     ok, msg = alerts.send_daily_summary(date or None)
     return {"ok": ok, "message": msg}
+
+
+@app.get("/api/trend")
+def api_trend(days: int = 7, start: str = "", end: str = ""):
+    end_d = end or date_cls.today().isoformat()
+    if not start:
+        n = max(1, min(days, 90))
+        start_d = (date_cls.fromisoformat(end_d) - timedelta(days=n - 1)).isoformat()
+    else:
+        start_d = start
+    return {"start": start_d, "end": end_d, "days": db.trend(start_d, end_d)}
+
+
+@app.get("/api/export.xlsx")
+def api_export_xlsx(start: str = "", end: str = "", days: int = 7):
+    end_d = end or date_cls.today().isoformat()
+    if not start:
+        n = max(1, min(days, 365))
+        start_d = (date_cls.fromisoformat(end_d) - timedelta(days=n - 1)).isoformat()
+    else:
+        start_d = start
+    rows = db.incidents_range(start_d, end_d)
+    data = export.build_xlsx(rows)
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="hisobot_{start_d}_{end_d}.xlsx"'},
+    )
 
 
 alerts.SNAPSHOTS.mkdir(parents=True, exist_ok=True)

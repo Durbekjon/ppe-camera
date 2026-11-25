@@ -253,6 +253,37 @@ async function loadReport() {
 $('report-date').value = today();
 $('report-date').onchange = loadReport;
 
+async function loadTrend() {
+  const days = $('trend-days')?.value || '7';
+  const btn = $('btn-export-xlsx');
+  if (btn) btn.href = '/api/export.xlsx?days=' + encodeURIComponent(days);
+  const res = await getJSON('/api/trend?days=' + encodeURIComponent(days));
+  const chart = $('trend-chart');
+  if (!chart) return;
+  chart.replaceChildren();
+  const max = Math.max(1, ...res.days.map((d) => d.total));
+  if (!res.days.length) {
+    const empty = document.createElement('div');
+    empty.className = 'muted';
+    empty.textContent = "Tanlangan davrda hodisalar yo'q.";
+    chart.append(empty);
+    return;
+  }
+  res.days.forEach((d) => {
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.title = `${d.date} — ${d.total} ta (zonada: ${d.zone})`;
+    const num = document.createElement('span'); num.className = 'n'; num.textContent = d.total || '';
+    const fill = document.createElement('i');
+    if (d.total) fill.style.height = Math.round((d.total / max) * 140) + 'px'; else fill.className = 'zero';
+    const label = document.createElement('span'); label.className = 'h'; label.textContent = d.date.slice(5);
+    bar.append(num, fill, label);
+    chart.append(bar);
+  });
+}
+if ($('trend-days')) $('trend-days').onchange = loadTrend;
+loadTrend();
+
 // ---------- danger zone drawing ----------
 const canvas = $('canvas'), ctx = canvas.getContext('2d');
 let drawing = false, points = [], zones = [];

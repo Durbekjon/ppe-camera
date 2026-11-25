@@ -2,7 +2,7 @@
 import logging
 import threading
 
-from . import config, zones
+from . import config, tts, zones
 from .alerts import AlertManager
 from .cameras import parse_cameras
 from .detector import Detector
@@ -45,6 +45,9 @@ class Voice:
                 "zone": event.zone,
                 "camera": event.camera,
             }
+            if config.LOCAL_AUDIO:
+                key = "entry" if "entry" in event.missing else ("zone" if event.zone else event.missing[0])
+                tts.play_local(key)
 
 
 class Hub:

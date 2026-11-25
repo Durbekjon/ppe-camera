@@ -161,3 +161,27 @@ def report(date):
     for r in rows:
         by_hour[r["hour"]] = r["n"]
     return {"date": date, "total": sum(by_hour), "zone": sum(r["z"] for r in rows), "by_hour": by_hour}
+
+
+def trend(start_date, end_date):
+    """Daily incident counts between start_date and end_date ('YYYY-MM-DD', inclusive), excluding false alarms."""
+    with _lock:
+        rows = _conn.execute(
+            "SELECT substr(ts, 1, 10) AS day, COUNT(*) AS total, COALESCE(SUM(zone), 0) AS zone "
+            "FROM incidents WHERE false_alarm = 0 AND substr(ts, 1, 10) BETWEEN ? AND ? "
+            "GROUP BY day ORDER BY day ASC",
+            (start_date, end_date),
+        ).fetchall()
+    return [{"date": r["day"], "total": r["total"], "zone": r["zone"]} for r in rows]
+
+
+def incidents_range(start_date, end_date):
+    """All non-false-alarm incidents between start_date and end_date ('YYYY-MM-DD', inclusive)."""
+    with _lock:
+        rows = _conn.execute(
+            "SELECT id, ts, missing, zone, zone_name, camera, status "
+            "FROM incidents WHERE false_alarm = 0 AND substr(ts, 1, 10) BETWEEN ? AND ? "
+            "ORDER BY id DESC",
+            (start_date, end_date),
+        ).fetchall()
+    return [dict(r) for r in rows]

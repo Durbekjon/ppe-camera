@@ -257,22 +257,30 @@ Qabul mezonlari: kamida 2 kamera bitta panelda; zona va hodisalar kameraga bog'l
 
 *Natija:* ikki oqim (video fayl va soxta tarmoq kamerasi) bilan panel, zonalar va uzilish tekshirildi. FPS (Apple M5 Pro, demo video): 1 kamera 30.0; 2 — 26.9; 3 — 18.3; 4 — 13.6. Pilot qurilmasida qayta o'lchanadi.
 
-### PPE-304 · Haftalik/oylik trend va eksport · P2 · 5 SP · O'tkirbek
+### PPE-304 · Haftalik/oylik trend va eksport · P2 · 5 SP · O'tkirbek (Jarayonda: brauzerda qo'lda tekshirish kutilmoqda)
 
 Qabul mezonlari: trend grafigi; tanlangan davr Excel'ga eksport qilinadi.
 
-### PPE-404 · Olov va tutunni aniqlash (prototip) · P2 · 5 SP · O'tkirbek
+*Natija:* `app/db.py` (`trend`, `incidents_range`), `app/export.py` (`.xlsx` generator), `/api/trend`, `/api/export.xlsx` va UI trend grafigi + Excel tugmasi qo'shildi (`tests/test_sprint3.py` o'tdi). Brauzerda qo'lda tekshirish kutilmoqda.
+
+### PPE-404 · Olov va tutunni aniqlash (prototip) · P2 · 5 SP · O'tkirbek (Jarayonda: test videolarida o'lchov kutilmoqda)
 
 Qabul mezoni: model va litsenziyasi tanlangan, test videolarida o'lchangan. Sertifikatlangan yong'in signalizatsiyasi o'rnini bosmasligi hujjatda yoziladi.
 
-### PPE-604 · Obyekt karnayida ovoz · P1 · 2 SP · O'tkirbek
+*Natija:* Model/litsenziya tanlovi va sertifikatlangan tizim o'rnini bosmasligi haqidagi ogohlantirish [docs/PPE-404_FIRE_SMOKE_PROTOTYPE.md](docs/PPE-404_FIRE_SMOKE_PROTOTYPE.md) da yozildi. Test videolarida o'lchov kutilmoqda.
+
+### PPE-604 · Obyekt karnayida ovoz · P1 · 2 SP · O'tkirbek (Jarayonda: haqiqiy karnayda qo'lda tekshirish kutilmoqda)
 
 Qabul mezoni: brauzer ochilmagan holda ham ogohlantirish karnaydan eshitiladi.
 
-### PPE-605 · Pilotni boshlash · P0 · 3 SP · O'tkirbek
+*Natija:* `app/config.py` (`LOCAL_AUDIO`), `app/tts.py` (`play_local` — `afplay`/`mpg123`/`ffplay`/`aplay`) va `app/hub.py` (`Voice.warn`) qo'shildi (`tests/test_sprint3.py` o'tdi). Haqiqiy karnayda qo'lda tekshirish kutilmoqda.
+
+### PPE-605 · Pilotni boshlash · P0 · 3 SP · O'tkirbek (Jarayonda: obyektga o'rnatish va pilot kuzatuvi kutilmoqda)
 
 Bog'liqlik: PPE-501–504, PPE-601, PPE-602.
 Qabul mezonlari: bitta obyektda o'rnatilgan; muvaffaqiyat o'lchovlari (soxta signallar soni, ishlash vaqti) kelishilgan; qo'llanma topshirilgan. Pilot kuzatuvi sprintdan keyin davom etadi.
+
+*Natija:* Operator qo'llanmasi va KPI mezonlari tayyorlandi: [docs/PILOT_GUIDE.md](docs/PILOT_GUIDE.md). Obyektga o'rnatish kutilmoqda.
 
 ---
 

@@ -7,20 +7,56 @@
 <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
-<header>
-  <div class="brand"><span class="logo">⛑</span><div><h1>Xavfsizlik nazorati</h1><p>Himoya vositalarini real vaqtda nazorat qilish</p></div></div>
-  <div id="status" class="status offline">Ulanmoqda…</div>
-  <div class="chips">
-    <span class="chip" id="chip-camera">Kamera: —</span>
-    <span class="chip" id="chip-fps">FPS: —</span>
-    <span class="chip" id="chip-people">Ishchilar: —</span>
-    <span class="chip" id="chip-telegram">Telegram: —</span>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo" aria-hidden="true">⛑</span>
+    <div><h1>Xavfsizlik nazorati</h1><p>Himoya vositalari monitoringi</p></div>
   </div>
-  <div class="user-box"><span class="muted" id="user-name"></span><button id="btn-logout">Chiqish</button></div>
+  <nav class="tabs" aria-label="Bo'limlar">
+    <a href="#map" class="active">Xarita</a>
+    <a href="#live">Jonli video</a>
+    <a href="#events">Hodisalar</a>
+    <a href="#report">Hisobot</a>
+    <a href="#health">Tizim</a>
+  </nav>
+  <div class="top-right">
+    <div id="status" class="status offline">Ulanmoqda…</div>
+    <div class="user-box"><span id="user-name"></span><button id="btn-logout" class="ghost">Chiqish</button></div>
+  </div>
 </header>
 
 <main>
-  <section class="card video-card">
+  <section class="card map-card" id="map">
+    <div class="kpis">
+      <div class="kpi"><span>Bugungi buzilishlar</span><b id="kpi-total">0</b><small id="kpi-zone">zonada: 0</small></div>
+      <div class="kpi"><span>Hozir kadrda</span><b id="kpi-people">0</b><small id="kpi-violators">qoidabuzar: 0</small></div>
+      <div class="kpi"><span>Kameralar</span><b id="kpi-cameras">0</b><small id="kpi-cameras-sub">onlayn</small></div>
+      <div class="chips">
+        <span class="chip" id="chip-camera">Kamera: —</span>
+        <span class="chip" id="chip-fps">FPS: —</span>
+        <span class="chip" id="chip-people">Ishchilar: —</span>
+        <span class="chip" id="chip-telegram">Telegram: —</span>
+      </div>
+    </div>
+    <div class="scene" id="scene" tabindex="0" aria-label="Obyekt xaritasi: sudrab aylantiring, g'ildirak bilan kattalashtiring, binoni bosib kamerani tanlang">
+      <div class="world" id="world">
+        <div class="ground"></div>
+      </div>
+    </div>
+    <div class="map-tools">
+      <button class="icon" id="map-zoom-in" title="Kattalashtirish">+</button>
+      <button class="icon" id="map-zoom-out" title="Kichiklashtirish">−</button>
+      <button class="icon" id="map-reset" title="Boshlang'ich ko'rinish">⟲</button>
+    </div>
+    <div class="map-legend">
+      <span><i class="dot safe"></i>Xavfsiz</span><span><i class="dot danger"></i>Xavf</span>
+      <span><i class="dot zone"></i>Xavfli zona</span><span><i class="dot offline"></i>Uzilgan</span>
+      <span class="muted">Sudrab aylantiring · binoni bosing</span>
+    </div>
+  </section>
+
+  <section class="card video-card" id="live">
+    <div class="card-head"><h2>Jonli video</h2><span class="muted" id="live-name"></span></div>
     <div class="cameras" id="cameras" hidden></div>
     <div class="toolbar">
       <button id="btn-sound" class="primary">🔊 Ovozni yoqish</button>
@@ -51,7 +87,7 @@
     <ul id="zones"></ul>
   </section>
 
-  <section class="card incidents-card">
+  <section class="card incidents-card" id="events">
     <div class="incidents-head">
       <h2>Hodisalar <span id="incident-count" class="muted"></span></h2>
       <div class="filters">
@@ -76,7 +112,7 @@
     <ul id="incidents"></ul>
   </section>
 
-  <section class="card report-card">
+  <section class="card report-card" id="report">
     <div class="report-head">
       <h2>Kunlik hisobot</h2>
       <input type="date" id="report-date">
@@ -93,8 +129,8 @@
         <div id="chart" class="chart"></div>
       </div>
       <div class="chart-wrap trend">
-        <div class="report-head" style="margin-bottom:8px">
-          <div class="chart-title" style="margin:0">Trend grafigi</div>
+        <div class="report-head">
+          <div class="chart-title">Trend grafigi</div>
           <select id="trend-days">
             <option value="7">Oxirgi 7 kun</option>
             <option value="30">Oxirgi 30 kun</option>
@@ -112,7 +148,7 @@
     </div>
   </section>
 
-  <section class="card system-card">
+  <section class="card system-card" id="health">
     <h2>Tizim holati <span class="muted" id="system-age"></span></h2>
     <ul id="system"></ul>
   </section>
@@ -123,5 +159,6 @@
 <audio id="a-entry" src="/static/audio/entry.mp3" preload="auto"></audio>
 <audio id="a-zone" src="/static/audio/zone.mp3" preload="auto"></audio>
 <script src="/static/app.js"></script>
+<script src="/static/scene.js"></script>
 </body>
 </html>

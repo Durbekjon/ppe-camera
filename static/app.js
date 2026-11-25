@@ -103,6 +103,7 @@ async function poll() {
     $('status').textContent = STATUS[s.overall.status] + (many && s.overall.status !== 'safe' ? ` · ${s.overall.camera}` : '');
     $('status').className = 'status ' + s.overall.status;
     showCameras(s.cameras, s.name);
+    if (window.sceneUpdate) window.sceneUpdate(s);  // 3D site map (scene.js)
     $('wrap').classList.toggle('alarm', s.status === 'zone');
     $('offline').hidden = s.camera;
     chip('chip-camera', 'Kamera: ' + (s.camera ? 'ulangan' : 'uzilgan'), s.camera ? 'ok' : 'bad');

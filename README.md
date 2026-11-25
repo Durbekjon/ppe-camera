@@ -21,7 +21,17 @@ The dashboard needs a login. Create the first user (you are asked for a password
 ```
 
 On a fresh clone, run `./run.sh` once first so that `.venv` exists. Running the command again resets a password.
-Sessions last 12 hours. Until HTTPS is added (PPE-503), use it on localhost only.
+Sessions last 12 hours.
+
+**Access from another computer (HTTPS).** By default the app listens on this computer only. To open it to the
+local network, run `tools/make_cert.sh <this computer's IP>`, add the three printed lines to `.env`, restart,
+and open `https://<IP>:8000`. The certificate is self-signed, so the browser warns on first use; compare its
+fingerprint (`openssl x509 -in data/certs/cert.pem -noout -fingerprint -sha256`) before accepting. Without a
+certificate `run.sh` refuses to listen on the network, and the app rejects non-HTTPS network requests.
+
+**Secrets** stay in `.env` (`run.sh` makes it readable by you only). Logs hide stream passwords, URL query strings
+and the Telegram token; OpenCV/FFmpeg messages are switched off for that reason (to debug a camera, set
+`OPENCV_FFMPEG_LOGLEVEL=32`, which may print the password).
 
 Open http://localhost:8000 and click **Ovozni yoqish** once (browsers block sound until a click).
 

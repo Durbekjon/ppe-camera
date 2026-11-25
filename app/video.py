@@ -1,11 +1,12 @@
 """Threaded video capture that always exposes the newest frame and reconnects if the source drops."""
 import logging
 import os
-import re
 import threading
 import time
 
 import cv2
+
+from .redact import safe_url
 
 log = logging.getLogger("video")
 
@@ -20,7 +21,7 @@ class VideoSource:
         self.width = width
         self.is_file = not source.isdigit() and "://" not in source
         # Name used in logs: no stream passwords, no long absolute paths.
-        self.label = os.path.basename(source) if self.is_file else re.sub(r"//[^/@]*@", "//***@", source)
+        self.label = os.path.basename(source) if self.is_file else safe_url(source) if "://" in source else source
         self.connected = False
         self._frame = None
         self._seq = 0
@@ -43,7 +44,9 @@ class VideoSource:
     def _run(self):
         delay = 1.0
         while not self._stop.is_set():
-            cap = cv2.VideoCapture(parse_source(self.source))
+            # Network streams go to FFmpeg only: other backends print the full URL when they fail.
+            backend = cv2.CAP_FFMPEG if "://" in self.source else cv2.CAP_ANY
+            cap = cv2.VideoCapture(parse_source(self.source), backend)
             if not cap.isOpened():
                 cap.release()
                 self.connected = False

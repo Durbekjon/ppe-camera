@@ -54,6 +54,7 @@ Demo mode plays `data/demo.mp4` in a loop and needs no internet.
 | `IMG_SIZE` | `480` | Model input size; `416` is faster, `640` sees small people better |
 | `DEBOUNCE_S` / `COOLDOWN_S` | `1.5` / `15` | Violation must last this long / gap between voice reminders |
 | `RESOLVE_S` / `REJOIN_S` | `5` / `10` | Compliance needed to end a violation / longest disappearance after which a worker nearby with a new ID continues the same incident. `COOLDOWN_S` now only spaces voice reminders and repeat zone entries |
+| `TELEGRAM_BUTTONS` | `1` | **Ko'rildi** and **Noto'g'ri signal** buttons under incident alerts (an album is followed by a message with the buttons). Presses are fetched by polling, so no public address is needed; only the chat in `TELEGRAM_CHAT_ID` is accepted, and **in a group every member can press them**. Only one program may poll a bot, and it must have no webhook |
 | `TELEGRAM_RETRY_HOURS` | `24` | An alert Telegram has not accepted is retried (pauses grow from 10 s to 15 min) for this long, also after a restart. After a timeout it may arrive twice. The **Telegramni tekshirish** test message is not retried |
 | `TELEGRAM_GROUP_S` | `5` | Ordinary alerts within this window share one Telegram message; zone alerts are sent at once |
 | `BLUR_FACES` | `1` | Blur faces in saved and Telegram snapshots (plus the head area of people on whom no face was found). The live video is not blurred |

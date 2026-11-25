@@ -72,6 +72,9 @@ SAVE_RAW = _flag("SAVE_RAW", "1")
 # An alert Telegram has not accepted is retried for this long.
 TELEGRAM_RETRY_HOURS = float(os.getenv("TELEGRAM_RETRY_HOURS", "24"))
 
+# "Ko'rildi" / "Noto'g'ri signal" buttons under incident alerts.
+TELEGRAM_BUTTONS = _flag("TELEGRAM_BUTTONS", "1")
+
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 DAILY_SUMMARY_HOUR = int(os.getenv("DAILY_SUMMARY_HOUR", "18"))

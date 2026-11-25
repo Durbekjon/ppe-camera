@@ -100,6 +100,16 @@ Qabul mezonlari:
 
 *Natija:* `tools/archive_data.py`; testlar o'tgan.
 
+### PPE-009 · Telegram'dan hodisani ko'rib chiqish tugmalari · P1 · 3 SP · Durbek (Jarayonda: haqiqiy Telegram sinovi kutilmoqda)
+
+Qabul mezonlari:
+
+- Xabar ostidagi "Ko'rildi" va "Noto'g'ri signal" bazani o'zgartiradi, dashboard yangilanadi.
+- Faqat sozlangan chatdan qabul qilinadi; eski tugma arxivdan keyingi boshqa hodisani o'zgartira olmaydi.
+- Albom uchun ham har bir hodisaga tugma bor; token logga tushmaydi.
+
+*Natija:* testlar soxta Telegram bilan o'tgan.
+
 ### PPE-001 · Webcam va telefon oqimida sinov · P0 · 2 SP · O'tkirbek (Jarayonda: dastlabki sinovlar o'tkazildi)
 
 Qabul mezonlari:

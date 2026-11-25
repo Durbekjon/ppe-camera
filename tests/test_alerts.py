@@ -73,6 +73,7 @@ def test_ordinary_alerts_are_grouped_and_zone_alert_is_immediate(tmp_path, monke
     monkeypatch.setattr(config, "TELEGRAM_BOT_TOKEN", "TEST")
     monkeypatch.setattr(config, "TELEGRAM_CHAT_ID", "42")
     monkeypatch.setattr(config, "TELEGRAM_GROUP_S", 1.0)
+    monkeypatch.setattr(config, "TELEGRAM_BUTTONS", False)  # buttons are covered in test_telegram_buttons.py
     db.init(tmp_path / "t.db")
     manager = alerts.AlertManager()
     frame = np.zeros((48, 64, 3), np.uint8)

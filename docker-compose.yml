@@ -27,6 +27,7 @@ services:
       - TELEGRAM_GROUP_S=${TELEGRAM_GROUP_S:-5}
       - TELEGRAM_RETRY_HOURS=${TELEGRAM_RETRY_HOURS:-24}
       - BLUR_FACES=${BLUR_FACES:-1}
+      - TELEGRAM_BUTTONS=${TELEGRAM_BUTTONS:-1}
       - SKELETON=${SKELETON:-1}
       - POSE_IMG_SIZE=${POSE_IMG_SIZE:-480}
       # Container audio also needs an audio device (e.g. /dev/snd) and a player in the image; not set up or tested.

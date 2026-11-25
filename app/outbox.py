@@ -4,6 +4,7 @@ The queue lives in SQLite, so an alert survives a lost connection or a restart. 
 with growing pauses. A timeout does not tell whether Telegram got the message, so an alert can occasionally
 arrive twice; that is preferred to losing it.
 """
+import json
 import logging
 import re
 import time
@@ -17,11 +18,12 @@ MIN_GAP_S = 1.0  # between two sends, so a backlog does not run into Telegram's 
 ALBUM_MAX = 10
 
 
-def add(urgent, caption, photo, line, now=None):
+def add(urgent, caption, photo, line, now=None, incidents=()):
     now = time.time() if now is None else now
     db.execute(
-        "INSERT INTO outbox (urgent, caption, photo, line, created, next_try, attempts) VALUES (?, ?, ?, ?, ?, ?, 0)",
-        (int(urgent), caption, photo, line, now, now),
+        "INSERT INTO outbox (urgent, caption, photo, line, created, next_try, attempts, incidents) "
+        "VALUES (?, ?, ?, ?, ?, ?, 0, ?)",
+        (int(urgent), caption, photo, line, now, now, json.dumps(list(incidents)) if incidents else ""),
     )
 
 

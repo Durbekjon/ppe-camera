@@ -15,7 +15,7 @@ def env(tmp_path, monkeypatch):
     db.init(tmp_path / "t.db")
     answers, sent = [], []
 
-    def send(caption, photo=None):
+    def send(caption, photo=None, reply_markup=None):
         sent.append(caption)
         return answers.pop(0) if answers else (True, "")
 

@@ -502,3 +502,10 @@ body.role-supervisor .admin-only { display: none !important; }
   background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .45), transparent); transform: skewX(-20deg); transition: left .6s; }
 .btn.primary-link:hover::after, .cta-white:hover::after { left: 130%; }
 @media (prefers-reduced-motion: reduce) { .hero-scene, .reveal { transition: none !important; } }
+
+/* camera view lost (covered / black) */
+.status.blocked { background: #2b3445; color: #fff; }
+.tile.blocked { background: #e9ecf2; }
+.building.blocked { --accent-c: #3a4559; --c-top: #e7eaf0; --c-front: #d6dbe4; --c-side: #c6ccd7; }
+.building.blocked .halo { border: 2px solid #3a4559; animation: pulse 1.6s ease-out infinite; }
+.dot.blocked { background: #3a4559; }

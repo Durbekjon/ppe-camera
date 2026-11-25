@@ -1,6 +1,6 @@
 const $ = (id) => document.getElementById(id);
 const LABEL = { helmet: 'Kaskasiz', vest: 'Jiletsiz', entry: 'Taqiqlangan hududda' };
-const STATUS = { safe: 'Xavfsiz', danger: 'Xavf', zone: 'Xavfli zona', offline: 'Kamera yo\'q' };
+const STATUS = { safe: 'Xavfsiz', danger: 'Xavf', zone: 'Xavfli zona', offline: 'Kamera yo\'q' , blocked: 'Kamera to\'silgan' };
 
 // ---------- sound ----------
 let soundOn = false, audioCtx = null, lastIncident = null, lastVoice = null, lastReviews = null;

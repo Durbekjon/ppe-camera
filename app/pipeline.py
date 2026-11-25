@@ -15,6 +15,7 @@ from . import config, privacy
 from .alerts import describe
 from .detector import HELMET, PERSON, VEST
 from .pose import BONES, POINT_CONF
+from .tamper import ViewGuard
 from .video import VideoSource
 from .violations import ViolationEngine
 
@@ -54,6 +55,7 @@ class Pipeline:
         self.alerts = alerts
         self.voice = voice
         self.state = {"status": "safe", "people": 0, "violators": 0}
+        self.view = ViewGuard() if config.TAMPER_CHECK else None
         self.fps = 0.0
         self.jpeg = None
         self.jpeg_seq = 0
@@ -67,6 +69,8 @@ class Pipeline:
     def summary(self):
         connected = self.video.connected
         state = self.state if connected else {"status": "offline", "people": 0, "violators": 0}
+        if connected and self.view and self.view.blocked:
+            state = {**state, "status": "blocked"}
         return {**state, "connected": connected, "fps": round(self.fps, 1) if connected else 0}
 
     def start(self):
@@ -125,6 +129,14 @@ class Pipeline:
     def process(self, frame, now):
         """Detect, update violation state, annotate the frame in place and raise alerts."""
         h, w = frame.shape[:2]
+        if self.view:
+            change = self.view.update(frame, now)
+            if change == "blocked":
+                log.error("%s: kamera ko'rinishi yo'qoldi (to'silgan yoki juda qorong'i)", self.name)
+                self._notify(f"🚫 [{self.name}] kamerasi to'silgan yoki hech narsa ko'rinmayapti!")
+            elif change == "restored":
+                log.info("%s: kamera ko'rinishi tiklandi", self.name)
+                self._notify(f"✅ [{self.name}] kamerasi yana ko'ryapti")
         detections = self.detector.detect(frame)
         clock = datetime.now().strftime("%H:%M")
         people, events = self.engine.update(detections, now, (w, h), clock)

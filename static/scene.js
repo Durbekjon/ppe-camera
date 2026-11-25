@@ -3,7 +3,7 @@
   const scene = document.getElementById('scene'), world = document.getElementById('world');
   const VIEW = { rx: 58, rz: -42, zoom: 1 };
   let view = { ...VIEW };
-  const STATE_TEXT = { safe: 'Xavfsiz', danger: 'Xavf', zone: 'Xavfli zona', offline: 'Uzilgan' };
+  const STATE_TEXT = { safe: 'Xavfsiz', danger: 'Xavf', zone: 'Xavfli zona', offline: 'Uzilgan', blocked: "To'silgan" };
   const B = { w: 190, d: 130, h: 72 };  // building size in ground pixels
 
   function apply() {

@@ -4,6 +4,7 @@ Rule for every image of people that is written to disk or sent anywhere (includi
 future feature may keep): blur it with `anonymize` and let `delete_old_snapshots` expire it.
 """
 import logging
+import threading
 import time
 from datetime import datetime, timedelta
 
@@ -19,15 +20,17 @@ FACE_CONF = 0.5
 HEAD_HEIGHT, HEAD_WIDTH = 0.25, 0.8
 
 _detector = None
+_lock = threading.Lock()  # every camera uses the same face model
 
 
 def find_faces(image):
     """Face boxes (x1, y1, x2, y2) found by YuNet."""
     global _detector
-    if _detector is None:
-        _detector = cv2.FaceDetectorYN.create(str(FACE_MODEL), "", (320, 320), FACE_CONF)
-    _detector.setInputSize((image.shape[1], image.shape[0]))
-    _, faces = _detector.detect(image)
+    with _lock:
+        if _detector is None:
+            _detector = cv2.FaceDetectorYN.create(str(FACE_MODEL), "", (320, 320), FACE_CONF)
+        _detector.setInputSize((image.shape[1], image.shape[0]))
+        _, faces = _detector.detect(image)
     return [] if faces is None else [(f[0], f[1], f[0] + f[2], f[1] + f[3]) for f in faces]
 
 

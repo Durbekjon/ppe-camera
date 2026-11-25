@@ -43,6 +43,7 @@ Demo mode plays `data/demo.mp4` in a loop and needs no internet.
 | Variable | Default | Meaning |
 |---|---|---|
 | `VIDEO_SOURCE` | `0` | Webcam index, stream URL (`http://phone-ip:8080/video`, `rtsp://...`) or a video file |
+| `CAMERAS` | empty | Up to 4 cameras: `Kirish=0;Sex=rtsp://...`. Replaces `VIDEO_SOURCE`; see **Several cameras** |
 | `DEMO_MODE` | `0` | `1` starts on the demo video |
 | `DEMO_VIDEO` | `data/demo.mp4` | File used by demo mode |
 | `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` | empty | Supervisor alerts; empty disables them |
@@ -96,6 +97,15 @@ app/main.py serves the MJPEG stream, the JSON API and static/ (dashboard)
 Face detection uses [YuNet](https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet)
 (`models/face_yunet_2023mar.onnx`, MIT). Blurring is best-effort: check real snapshots before relying on it.
 Snapshots saved before this feature are not blurred (see `tools/blur_snapshots.py`).
+
+## Several cameras
+
+Set `CAMERAS` in `.env` and restart. The dashboard shows a small live tile per camera; click one to see it large and
+edit its zones. The header shows the most serious state of any camera, and voice warnings and incidents from every
+camera arrive. **Demo rejimi** applies to the selected camera. The name identifies a camera: renaming it leaves its
+zones and old incidents under the old name. The daily report counts all cameras together. A `;` cannot appear in a
+source URL. All cameras share one model, so speed per camera drops as cameras are added; measure on your computer
+with `.venv/bin/python -m tools.measure_fps 2`.
 
 ## False alarms
 

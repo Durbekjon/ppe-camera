@@ -27,6 +27,8 @@ DEMO_VIDEO = os.getenv("DEMO_VIDEO", str(DATA / "demo.mp4"))
 DEMO_MODE = _flag("DEMO_MODE")
 # Webcam index ("0"), stream URL (http://..., rtsp://...) or a video file path.
 VIDEO_SOURCE = os.getenv("VIDEO_SOURCE", "0")
+# Several cameras: "Kirish=0;Sex=rtsp://...". Empty: the single VIDEO_SOURCE.
+CAMERAS = os.getenv("CAMERAS", "")
 
 MODEL_PATH = os.getenv("MODEL_PATH", str(ROOT / "models" / "ppe_yolov8s.pt"))
 IMG_SIZE = int(os.getenv("IMG_SIZE", "480"))

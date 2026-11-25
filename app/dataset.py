@@ -21,7 +21,7 @@ def export_false_alarms():
     for r in found:
         shutil.copyfile(RAW / r["raw"], folder / r["raw"])
         # "detections" is what the model claimed; it is a starting point for labelling, not ground truth.
-        labels.append({"image": r["raw"], "incident": r["id"], "time": r["ts"], "reported": r["missing"].split(","),
+        labels.append({"image": r["raw"], "incident": r["id"], "camera": r["camera"], "time": r["ts"], "reported": r["missing"].split(","),
                        "detections": json.loads(r["detections"] or "[]")})
     (folder / "labels.json").write_text(json.dumps(labels, indent=1))
     return folder, len(found), len(rows) - len(found)

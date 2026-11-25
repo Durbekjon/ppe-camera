@@ -34,6 +34,52 @@ function playAlert(incident) {
   setTimeout(() => audio.play().catch(() => beep(700, 0.5, 0.4)), delay);  // beep if the voice file is missing
 }
 
+// ---------- cameras ----------
+let selected = '', cameraNames = [];  // '' = the first camera
+const withCamera = (url) => selected ? `${url}${url.includes('?') ? '&' : '?'}camera=${encodeURIComponent(selected)}` : url;
+
+function selectCamera(name) {
+  if (name === selected) return;
+  selected = name;
+  setDrawing(false);
+  zones = []; showZones();
+  $('video').src = withCamera('/video?t=' + Date.now());
+  loadZones();
+}
+
+function showCameras(list, current) {
+  cameraNames = list.map((c) => c.name);
+  const box = $('cameras');
+  box.hidden = list.length < 2;
+  if (box.hidden) return;
+  if (box.children.length !== list.length) {
+    box.replaceChildren(...list.map((c) => {
+      const tile = document.createElement('button');
+      const img = document.createElement('img'); img.alt = '';
+      const label = document.createElement('span');
+      tile.append(img, label);
+      tile.onclick = () => selectCamera(c.name);
+      return tile;
+    }));
+  }
+  list.forEach((c, i) => {
+    const tile = box.children[i];
+    tile.className = `tile ${c.status}${c.name === current ? ' selected' : ''}`;
+    tile.querySelector('span').textContent = `${c.name} · ${STATUS[c.status]} · ${c.fps} FPS`;
+  });
+}
+
+setInterval(() => {  // refresh the small pictures once a second
+  if ($('cameras').hidden) return;
+  [...$('cameras').children].forEach((tile, i) => {
+    const img = tile.querySelector('img');
+    if (img.dataset.busy) return;
+    img.dataset.busy = '1';
+    img.onload = img.onerror = () => delete img.dataset.busy;
+    img.src = `/api/frame?camera=${encodeURIComponent(cameraNames[i])}&t=${Date.now()}`;
+  });
+}, 1000);
+
 // ---------- status ----------
 async function getJSON(url, options) {
   const r = await fetch(url, options);
@@ -48,10 +94,15 @@ let serverDown = false;
 
 async function poll() {
   try {
-    const s = await getJSON('/api/status');
-    if (serverDown) { serverDown = false; $('video').src = '/video?' + Date.now(); }  // stream dies with the server
-    $('status').textContent = STATUS[s.status];
-    $('status').className = 'status ' + s.status;
+    const asked = selected;
+    const s = await getJSON(withCamera('/api/status'));
+    if (asked !== selected) return;  // another camera was picked meanwhile
+    if (serverDown) { serverDown = false; $('video').src = withCamera('/video?t=' + Date.now()); }  // stream dies with the server
+    // the header shows the most serious camera, so danger elsewhere is not missed
+    const many = s.cameras.length > 1;
+    $('status').textContent = STATUS[s.overall.status] + (many && s.overall.status !== 'safe' ? ` · ${s.overall.camera}` : '');
+    $('status').className = 'status ' + s.overall.status;
+    showCameras(s.cameras, s.name);
     $('wrap').classList.toggle('alarm', s.status === 'zone');
     $('offline').hidden = s.camera;
     chip('chip-camera', 'Kamera: ' + (s.camera ? 'ulangan' : 'uzilgan'), s.camera ? 'ok' : 'bad');
@@ -106,7 +157,7 @@ async function loadIncidents() {
     what.textContent = it.missing.split(',').map((m) => LABEL[m] || m).join(', ');
     if (it.zone) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = it.zone_name || 'XAVFLI ZONA'; what.append(b); }
     const when = document.createElement('div');
-    when.className = 'when'; when.textContent = `№${it.id} · ${it.ts}`;
+    when.className = 'when'; when.textContent = `№${it.id} · ${it.ts}` + (cameraNames.length > 1 && it.camera ? ` · ${it.camera}` : '');
     const mark = document.createElement('button');
     mark.className = 'mark';
     mark.textContent = it.false_alarm ? 'Belgini olib tashlash' : "Noto'g'ri signal";
@@ -155,7 +206,7 @@ $('report-date').onchange = loadReport;
 
 // ---------- danger zone drawing ----------
 const canvas = $('canvas'), ctx = canvas.getContext('2d');
-let drawing = false, points = [];
+let drawing = false, points = [], zones = [];
 
 function redraw() {
   const r = canvas.getBoundingClientRect();
@@ -189,7 +240,6 @@ canvas.onclick = (e) => {
 };
 $('btn-draw').onclick = () => setDrawing(!drawing);
 $('btn-cancel').onclick = () => setDrawing(false);
-let zones = [];
 
 function nextName() {
   let n = 1;
@@ -215,7 +265,7 @@ function showZones() {
 
 async function saveZones(next, message) {
   try {
-    const r = await getJSON('/api/zones', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ zones: next }) });
+    const r = await getJSON(withCamera('/api/zones'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ zones: next }) });
     zones = r.zones;
     showZones();
     $('hint').textContent = message;
@@ -233,12 +283,17 @@ $('btn-save').onclick = async () => {
     $('hint').textContent = message;
   }
 };
-getJSON('/api/zones').then((r) => { zones = r.zones; showZones(); });
+async function loadZones() {
+  const asked = selected;
+  const r = await getJSON(withCamera('/api/zones'));
+  if (asked === selected) { zones = r.zones; showZones(); }
+}
+loadZones();
 window.addEventListener('resize', redraw);
 
 // ---------- demo mode + telegram test ----------
 $('demo').onchange = async (e) => {
-  try { await getJSON('/api/demo', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: e.target.checked }) }); }
+  try { await getJSON(withCamera('/api/demo'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: e.target.checked }) }); }
   catch (err) { e.target.checked = !e.target.checked; $('hint').textContent = err.message; }
 };
 $('btn-telegram').onclick = async () => {

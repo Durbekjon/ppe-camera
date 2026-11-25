@@ -7,20 +7,19 @@ from datetime import datetime
 import cv2
 
 import os
+from dataclasses import replace
 
 import numpy as np
 
-from . import config, privacy, zones
-from .alerts import AlertManager, describe
-from .detector import HELMET, PERSON, VEST, Detector
+from . import config, privacy
+from .alerts import describe
+from .detector import HELMET, PERSON, VEST
 from .video import VideoSource
 from .violations import ViolationEngine
 
 log = logging.getLogger("pipeline")
 
 GREEN, AMBER, RED, WHITE = (80, 200, 60), (40, 170, 250), (40, 40, 230), (255, 255, 255)
-ZONE_FILE = config.DATA / "zones.json"
-LEGACY_ZONE_FILE = config.DATA / "zone.json"
 GREY = (150, 150, 150)
 
 
@@ -34,23 +33,28 @@ def draw_box(frame, box, color, label, thickness=2):
 
 
 class Pipeline:
-    def __init__(self):
+    def __init__(self, name, index, source, detector, alerts, voice):
+        """One camera. `detector`, `alerts` and `voice` are shared by all cameras."""
+        self.name, self.index, self.source = name, index, source
         self.demo = config.DEMO_MODE
         self.video = VideoSource(self._source(), config.FRAME_WIDTH)
-        self.detector = Detector(config.MODEL_PATH, config.IMG_SIZE, config.CONF, config.GEAR_CONF)
+        self.detector = detector
         self.engine = ViolationEngine(config.DEBOUNCE_S, config.COOLDOWN_S, config.REQUIRE_VEST, config.HELMET_RULE, config.CONF, config.RESOLVE_S, config.REJOIN_S)
-        self.alerts = AlertManager()
+        self.alerts = alerts
+        self.voice = voice
         self.state = {"status": "safe", "people": 0, "violators": 0}
-        self.engine.zones = zones.load(ZONE_FILE, LEGACY_ZONE_FILE)
         self.fps = 0.0
-        self.voice = {"seq": 0, "missing": "helmet", "zone": False}  # latest spoken warning
-        self._voice_at = 0.0
         self.jpeg = None
         self.jpeg_seq = 0
         self.frame_size = (0, 0)
         self._cond = threading.Condition()
         self._stop = threading.Event()
-        self._thread = threading.Thread(target=self._run, daemon=True, name="pipeline")
+        self._thread = threading.Thread(target=self._run, daemon=True, name=f"pipeline-{index}")
+
+    def summary(self):
+        connected = self.video.connected
+        state = self.state if connected else {"status": "offline", "people": 0, "violators": 0}
+        return {**state, "connected": connected, "fps": round(self.fps, 1) if connected else 0}
 
     def start(self):
         self.video.start()
@@ -74,7 +78,7 @@ class Pipeline:
             return self.jpeg_seq, self.jpeg
 
     def _source(self):
-        return config.DEMO_VIDEO if self.demo else config.VIDEO_SOURCE
+        return config.DEMO_VIDEO if self.demo else self.source
 
     def set_demo(self, on: bool):
         """Switch between the live source and the offline demo video at runtime."""
@@ -85,14 +89,7 @@ class Pipeline:
         self.video.start()
         old.stop()
         self.engine.reset()
-        log.info("Demo rejimi: %s (manba: %s)", "yoqildi" if on else "o'chirildi", self.video.label)
-
-    def set_zones(self, items):
-        """Replace all zones (raises ValueError for invalid input)."""
-        parsed = zones.parse(items)
-        zones.save(ZONE_FILE, parsed)
-        self.engine.zones = parsed
-        log.info("Zonalar saqlandi: %d ta", len(parsed))
+        log.info("%s: demo rejimi %s (manba: %s)", self.name, "yoqildi" if on else "o'chirildi", self.video.label)
 
     def _draw_zones(self, frame, clock, alarms):
         h, w = frame.shape[:2]
@@ -153,17 +150,9 @@ class Pipeline:
         }
         for e in events:
             if e.record:
-                self.alerts.handle(e, frame, regions, clean, detections)
+                self.alerts.handle(replace(e, camera=self.name, camera_index=self.index), frame, regions, clean, detections)
         if events:
-            self._warn(max(events, key=lambda e: e.zone), now)
-
-    def _warn(self, event, now):
-        """Publish a voice warning for the dashboard; a fresh zone warning is not overridden."""
-        if self.voice["zone"] and not event.zone and now - self._voice_at < 1.0:
-            return
-        self._voice_at = now
-        self.voice = {"seq": self.voice["seq"] + 1, "missing": "entry" if "entry" in event.missing else event.missing[0],
-                      "zone": event.zone}
+            self.voice.warn(replace(max(events, key=lambda e: e.zone), camera=self.name), now)
 
     def _run(self):
         last_seq, last_log, times = 0, time.monotonic(), []
@@ -179,7 +168,7 @@ class Pipeline:
             try:
                 self.process(frame, now)
             except Exception:
-                log.exception("Kadrni qayta ishlashda xato")
+                log.exception("%s: kadrni qayta ishlashda xato", self.name)
                 continue
             ok, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
             times = [t for t in times if now - t < 2.0] + [now]
@@ -192,4 +181,4 @@ class Pipeline:
                 self._cond.notify_all()
             if now - last_log > 10:
                 last_log = now
-                log.info("FPS: %.1f", self.fps)
+                log.info("%s: FPS %.1f", self.name, self.fps)

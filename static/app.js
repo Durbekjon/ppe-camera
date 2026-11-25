@@ -88,11 +88,17 @@ async function loadIncidents() {
   for (const it of list) {
     const li = document.createElement('li');
     if (it.zone) li.className = 'zone';
-    const a = document.createElement('a');
-    a.href = '/snapshots/' + it.snapshot; a.target = '_blank';
-    const img = document.createElement('img');
-    img.src = a.href; img.alt = 'Surat'; img.loading = 'lazy';
-    a.append(img);
+    let picture;
+    if (it.snapshot) {
+      picture = document.createElement('a');
+      picture.href = '/snapshots/' + it.snapshot; picture.target = '_blank';
+      const img = document.createElement('img');
+      img.src = picture.href; img.alt = 'Surat'; img.loading = 'lazy';
+      picture.append(img);
+    } else {
+      picture = document.createElement('span');
+      picture.className = 'no-photo'; picture.textContent = "Surat o'chirilgan";
+    }
     const div = document.createElement('div');
     const what = document.createElement('div');
     what.className = 'what';
@@ -101,7 +107,7 @@ async function loadIncidents() {
     const when = document.createElement('div');
     when.className = 'when'; when.textContent = `№${it.id} · ${it.ts}`;
     div.append(what, when);
-    li.append(a, div);
+    li.append(picture, div);
     ul.append(li);
   }
   $('incident-count').textContent = list.length ? `(oxirgi ${list.length} ta)` : '';

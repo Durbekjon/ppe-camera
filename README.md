@@ -93,7 +93,8 @@ app/main.py serves the MJPEG stream, the JSON API and static/ (dashboard)
 - Alternative: `models/ppe_yolov8n_alt.pt` from [`Hansung-Cho/yolov8-ppe-detection`](https://huggingface.co/Hansung-Cho/yolov8-ppe-detection)
   (MIT, YOLOv8n, faster). Use with `MODEL_PATH=models/ppe_yolov8n_alt.pt`.
 - The Ultralytics library is **AGPL-3.0**: fine for a demo, but a closed commercial product needs their enterprise licence.
-- Test photos in `testdata/images/` are from Wikimedia Commons (CC0 / public domain) and the Ultralytics samples.
+- Test photos in `testdata/images/` are from Wikimedia Commons (CC0 / public domain; the licence of
+  `metro_shaft_group.jpg` is unconfirmed, see [docs/DATASET_LICENSES.md](docs/DATASET_LICENSES.md)) and the Ultralytics samples.
 
 Face detection uses [YuNet](https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet)
 (`models/face_yunet_2023mar.onnx`, MIT). Blurring is best-effort: check real snapshots before relying on it.

@@ -11,8 +11,8 @@
 | Qabul mezoni | Talab | Natija | Holat |
 |---|---|---|---|
 | **Yorug'lik va masofa sinovi** | Turli yorug'likda (yorug', o'rtacha, xira) va masofada (1–2 m, 3–5 m, 8+ m) sinash | 5 xil real fotosurat va 25 soniyali videoda sinovdan o'tkazildi; xodimlar bilan demo xonada sinash kutilmoqda | Jarayonda 🟡 |
-| **Signallar tahlili** | Soxta (FP) va o'tkazib yuborilgan (FN) signallarni sanash | Har bir model va parametr uchun alohida hisoblandi | Bajarildi ✅ |
-| **Parametrnarni sozlash** | `CONF`, `GEAR_CONF`, `IMG_SIZE` bo'yicha tavsiyalar | Optimal qiymatlar aniqlandi va asoslandi (`CONF=0.4`, `GEAR_CONF=0.25`, `IMG_SIZE=480`) | Bajarildi ✅ |
+| **Signallar tahlili** | Soxta (FP) va o'tkazib yuborilgan (FN) signallarni sanash | Alohida holatlar izohlangan, FP va FN sanog'i keltirilmagan | Jarayonda 🟡 |
+| **Parametrlarni sozlash** | `CONF`, `GEAR_CONF`, `IMG_SIZE` bo'yicha tavsiyalar | Joriy qiymatlar tavsiya qilingan (`CONF=0.4`, `GEAR_CONF=0.25`, `IMG_SIZE=480`); qiymatlarni solishtiruvchi FP/FN o'lchovi yo'q | Jarayonda 🟡 |
 
 ---
 
@@ -63,7 +63,7 @@ $ PYTHONPATH=. .venv/bin/python tools/probe_thresholds.py models/ppe_yolov8s.pt 
 2. **Masofa va kadr o'lchami (`IMG_SIZE`):**
    - Odam kameradan 8 metrdan uzoqda bo'lsa, uning boshi kadrda 20–30 pikseldan kichik bo'lib qoladi.
    - `IMG_SIZE=480` da noutbuk CPU'sida **22–25 ms/kadr (40–45 FPS)** tezlik beradi.
-   - `IMG_SIZE=640` da uzoqdagi odamlarni aniqlash darajasi 15–20% ga yaxshilanadi, lekin tezlik **45 ms/kadr (22 FPS)** gacha pasayadi. Noutbuk CPU uchun 22 FPS to'liq yetarli (maqsad kamida 15 FPS edi).
+   - `IMG_SIZE=640` ning aniqlikka ta'siri belgilangan to'plamda o'lchanmagan. Uni `tools/evaluate.py --imgsz 640` bilan, tezligini alohida o'lchash kerak.
 
 3. **Yorug'lik ta'siri:**
    - Xira yorug'likda (shaxta, yerto'la) kaska ishonchi 0.40 dan pastga tushishi mumkin (0.32 gacha).
@@ -79,7 +79,7 @@ $ PYTHONPATH=. .venv/bin/python tools/probe_thresholds.py models/ppe_yolov8s.pt 
 MODEL_PATH=models/ppe_yolov8s.pt
 
 # Odamlarni aniqlash chegarasi:
-CONF=0.35
+CONF=0.4
 
 # Kaska va jilet chegarasi (soxta signalni kamaytirish uchun pastroq):
 GEAR_CONF=0.25

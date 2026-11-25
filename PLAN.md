@@ -77,7 +77,7 @@ Qabul mezonlari:
 - Oqim uzilganda tizim o'zi qayta ulanadi.
 - Topilgan muammolar alohida ticket qilinadi.
 
-*Natija:* Lokal test oqimida va test muhitida sinovlar muvaffaqiyatli o'tdi (25.1 FPS), tarmoq uzilishidan so'ng 1.2 s da avtomatik qayta ulandi, 3 ta ticket rasmiylashtirildi (TICKET-001..003) va test loglari biriktirildi. To'liq hisobot: [docs/PPE-001_STREAM_TEST.md](docs/PPE-001_STREAM_TEST.md). Real ob'ekt kamerasida to'liq maydon sinovi kutilmoqda.
+*Natija:* video fayl bilan 10 soniyalik sinov logi bor (25.1 FPS); 3 ta ticket yozilgan. Webcam va telefonning 10 daqiqalik sinovi hamda qayta ulanish vaqti log bilan tasdiqlanmagan. Hisobot: [docs/PPE-001_STREAM_TEST.md](docs/PPE-001_STREAM_TEST.md).
 
 ### PPE-003 · Kaskali ishchi bilan sinov · P0 · 2 SP · O'tkirbek (Jarayonda: test to'plamida sinov o'tkazildi)
 
@@ -87,7 +87,7 @@ Qabul mezonlari:
 - Soxta va o'tkazib yuborilgan signallar sanab yoziladi.
 - Zarur bo'lsa `CONF`, `GEAR_CONF`, `IMG_SIZE` sozlanadi.
 
-*Natija:* `ppe_yolov8s.pt` va `ppe_yolov8n_alt.pt` modellarining yorug'lik, masofa va kal bosh (soxta kaska) holatlari o'lchandi. Kichik model kal boshni 0.55 bilan kaska deb xato qildi; asosiy modelda bu xato yo'q. Optimal parametrlar belgilandi (`CONF=0.4`, `GEAR_CONF=0.25`, `IMG_SIZE=480`). To'liq hisobot va CLI sinov loglari: [docs/PPE-003_TEST_REPORT.md](docs/PPE-003_TEST_REPORT.md). Demo xonasida tirik ishchi bilan yakuniy qabul sinovi kutilmoqda.
+*Natija:* `ppe_yolov8s.pt` va `ppe_yolov8n_alt.pt` modellarining yorug'lik, masofa va kal bosh (soxta kaska) holatlari o'lchandi. Kichik model kal boshni 0.55 bilan kaska deb xato qildi; asosiy modelda bu xato yo'q. Joriy parametrlar tavsiya qilindi (`CONF=0.4`, `GEAR_CONF=0.25`, `IMG_SIZE=480`). To'liq hisobot va CLI sinov loglari: [docs/PPE-003_TEST_REPORT.md](docs/PPE-003_TEST_REPORT.md). Demo xonasida tirik ishchi bilan yakuniy qabul sinovi kutilmoqda.
 
 ---
 

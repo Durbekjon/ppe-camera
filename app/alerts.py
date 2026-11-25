@@ -52,22 +52,6 @@ def telegram_send(caption, photo_path=None):
         return False, type(e).__name__
 
 
-def send_background(caption, photo_path=None, callback=None):
-    """Deliver a Telegram message in a background worker thread so the calling thread is never blocked."""
-    def _run():
-        ok, err = telegram_send(caption, photo_path)
-        if ok:
-            log.info("Telegram xabari fonda yuborildi: %s", caption.splitlines()[0] if caption else "")
-        else:
-            log.error("Telegram xabari fonda yuborilmadi: %s", err)
-        if callback:
-            callback(ok, err)
-
-    t = threading.Thread(target=_run, daemon=True, name="tg-bg-sender")
-    t.start()
-    return t
-
-
 def telegram_send_album(caption, photo_paths):
     """Send 2-10 photos as one album with a single caption. Returns (ok, error text)."""
     if not telegram_configured():
@@ -102,8 +86,10 @@ def group_caption(lines):
 
 def deliver(rows):
     """Send one message for these outbox rows. Returns (ok, error text)."""
-    photos = [row["photo"] for row in rows if Path(row["photo"]).is_file()]
+    photos = [row["photo"] for row in rows if row["photo"] and Path(row["photo"]).is_file()]
     if len(rows) == 1:
+        if not rows[0]["photo"]:  # a text-only notice, such as a lost camera
+            return telegram_send(rows[0]["caption"])
         if photos:
             return telegram_send(rows[0]["caption"], photos[0])
         return telegram_send(rows[0]["caption"] + "\n(surat saqlanmagan)")  # expired while waiting
@@ -221,6 +207,14 @@ class AlertManager:
             outbox.add(event.zone, caption, str(SNAPSHOTS / name), line)
             self._wake.set()
         return incident_id
+
+    def notify(self, text):
+        """Queue an urgent text message (retried like incident alerts). False if Telegram is not set up."""
+        if not telegram_configured():
+            return False
+        outbox.add(True, text, "", text.splitlines()[0])
+        self._wake.set()
+        return True
 
     def close(self):
         """Stop the threads; unsent alerts stay in the database for the next start."""

@@ -16,18 +16,19 @@
     <span class="chip" id="chip-people">Ishchilar: —</span>
     <span class="chip" id="chip-telegram">Telegram: —</span>
   </div>
+  <div class="user-box"><span class="muted" id="user-name"></span><button id="btn-logout">Chiqish</button></div>
 </header>
 
 <main>
   <section class="card video-card">
     <div class="toolbar">
       <button id="btn-sound" class="primary">🔊 Ovozni yoqish</button>
-      <label class="switch"><input type="checkbox" id="demo"> Demo rejimi</label>
+      <label class="switch admin-only"><input type="checkbox" id="demo"> Demo rejimi</label>
       <span class="spacer"></span>
-      <button id="btn-draw">Xavfli zonani chizish</button>
+      <button class="admin-only" id="btn-draw">Xavfli zonani chizish</button>
       <button id="btn-save" hidden>Saqlash</button>
       <button id="btn-cancel" hidden>Bekor qilish</button>
-      <button id="btn-clear">Zonani o'chirish</button>
+      <button class="admin-only" id="btn-clear">Zonani o'chirish</button>
     </div>
     <div class="video-wrap" id="wrap">
       <div class="stage">
@@ -48,7 +49,7 @@
     <div class="report-head">
       <h2>Kunlik hisobot</h2>
       <input type="date" id="report-date">
-      <button id="btn-telegram">Telegramni tekshirish</button>
+      <button class="admin-only" id="btn-telegram">Telegramni tekshirish</button>
     </div>
     <div class="report-body">
       <div class="stats">

@@ -13,6 +13,16 @@ cp .env.example .env    # optional: set camera and Telegram
 ./run.sh
 ```
 
+The dashboard needs a login. Create the first user (you are asked for a password, at least 8 characters):
+
+```bash
+.venv/bin/python -m tools.create_user NAME --role admin        # can change zone, demo mode, test Telegram
+.venv/bin/python -m tools.create_user NAME --role supervisor   # watch only
+```
+
+On a fresh clone, run `./run.sh` once first so that `.venv` exists. Running the command again resets a password.
+Sessions last 12 hours. Until HTTPS is added (PPE-503), use it on localhost only.
+
 Open http://localhost:8000 and click **Ovozni yoqish** once (browsers block sound until a click).
 
 No camera at hand? Tick **Demo rejimi** in the dashboard, or start with `DEMO_MODE=1 ./run.sh`.

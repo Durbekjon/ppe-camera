@@ -37,6 +37,7 @@ function playAlert(incident) {
 // ---------- status ----------
 async function getJSON(url, options) {
   const r = await fetch(url, options);
+  if (r.status === 401) location.href = '/login';
   if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || r.statusText);
   return r.json();
 }
@@ -187,6 +188,13 @@ $('btn-telegram').onclick = async () => {
   const r = await getJSON('/api/telegram-test', { method: 'POST' });
   $('hint').textContent = r.ok ? 'Telegram: sinov xabari yuborildi.' : 'Telegram xatosi: ' + r.error;
 };
+
+// ---------- user ----------
+getJSON('/api/me').then((u) => {
+  document.body.classList.add('role-' + u.role);
+  $('user-name').textContent = `${u.username} (${u.role === 'admin' ? 'admin' : 'nazoratchi'})`;
+});
+$('btn-logout').onclick = async () => { await getJSON('/api/logout', { method: 'POST' }); location.href = '/login'; };
 
 poll();
 setInterval(poll, 500);

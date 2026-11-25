@@ -100,3 +100,59 @@ def test_unknown_camera_and_frames(setup):
     assert client.get("/api/frame?camera=Sex").content == b"jpegbytes"
     client.cookies.clear()
     assert client.get("/api/frame?camera=Sex").status_code == 401
+
+
+def test_health_checks_all_cameras(setup):
+    _, cameras, client = setup
+    # Public endpoint: no auth needed
+    client.cookies.clear()
+    r = client.get("/api/health")
+    assert r.status_code == 200
+    data = r.json()
+    assert "people" not in data
+    assert data["status"] == "warning"
+    assert data["camera"] is False
+    assert "Kirish" in data["cameras"] and "Sex" in data["cameras"]
+    assert data["cameras"]["Kirish"]["connected"] is False
+
+    # One connected, one disconnected -> still warning
+    cameras.cameras["Kirish"].video.connected = True
+    cameras.cameras["Kirish"].fps = 12.5
+    data = client.get("/api/health").json()
+    assert data["status"] == "warning"
+    assert data["camera"] is False
+    assert data["cameras"]["Kirish"]["connected"] is True
+    assert data["cameras"]["Sex"]["connected"] is False
+
+    # Both connected -> ok
+    cameras.cameras["Sex"].video.connected = True
+    cameras.cameras["Sex"].fps = 17.5
+    data = client.get("/api/health").json()
+    assert data["status"] == "ok"
+    assert data["camera"] is True
+    assert data["fps"] == 30.0
+
+
+def test_camera_disconnect_alert_contains_camera_name(monkeypatch):
+    sent = []
+    monkeypatch.setattr(alerts, "send_background", lambda msg: sent.append(msg))
+
+    p = hub.Pipeline("Darvoza", 1, "0", None, None, hub.Voice())
+    p.video.connected = False
+
+    # Call actual pipeline code: disconnected at t=100.0
+    p._check_connection(100.0)
+    assert len(sent) == 0  # < 10 seconds: no alert yet
+
+    # Call actual pipeline code: >10s elapsed at t=111.0
+    p._check_connection(111.0)
+    assert len(sent) == 1
+    assert "[Darvoza]" in sent[0]
+    assert "aloqa uzildi" in sent[0]
+
+    # Reconnect at t=115.0: call actual pipeline code
+    p.video.connected = True
+    p._check_connection(115.0)
+    assert len(sent) == 2
+    assert "[Darvoza]" in sent[1]
+    assert "aloqa qayta tiklandi" in sent[1]

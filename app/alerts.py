@@ -52,6 +52,22 @@ def telegram_send(caption, photo_path=None):
         return False, type(e).__name__
 
 
+def send_background(caption, photo_path=None, callback=None):
+    """Deliver a Telegram message in a background worker thread so the calling thread is never blocked."""
+    def _run():
+        ok, err = telegram_send(caption, photo_path)
+        if ok:
+            log.info("Telegram xabari fonda yuborildi: %s", caption.splitlines()[0] if caption else "")
+        else:
+            log.error("Telegram xabari fonda yuborilmadi: %s", err)
+        if callback:
+            callback(ok, err)
+
+    t = threading.Thread(target=_run, daemon=True, name="tg-bg-sender")
+    t.start()
+    return t
+
+
 def telegram_send_album(caption, photo_paths):
     """Send 2-10 photos as one album with a single caption. Returns (ok, error text)."""
     if not telegram_configured():
@@ -108,6 +124,42 @@ def expire_snapshots():
         for folder in [p for p in dataset.EXPORTS.iterdir() if p.is_dir()]:
             if privacy.delete_old_snapshots(folder, config.RETENTION_DAYS) and not any(folder.glob("*.jpg")):
                 shutil.rmtree(folder)  # the labels file goes with the last image
+
+
+def format_daily_summary(rep):
+    """Format a daily report dict into a Telegram summary message text."""
+    date = rep.get("date", "")
+    total = rep.get("total", 0)
+    zone = rep.get("zone", 0)
+    by_hour = rep.get("by_hour", [0] * 24)
+
+    if total == 0:
+        return f"📊 Kunlik hisobot ({date})\nBugun hech qanday qoidabuzarlik qayd etilmadi. Barcha ishchilar qoidalarga rioya qildi! ✅"
+
+    max_hour = max(range(24), key=lambda h: by_hour[h])
+    max_count = by_hour[max_hour]
+
+    lines = [
+        f"📊 Kunlik xavfsizlik xulosasi ({date})",
+        f"• Jami qoidabuzarliklar: {total} ta",
+        f"• Xavfli zonadagi buzilishlar: {zone} ta",
+        f"• Eng xavfli soat: {max_hour:02d}:00–{max_hour+1:02d}:00 ({max_count} ta hodisa)",
+    ]
+    return "\n".join(lines)
+
+
+def send_daily_summary(date=None):
+    """Send daily summary text to the configured Telegram chat. Returns (ok, message/error)."""
+    if not date:
+        date = datetime.now().strftime("%Y-%m-%d")
+    rep = db.report(date)
+    text = format_daily_summary(rep)
+    ok, err = telegram_send(text)
+    if ok:
+        log.info("Kunlik Telegram xulosasi yuborildi (%s)", date)
+    else:
+        log.error("Kunlik Telegram xulosasi yuborilmadi (%s): %s", date, err)
+    return ok, text if ok else err
 
 
 class AlertManager:

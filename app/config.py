@@ -23,14 +23,20 @@ def _flag(name: str, default: str = "0") -> bool:
     return os.getenv(name, default).lower() in ("1", "true", "yes", "on")
 
 
-DEMO_VIDEO = os.getenv("DEMO_VIDEO", str(DATA / "demo.mp4"))
+_default_demo = DATA / "demo.mp4"
+if not _default_demo.exists() and (ROOT / "testdata" / "stills.mp4").exists():
+    _default_demo = ROOT / "testdata" / "stills.mp4"
+DEMO_VIDEO = os.getenv("DEMO_VIDEO", str(_default_demo))
 DEMO_MODE = _flag("DEMO_MODE")
 # Webcam index ("0"), stream URL (http://..., rtsp://...) or a video file path.
 VIDEO_SOURCE = os.getenv("VIDEO_SOURCE", "0")
 # Several cameras: "Kirish=0;Sex=rtsp://...". Empty: the single VIDEO_SOURCE.
 CAMERAS = os.getenv("CAMERAS", "")
 
-MODEL_PATH = os.getenv("MODEL_PATH", str(ROOT / "models" / "ppe_yolov8s.pt"))
+_default_model = ROOT / "models" / "ppe_yolov8s.pt"
+if not _default_model.exists() and (ROOT / "models" / "ppe_yolov8n_alt.pt").exists():
+    _default_model = ROOT / "models" / "ppe_yolov8n_alt.pt"
+MODEL_PATH = os.getenv("MODEL_PATH", str(_default_model))
 IMG_SIZE = int(os.getenv("IMG_SIZE", "480"))
 CONF = float(os.getenv("CONF", "0.4"))  # people and "no helmet" detections
 GEAR_CONF = float(os.getenv("GEAR_CONF", "0.25"))  # helmets and vests
@@ -62,5 +68,6 @@ TELEGRAM_RETRY_HOURS = float(os.getenv("TELEGRAM_RETRY_HOURS", "24"))
 
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
+DAILY_SUMMARY_HOUR = int(os.getenv("DAILY_SUMMARY_HOUR", "18"))
 
 PORT = int(os.getenv("PORT", "8000"))

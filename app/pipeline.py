@@ -11,7 +11,7 @@ from dataclasses import replace
 
 import numpy as np
 
-from . import config, privacy
+from . import alerts, config, privacy
 from .alerts import describe
 from .detector import HELMET, PERSON, VEST
 from .video import VideoSource
@@ -47,6 +47,8 @@ class Pipeline:
         self.jpeg = None
         self.jpeg_seq = 0
         self.frame_size = (0, 0)
+        self._cam_disconnected_at = None
+        self._cam_alert_sent = False
         self._cond = threading.Condition()
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True, name=f"pipeline-{index}")
@@ -154,10 +156,29 @@ class Pipeline:
         if events:
             self.voice.warn(replace(max(events, key=lambda e: e.zone), camera=self.name), now)
 
+    def _check_connection(self, now):
+        video = self.video
+        if not video.connected:
+            if self._cam_disconnected_at is None:
+                self._cam_disconnected_at = now
+            elif now - self._cam_disconnected_at > 10.0 and not self._cam_alert_sent:
+                self._cam_alert_sent = True
+                log.error("%s: Kamera uzildi: Telegram ogohlantirish yuborildi (%s)", self.name, video.label)
+                alerts.send_background(f"🚨 OGOHLANTIRISH: [{self.name}] kamerasi bilan aloqa uzildi!\nManba: {video.label}")
+        else:
+            if self._cam_alert_sent:
+                self._cam_alert_sent = False
+                log.info("%s: Kamera qayta ulandi: Telegram xabari yuborildi (%s)", self.name, video.label)
+                alerts.send_background(f"✅ [{self.name}] kamerasi bilan aloqa qayta tiklandi: {video.label}")
+            self._cam_disconnected_at = None
+
     def _run(self):
         last_seq, last_log, times = 0, time.monotonic(), []
         while not self._stop.is_set():
             video = self.video
+            now = time.monotonic()
+            self._check_connection(now)
+
             seq, frame = video.read()
             if frame is None or seq == last_seq or video is not self.video:
                 time.sleep(0.005)

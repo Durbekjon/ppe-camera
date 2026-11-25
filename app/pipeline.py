@@ -120,6 +120,7 @@ class Pipeline:
         people, events = self.engine.update(detections, now, (w, h), clock)
         alarmed = [t for t in people if t.confirmed and t.in_zone]
         zone_alarm = bool(alarmed)
+        clean = frame.copy() if any(e.record for e in events) else None  # before anything is drawn
         regions = None
         if config.BLUR_FACES and any(e.record for e in events):
             try:  # faces are searched before anything is drawn over them
@@ -152,7 +153,7 @@ class Pipeline:
         }
         for e in events:
             if e.record:
-                self.alerts.handle(e, frame, regions)
+                self.alerts.handle(e, frame, regions, clean, detections)
         if events:
             self._warn(max(events, key=lambda e: e.zone), now)
 

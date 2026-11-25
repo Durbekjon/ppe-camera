@@ -23,8 +23,15 @@ def init(path=None):
             snapshot TEXT
         )"""
     )
-    if "zone_name" not in {r["name"] for r in _conn.execute("PRAGMA table_info(incidents)")}:
-        _conn.execute("ALTER TABLE incidents ADD COLUMN zone_name TEXT NOT NULL DEFAULT ''")  # keeps old rows
+    columns = {r["name"] for r in _conn.execute("PRAGMA table_info(incidents)")}
+    for name, definition in (
+        ("zone_name", "TEXT NOT NULL DEFAULT ''"),
+        ("false_alarm", "INTEGER NOT NULL DEFAULT 0"),
+        ("raw", "TEXT NOT NULL DEFAULT ''"),  # clean frame file name, for retraining
+        ("detections", "TEXT NOT NULL DEFAULT ''"),  # JSON: what the model saw in that frame
+    ):
+        if name not in columns:
+            _conn.execute(f"ALTER TABLE incidents ADD COLUMN {name} {definition}")  # keeps old rows
     _conn.execute(
         "CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, role TEXT NOT NULL, salt BLOB NOT NULL, hash BLOB NOT NULL)"
     )
@@ -45,11 +52,12 @@ def query(sql, params=()):
         return _conn.execute(sql, params).fetchall()
 
 
-def add_incident(ts, missing, zone, track_id, snapshot, zone_name=""):
+def add_incident(ts, missing, zone, track_id, snapshot, zone_name="", raw="", detections=""):
     with _lock:
         cur = _conn.execute(
-            "INSERT INTO incidents (ts, missing, zone, track_id, snapshot, zone_name) VALUES (?, ?, ?, ?, ?, ?)",
-            (ts, ",".join(missing), int(zone), track_id, snapshot, zone_name),
+            "INSERT INTO incidents (ts, missing, zone, track_id, snapshot, zone_name, raw, detections) "
+            "VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+            (ts, ",".join(missing), int(zone), track_id, snapshot, zone_name, raw, detections),
         )
         _conn.commit()
         return cur.lastrowid
@@ -57,8 +65,19 @@ def add_incident(ts, missing, zone, track_id, snapshot, zone_name=""):
 
 def list_incidents(limit=30):
     with _lock:
-        rows = _conn.execute("SELECT * FROM incidents ORDER BY id DESC LIMIT ?", (limit,)).fetchall()
+        rows = _conn.execute(
+            "SELECT id, ts, missing, zone, track_id, snapshot, zone_name, false_alarm "
+            "FROM incidents ORDER BY id DESC LIMIT ?", (limit,)
+        ).fetchall()
     return [dict(r) for r in rows]
+
+
+def set_false_alarm(incident_id, value):
+    """Mark or unmark; return False if there is no such incident."""
+    with _lock:
+        cur = _conn.execute("UPDATE incidents SET false_alarm = ? WHERE id = ?", (int(value), incident_id))
+        _conn.commit()
+        return cur.rowcount == 1
 
 
 def last_id():
@@ -71,7 +90,7 @@ def report(date):
     with _lock:
         rows = _conn.execute(
             "SELECT CAST(substr(ts, 12, 2) AS INTEGER) AS hour, COUNT(*) AS n, SUM(zone) AS z "
-            "FROM incidents WHERE substr(ts, 1, 10) = ? GROUP BY hour",
+            "FROM incidents WHERE substr(ts, 1, 10) = ? AND false_alarm = 0 GROUP BY hour",
             (date,),
         ).fetchall()
     by_hour = [0] * 24

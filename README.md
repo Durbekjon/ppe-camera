@@ -55,7 +55,8 @@ Demo mode plays `data/demo.mp4` in a loop and needs no internet.
 | `RESOLVE_S` / `REJOIN_S` | `5` / `10` | Compliance needed to end a violation / longest disappearance after which a worker nearby with a new ID continues the same incident. `COOLDOWN_S` now only spaces voice reminders and repeat zone entries |
 | `TELEGRAM_GROUP_S` | `5` | Ordinary alerts within this window share one Telegram message; zone alerts are sent at once |
 | `BLUR_FACES` | `1` | Blur faces in saved and Telegram snapshots (plus the head area of people on whom no face was found). The live video is not blurred |
-| `RETENTION_DAYS` | `30` | Snapshots older than this are deleted at start-up and hourly; incident rows stay. `0` keeps everything. No raw frames are stored; any future feature that stores them must follow the same two rules |
+| `RETENTION_DAYS` | `30` | Snapshots older than this are deleted at start-up and hourly; incident rows stay. `0` keeps everything. Stored raw frames and exports follow the same two rules |
+| `SAVE_RAW` | `1` | Keep a clean, blurred frame per incident (`data/raw/`) so marked false alarms can be exported; same retention as snapshots |
 | `PORT` | `8000` | Dashboard port |
 
 **Phone as camera.** iPhone: with Continuity Camera the phone appears as a webcam (try `VIDEO_SOURCE=1`).
@@ -95,6 +96,13 @@ app/main.py serves the MJPEG stream, the JSON API and static/ (dashboard)
 Face detection uses [YuNet](https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet)
 (`models/face_yunet_2023mar.onnx`, MIT). Blurring is best-effort: check real snapshots before relying on it.
 Snapshots saved before this feature are not blurred (see `tools/blur_snapshots.py`).
+
+## False alarms
+
+Press **Noto'g'ri signal** on an incident (admin or supervisor; it can be undone). Marked incidents leave the daily
+report. `.venv/bin/python -m tools.export_false_alarms` copies their clean frames and the model's detections to
+`data/exports/` (export before the retention period ends). Faces are blurred; where no face was found the head
+area is blurred too, which makes such frames less useful for helmet training.
 
 ## Testing tools
 

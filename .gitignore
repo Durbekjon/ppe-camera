@@ -10,3 +10,5 @@ testdata/out/
 # real workshop footage and anything under data/ stays local
 data/
 testdata/workshop/
+# labelled datasets show real people: never commit them (the repository is public)
+datasets/

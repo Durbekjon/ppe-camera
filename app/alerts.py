@@ -1,21 +1,23 @@
 """What happens on a violation: snapshot to disk, row in SQLite, Telegram message to the supervisor."""
 import json
 import logging
-import queue
 import shutil
 import threading
 import time
+import weakref
+from pathlib import Path
 from datetime import datetime
 
 import cv2
 import requests
 
-from . import config, dataset, db, privacy
+from . import config, dataset, db, outbox, privacy
 
 log = logging.getLogger("alerts")
 
 SNAPSHOTS = config.DATA / "snapshots"
 CLEANUP_EVERY_S = 3600
+_managers = weakref.WeakSet()  # so tests can stop every sender thread
 LABELS = {"helmet": "kaskasiz", "vest": "jiletsiz", "entry": "taqiqlangan hududda"}
 
 
@@ -90,13 +92,25 @@ def telegram_send_album(caption, photo_paths):
             f.close()
 
 
-def group_caption(items):
-    """One caption for several ordinary alerts; `items` are (single caption, photo path, summary line)."""
-    lines = [line for _, _, line in items]
+def group_caption(lines):
+    """One caption for several ordinary alerts, from their summary lines."""
     shown = lines[:10]
     if len(lines) > len(shown):
         shown.append(f"... va yana {len(lines) - len(shown)} ta")
     return "\n".join([f"⚠️ Xavfsizlik qoidasi buzildi: {len(lines)} ta hodisa", *shown])
+
+
+def deliver(rows):
+    """Send one message for these outbox rows. Returns (ok, error text)."""
+    photos = [row["photo"] for row in rows if Path(row["photo"]).is_file()]
+    if len(rows) == 1:
+        if photos:
+            return telegram_send(rows[0]["caption"], photos[0])
+        return telegram_send(rows[0]["caption"] + "\n(surat saqlanmagan)")  # expired while waiting
+    caption = group_caption([row["line"] for row in rows])
+    if len(photos) > 1:
+        return telegram_send_album(caption, photos)
+    return telegram_send(caption, photos[0] if photos else None)
 
 
 def expire_snapshots():
@@ -151,19 +165,21 @@ def send_daily_summary(date=None):
 class AlertManager:
     def __init__(self):
         SNAPSHOTS.mkdir(parents=True, exist_ok=True)
-        self._queue = queue.Queue(maxsize=20)
-        threading.Thread(target=self._worker, daemon=True, name="telegram").start()
+        self._wake, self._closed = threading.Event(), threading.Event()
+        self._sender = threading.Thread(target=self._worker, daemon=True, name="telegram")
+        self._sender.start()
+        _managers.add(self)
         threading.Thread(target=self._cleanup_loop, daemon=True, name="cleanup").start()
         if not telegram_configured():
             log.warning("Telegram sozlanmagan (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID yo'q): xabarlar yuborilmaydi")
 
     def _cleanup_loop(self):
-        while True:
+        while not self._closed.is_set():
             try:
                 expire_snapshots()
             except Exception:
                 log.exception("Eski suratlarni tozalashda xato")
-            time.sleep(CLEANUP_EVERY_S)
+            self._closed.wait(CLEANUP_EVERY_S)
 
     def handle(self, event, frame, regions=None, clean=None, detections=()):
         """Called from the pipeline thread with the annotated frame.
@@ -202,37 +218,43 @@ class AlertManager:
             place += f"\nZona: {event.zone_name}" if event.zone_name else ""
             caption = f"{head}\nHolat: ishchi {what}{place}\nVaqt: {ts}\nHodisa №{incident_id}"
             line = f"№{incident_id}{source} — ishchi {what}, {ts}"
-            try:
-                self._queue.put_nowait((event.zone, (caption, str(SNAPSHOTS / name), line)))
-            except queue.Full:
-                log.error("Telegram navbati to'la; xabar tashlab yuborildi")
+            outbox.add(event.zone, caption, str(SNAPSHOTS / name), line)
+            self._wake.set()
         return incident_id
 
-    def _worker(self):
-        pending, deadline = [], None  # ordinary alerts waiting to be grouped
-        while True:
-            wait = None if deadline is None else max(0, deadline - time.monotonic())
-            try:
-                zone, item = self._queue.get(timeout=wait)
-            except queue.Empty:
-                pass
-            else:
-                if zone:  # urgent: goes out at once, on its own
-                    self._deliver([item])
-                else:
-                    if not pending:
-                        deadline = time.monotonic() + config.TELEGRAM_GROUP_S
-                    pending.append(item)
-            if deadline is not None and time.monotonic() >= deadline:
-                self._deliver(pending)
-                pending, deadline = [], None
+    def close(self):
+        """Stop the threads; unsent alerts stay in the database for the next start."""
+        self._closed.set()
+        self._wake.set()
+        self._sender.join(timeout=2)
 
-    def _deliver(self, items):
-        if len(items) == 1:
-            ok, err = telegram_send(items[0][0], items[0][1])
-        else:  # Telegram albums hold at most 10 photos; the caption still counts every alert
-            ok, err = telegram_send_album(group_caption(items), [path for _, path, _ in items[:10]])
+    def send_next(self, now=None):
+        """Send at most one waiting message. Returns True if one was attempted."""
+        now = time.time() if now is None else now
+        outbox.drop_expired(now)
+        rows = outbox.next_batch(now)
+        if not rows:
+            return False
+        ok, err = deliver(rows)
         if ok:
-            log.info("Telegram xabari yuborildi (%d ta hodisa)", len(items))
+            outbox.delivered(rows)
+            log.info("Telegram xabari yuborildi (%d ta hodisa)", len(rows))
         else:
-            log.error("Telegram xabari yuborilmadi (%d ta hodisa): %s", len(items), err)
+            outbox.failed(rows, err, now)
+            log.error("Telegram xabari yuborilmadi (%d ta hodisa): %s. Qayta urinib ko'riladi, navbatda: %d",
+                      len(rows), err, outbox.pending())
+        return True
+
+    def _worker(self):
+        while not self._closed.is_set():
+            sent = False
+            try:
+                if telegram_configured():
+                    sent = self.send_next()
+            except Exception:
+                log.exception("Telegram navbatida xato")
+            if sent:
+                self._closed.wait(outbox.MIN_GAP_S)
+            else:
+                self._wake.wait(0.2)
+                self._wake.clear()

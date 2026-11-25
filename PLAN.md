@@ -8,7 +8,7 @@
 
 | Sprint                                                 | Durbek                                     | O'tkirbek                                                    |
 | ------------------------------------------------------ | ------------------------------------------ | ------------------------------------------------------------ |
-| Sprint 0: Demoga tayyorlik (2 kun)                     | PPE-002, PPE-004, PPE-005 (9 SP)           | PPE-001, PPE-003 (4 SP)                                      |
+| Sprint 0: Demoga tayyorlik (2 kun)                     | PPE-002, 004, 005, 006 (12 SP)             | PPE-001, PPE-003 (4 SP)                                      |
 | Sprint 1: Ma'lumot, zonalar, kirish himoyasi (2 hafta) | PPE-501, PPE-502, PPE-503, PPE-301 (15 SP) | PPE-101, PPE-102, PPE-104, PPE-303 (14 SP)                   |
 | Sprint 2: Model, maxfiylik, o'rnatish (2 hafta)        | PPE-103, PPE-201, PPE-504 (16 SP)          | PPE-203, PPE-302, PPE-401, PPE-402, PPE-601, PPE-602 (16 SP) |
 | Sprint 3: Masshtab va pilot (2 hafta)                  | PPE-202, PPE-603 (13 SP)                   | PPE-304, PPE-404, PPE-604, PPE-605 (15 SP)                   |
@@ -58,6 +58,16 @@ Qabul mezonlari:
 - Kaska kiyib, keyin yana yechish yangi hodisa hisoblanadi; qisqa aniqlash xatosi bunga kirmaydi.
 - Xavfli zonaga kirish darhol xabar qilinadi.
 - Ovozli eslatma davom etadi.
+
+### PPE-006 · Yuborilmagan Telegram xabarini qayta yuborish (bug) · P0 · 3 SP · Durbek
+
+**Muammo:** kamera sinovida `ReadTimeout` chiqdi; yuborilmagan xabar qayta yuborilmas edi va yo'qolishi mumkin edi.
+
+Qabul mezonlari:
+
+- Muvaffaqiyatsiz xabar ortib boruvchi tanaffus bilan qayta yuboriladi, ilova qayta ishga tushsa ham navbat saqlanadi.
+- Qayta urinishlar yangi xavfli zona xabarini uzoq kechiktirmaydi.
+- Belgilangan muddatdan keyin bekor qilinsa, logga yoziladi.
 
 ### PPE-001 · Webcam va telefon oqimida sinov · P0 · 2 SP · O'tkirbek (Jarayonda: dastlabki sinovlar o'tkazildi)
 

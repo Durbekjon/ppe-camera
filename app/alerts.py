@@ -96,6 +96,42 @@ def expire_snapshots():
                 shutil.rmtree(folder)  # the labels file goes with the last image
 
 
+def format_daily_summary(rep):
+    """Format a daily report dict into a Telegram summary message text."""
+    date = rep.get("date", "")
+    total = rep.get("total", 0)
+    zone = rep.get("zone", 0)
+    by_hour = rep.get("by_hour", [0] * 24)
+
+    if total == 0:
+        return f"📊 Kunlik hisobot ({date})\nBugun hech qanday qoidabuzarlik qayd etilmadi. Barcha ishchilar qoidalarga rioya qildi! ✅"
+
+    max_hour = max(range(24), key=lambda h: by_hour[h])
+    max_count = by_hour[max_hour]
+
+    lines = [
+        f"📊 Kunlik xavfsizlik xulosasi ({date})",
+        f"• Jami qoidabuzarliklar: {total} ta",
+        f"• Xavfli zonadagi buzilishlar: {zone} ta",
+        f"• Eng xavfli soat: {max_hour:02d}:00–{max_hour+1:02d}:00 ({max_count} ta hodisa)",
+    ]
+    return "\n".join(lines)
+
+
+def send_daily_summary(date=None):
+    """Send daily summary text to the configured Telegram chat. Returns (ok, message/error)."""
+    if not date:
+        date = datetime.now().strftime("%Y-%m-%d")
+    rep = db.report(date)
+    text = format_daily_summary(rep)
+    ok, err = telegram_send(text)
+    if ok:
+        log.info("Kunlik Telegram xulosasi yuborildi (%s)", date)
+    else:
+        log.error("Kunlik Telegram xulosasi yuborilmadi (%s): %s", date, err)
+    return ok, text if ok else err
+
+
 class AlertManager:
     def __init__(self):
         SNAPSHOTS.mkdir(parents=True, exist_ok=True)

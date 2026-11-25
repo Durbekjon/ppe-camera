@@ -235,6 +235,12 @@ def telegram_test():
     return {"ok": ok, "error": err}
 
 
+@app.post("/api/telegram-summary")
+def telegram_summary(date: str = ""):
+    ok, msg = alerts.send_daily_summary(date or None)
+    return {"ok": ok, "message": msg}
+
+
 alerts.SNAPSHOTS.mkdir(parents=True, exist_ok=True)
 app.mount("/snapshots", StaticFiles(directory=alerts.SNAPSHOTS), name="snapshots")
 app.mount("/static", StaticFiles(directory=STATIC), name="static")

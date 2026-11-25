@@ -114,6 +114,17 @@ report. `.venv/bin/python -m tools.export_false_alarms` copies their clean frame
 `data/exports/` (export before the retention period ends). Faces are blurred; where no face was found the head
 area is blurred too, which makes such frames less useful for helmet training.
 
+## Model evaluation
+
+```bash
+.venv/bin/python -m tools.evaluate datasets/site/data.yaml --out docs/EVALUATION.md
+```
+
+The test set is in YOLO format (`images/<split>/`, `labels/<split>/`, class names in `data.yaml` such as
+`person`, `helmet`, `no_helmet`). It compares both bundled models: precision and recall at the app's
+thresholds, AP50 and mAP50, and how often a labelled bare head or cap is taken for a helmet. AP uses all-point
+interpolation, so it can differ slightly from other tools. Keep datasets in `datasets/` (ignored by git).
+
 ## Testing tools
 
 ```bash

@@ -81,3 +81,11 @@ def test_password_reset_expiry_and_storage(client, monkeypatch):
 def test_short_password_is_refused(client):
     with pytest.raises(ValueError):
         auth.set_user("x", "short", auth.ADMIN)
+
+
+def test_health_endpoint_is_public_and_unauthenticated(client):
+    r = client.get("/api/health")
+    assert r.status_code == 200
+    data = r.json()
+    assert "status" in data and "camera" in data and "fps" in data
+    assert "people" not in data

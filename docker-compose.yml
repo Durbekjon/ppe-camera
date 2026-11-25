@@ -4,7 +4,7 @@ services:
     container_name: ppe-camera
     restart: unless-stopped
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8000:8000"
     environment:
       - VIDEO_SOURCE=${VIDEO_SOURCE:-0}
       - DEMO_MODE=${DEMO_MODE:-0}

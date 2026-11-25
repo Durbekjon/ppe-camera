@@ -36,10 +36,15 @@ Loyiha doirasida ishlatilayotgan barcha tashqi modellar, datasetlar, sinov tasvi
 |---|---|---|---|
 | `testdata/images/amsterdam_workers_cc0.jpg` | Wikimedia Commons | **CC0 (Public Domain)** | Ochiq havoda 2 ishchining kaska kiyganligini tekshirish |
 | `testdata/images/hardhat_worker_pd.jpg` | Public Domain Archive | **Public Domain (CC0)** | Yaqin masofadagi kaskali ishchi aniqligi |
-| `testdata/images/metro_shaft_group.jpg` | Wikimedia Commons | **CC BY-SA 4.0** | Shaxtadagi guruh ishchilari, xira yorug'lik va masofa sinovi |
+| `testdata/images/metro_shaft_group.jpg` | Wikimedia Commons | **CC BY-SA 4.0** *(Tekshirildi: quyidagi izohga qarang)* | Shaxtadagi guruh ishchilari, xira yorug'lik va masofa sinovi |
 | `testdata/images/zidane.jpg` | Ultralytics namuna to'plami | Ochiq sinov uchun | Kal boshda soxta signal bermaslikni tekshirish |
 | `testdata/images/bus.jpg` | Ultralytics namuna to'plami | Ochiq sinov uchun | Ko'chadagi oddiy kiyimli odamlar va bosh kiyimsiz holatlar |
 | `testdata/stills.mp4` | Yuqoridagi tasvirlardan `make_test_video.py` orqali generatsiya qilingan | Loyihaning o'z resursi | Offline demo va avtomatik barqarorlik testlari |
+
+> ⚠️ **`metro_shaft_group.jpg` litsenziyasi bo'yicha tahlil:**
+> README.md faylida test rasmlari CC0 / public domain deb umumiy ko'rsatilgan. Biroq `metro_shaft_group.jpg` aslida Wikimedia Commons'dagi **CC BY-SA 4.0** (Creative Commons Attribution-ShareAlike) shartlariga tushishi mumkin.
+> - **Ichki test va tadqiqot:** Hozirgi sinovlar va offline demo uchun muammo yo'q.
+> - **Tijoriy / Tashqi reliz:** ShareAlike (SA) talabi loyihaning boshqa qismlariga ta'sir qilmasligi uchun, Sprint 2 dagi rasmiy relizdan oldin ushbu fayl to'liq CC0 litsenziyali yoki ob'ektda o'zimiz olgan asl surat bilan almashtirilishi tavsiya etiladi.
 
 ---
 

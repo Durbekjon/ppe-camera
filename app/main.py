@@ -1,10 +1,11 @@
 """FastAPI app: live MJPEG stream, JSON API and the dashboard page."""
+import asyncio
 import logging
 import re
 import time
 from contextlib import asynccontextmanager
 from dataclasses import asdict
-from datetime import date as date_cls
+from datetime import date as date_cls, datetime
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
@@ -27,6 +28,26 @@ def camera_or_404(name: str):
         raise HTTPException(404, "Bunday kamera yo'q")
 
 
+async def _daily_summary_loop(stop_event: asyncio.Event):
+    last_sent_date = ""
+    while not stop_event.is_set():
+        try:
+            await asyncio.sleep(20)
+            now = datetime.now()
+            today = now.strftime("%Y-%m-%d")
+            if now.hour == config.DAILY_SUMMARY_HOUR and now.minute == 0 and last_sent_date != today:
+                if alerts.telegram_configured():
+                    ok, msg = await asyncio.to_thread(alerts.send_daily_summary, today)
+                    if ok:
+                        last_sent_date = today
+                    else:
+                        log.error("Kunlik xulosa yuborilmadi: %s", msg)
+        except asyncio.CancelledError:
+            break
+        except Exception:
+            log.exception("Avtomatik kunlik xulosa yuborishda xatolik")
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global hub
@@ -36,8 +57,16 @@ async def lifespan(app: FastAPI):
     await tts.ensure_audio()
     hub = Hub()
     hub.start()
+    stop_event = asyncio.Event()
+    sched_task = asyncio.create_task(_daily_summary_loop(stop_event))
     log.info("Tayyor, port %d  (kameralar: %s)", config.PORT, ", ".join(hub.cameras))
     yield
+    stop_event.set()
+    sched_task.cancel()
+    try:
+        await sched_task
+    except asyncio.CancelledError:
+        pass
     hub.stop()
 
 
@@ -45,7 +74,7 @@ app = FastAPI(lifespan=lifespan)
 STATIC = config.ROOT / "static"
 COOKIE = "session"
 # Everything else needs a login, so a newly added route is protected by default.
-PUBLIC = {"/login", "/api/login", "/static/style.css", "/static/login.js"}
+PUBLIC = {"/login", "/api/login", "/static/style.css", "/static/login.js", "/api/health"}
 # Any request that changes something needs the admin role, except signing out.
 ANY_ROLE_POSTS = {"/api/logout"}
 # Reviewing alerts is the supervisor's job, so this change is open to both roles.
@@ -56,8 +85,10 @@ LOOPBACK = {"127.0.0.1", "::1"}
 @app.middleware("http")
 async def require_login(request: Request, call_next):
     path = request.url.path
+    is_https = request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
+    is_loopback = request.client is not None and request.client.host in LOOPBACK
     # Backstop for any way of starting the server: from the network, only HTTPS is served.
-    if request.url.scheme != "https" and (request.client is None or request.client.host not in LOOPBACK):
+    if not is_https and not is_loopback:
         return JSONResponse({"detail": "Tarmoq orqali faqat HTTPS bilan kiring"}, status_code=403)
     if path not in PUBLIC:
         user = auth.user_for(request.cookies.get(COOKIE))
@@ -141,6 +172,29 @@ def frame(camera: str = ""):
     if not pipeline.jpeg or not pipeline.video.connected:
         raise HTTPException(503, "Kadr yo'q")
     return Response(pipeline.jpeg, media_type="image/jpeg")
+
+
+@app.get("/api/health")
+def health():
+    if not hub:
+        return {"status": "starting", "camera": False, "cameras": {}, "fps": 0}
+    cams = {}
+    all_connected = bool(hub.cameras)
+    total_fps = 0.0
+    for name, p in hub.cameras.items():
+        conn = bool(p.video and p.video.connected)
+        fps = round(p.fps, 1) if conn else 0.0
+        cams[name] = {"connected": conn, "fps": fps}
+        if conn:
+            total_fps += fps
+        else:
+            all_connected = False
+    return {
+        "status": "ok" if all_connected else "warning",
+        "camera": all_connected,
+        "cameras": cams,
+        "fps": round(total_fps, 1),
+    }
 
 
 @app.get("/api/status")

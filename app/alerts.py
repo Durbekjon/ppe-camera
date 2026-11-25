@@ -50,6 +50,22 @@ def telegram_send(caption, photo_path=None):
         return False, type(e).__name__
 
 
+def send_background(caption, photo_path=None, callback=None):
+    """Deliver a Telegram message in a background worker thread so the calling thread is never blocked."""
+    def _run():
+        ok, err = telegram_send(caption, photo_path)
+        if ok:
+            log.info("Telegram xabari fonda yuborildi: %s", caption.splitlines()[0] if caption else "")
+        else:
+            log.error("Telegram xabari fonda yuborilmadi: %s", err)
+        if callback:
+            callback(ok, err)
+
+    t = threading.Thread(target=_run, daemon=True, name="tg-bg-sender")
+    t.start()
+    return t
+
+
 def telegram_send_album(caption, photo_paths):
     """Send 2-10 photos as one album with a single caption. Returns (ok, error text)."""
     if not telegram_configured():

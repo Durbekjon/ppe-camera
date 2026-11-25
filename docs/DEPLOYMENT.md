@@ -8,7 +8,7 @@
 
 ## 1. Docker Compose orqali o'rnatish (Tavsiya etiladi)
 
-Kompyuter qayta yoqilganda (reboot) konteyner `restart: unless-stopped` qoidasi tufayli avtomatik ravishda qayta ishga tushadi.
+Kompyuter qayta yoqilganda (reboot) konteyner `restart: unless-stopped` qoidasi tufayli avtomatik ravishda qayta ishga tushadi. Xavfsizlik maqsadida port faqat `127.0.0.1:8000` ga bog'langan (lokal tarmoqqa ochiq emas).
 
 ### 1.1. Ishga tushirish
 

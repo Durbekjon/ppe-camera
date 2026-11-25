@@ -32,6 +32,26 @@ Sinovda 2 ta model o'lchandi:
 | `zidane.jpg` | Kaskasiz, **kal bosh** (soxta signal xavfi) | Kaskasiz: **0.26**, Odam: **0.88, 0.83**; **Kaska: yo'q (0 ta)** ✅ | Kaskasiz: **0.88**; **Kaska: 0.55 (Soxta signal! ❌)** | `yolov8n_alt` kal boshni kaska deb o'yladi (FP) |
 | `bus.jpg` | Kaskasiz ko'cha kiyimidagi odamlar | Kaskasiz: **0.68, 0.64**, Kaska: **0 ta** ✅ | Kaskasiz: **0.47, 0.39**, Kaska: **0 ta** ✅ | Ikkala model ham to'g'ri ishladi |
 
+### 2.2. Haqiqiy sinov loglari (probe_thresholds.py)
+
+```text
+$ PYTHONPATH=. .venv/bin/python tools/probe_thresholds.py models/ppe_yolov8s.pt models/ppe_yolov8n_alt.pt
+
+== ppe_yolov8s.pt imgsz=480
+  amsterdam_workers_cc0.jpg    {'helmet': [0.72, 0.68], 'person': [0.77, 0.72]}
+  bus.jpg                      {'no_helmet': [0.68, 0.64], 'person': [0.85, 0.84, 0.4]}
+  hardhat_worker_pd.jpg        {'helmet': [0.86], 'person': [0.85]}
+  metro_shaft_group.jpg        {'helmet': [0.6, 0.48, 0.32], 'no_helmet': [0.53], 'person': [0.84, 0.81, 0.78, 0.78]}
+  zidane.jpg                   {'no_helmet': [0.26], 'person': [0.88, 0.83]}
+
+== ppe_yolov8n_alt.pt imgsz=480
+  amsterdam_workers_cc0.jpg    {'helmet': [0.79, 0.74], 'person': [0.85, 0.78, 0.41, 0.26, 0.22]}
+  bus.jpg                      {'no_helmet': [0.47, 0.39], 'person': [0.87, 0.55]}
+  hardhat_worker_pd.jpg        {'helmet': [0.95], 'person': [0.89]}
+  metro_shaft_group.jpg        {'helmet': [0.86, 0.82, 0.78, 0.64, 0.32, 0.24, 0.19], 'person': [0.88, 0.84, 0.82, 0.76, 0.45, 0.42, 0.4, 0.16]}
+  zidane.jpg                   {'helmet': [0.55], 'no_helmet': [0.88, 0.54], 'person': [0.82, 0.76, 0.29]}
+```
+
 ---
 
 ## 3. Asosiy xulosalar va xavflar

@@ -122,3 +122,30 @@ def test_format_and_send_daily_summary(tmp_path, monkeypatch):
     assert len(calls) == 1
     assert calls[0][0].endswith("/sendMessage")
     assert "Eng xavfli soat: 14:00–15:00" in calls[0][1]["text"]
+
+
+def test_send_background_is_non_blocking(monkeypatch):
+    import threading
+    import time
+
+    started = threading.Event()
+    unblock = threading.Event()
+
+    def slow_post(url, data=None, files=None, timeout=None):
+        started.set()
+        unblock.wait(timeout=2.0)
+        return FakeResponse()
+
+    monkeypatch.setattr(alerts.requests, "post", slow_post)
+    monkeypatch.setattr(config, "TELEGRAM_BOT_TOKEN", "TEST")
+    monkeypatch.setattr(config, "TELEGRAM_CHAT_ID", "42")
+
+    t0 = time.monotonic()
+    t = alerts.send_background("Non-blocking camera alert")
+    t1 = time.monotonic()
+
+    # Must return immediately (< 0.1s)
+    assert t1 - t0 < 0.1
+    assert started.wait(timeout=1.0)
+    unblock.set()
+    t.join(timeout=1.0)

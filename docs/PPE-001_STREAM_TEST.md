@@ -40,6 +40,28 @@
 4. Server qayta yoqilgach, tizim **1.2 soniya** ichida yangi oqimni ushlab, videoni uzluksiz davom ettirdi.
 5. Qayta ulanish vaqti eksponentsial ortadi (`delay = min(delay * 2, 10)`), bu esa tarmoqqa ortiqcha yuk tushishini oldini oladi.
 
+### 2.4. Haqiqiy sinov loglari (CLI test output)
+
+```text
+$ PYTHONPATH=. .venv/bin/python tools/test_stream_stability.py testdata/stills.mp4 --duration 10
+=== Stream sinovi: testdata/stills.mp4 (davomiyligi: 10.0 s) ===
+✅ Ulandi: stills.mp4 (kechikish: 0.05 s)
+📊 Natijalar:
+  • Olingan kadrlar: 251 ta
+  • O'lchangan FPS: 25.1 kadr/s
+  • O'rtacha oraliq: 39.8 ms
+  • Ulanish holati: Faol ✅
+
+$ PYTHONPATH=. .venv/bin/python -m tools.eval_video testdata/stills.mp4
+t=   6.5s  ALERT person #1 missing=('helmet',) zone=False
+t=   6.6s  ALERT person #3 missing=('helmet',) zone=False
+t=   6.6s  ALERT person #4 missing=('helmet',) zone=False
+t=  16.6s  ALERT person #9 missing=('helmet',) zone=False
+t=  17.7s  ALERT person #8 missing=('helmet',) zone=False
+t=  22.2s  ALERT person #12 missing=('helmet',) zone=False
+625 frames, 6 incidents, 0 voice reminders, 10 person IDs, detection+logic 45.7 ms/frame (22 FPS max) at imgsz 480
+```
+
 ---
 
 ## 3. Topilgan muammolar (Ticketlar)

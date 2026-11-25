@@ -41,6 +41,10 @@ HELMET_RULE = os.getenv("HELMET_RULE", "missing")
 DEBOUNCE_S = float(os.getenv("DEBOUNCE_S", "1.5"))
 COOLDOWN_S = float(os.getenv("COOLDOWN_S", "15"))
 
+# A violation counts as over only after this many seconds of continuous compliance.
+RESOLVE_S = float(os.getenv("RESOLVE_S", "5"))
+# A worker who disappears and gets a new ID within this time, near the same spot, is not counted again.
+REJOIN_S = float(os.getenv("REJOIN_S", "10"))
 # Ordinary alerts raised within this many seconds share one Telegram message. Zone alerts are never delayed.
 TELEGRAM_GROUP_S = float(os.getenv("TELEGRAM_GROUP_S", "5"))
 

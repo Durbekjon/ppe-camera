@@ -62,6 +62,7 @@ def status():
         "telegram": alerts.telegram_configured(),
         "require_vest": config.REQUIRE_VEST,
         "last_incident_id": db.last_id(),
+        "voice": pipeline.voice,
     }
 
 

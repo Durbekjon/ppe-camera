@@ -36,12 +36,14 @@ class Pipeline:
         self.demo = config.DEMO_MODE
         self.video = VideoSource(self._source(), config.FRAME_WIDTH)
         self.detector = Detector(config.MODEL_PATH, config.IMG_SIZE, config.CONF, config.GEAR_CONF)
-        self.engine = ViolationEngine(config.DEBOUNCE_S, config.COOLDOWN_S, config.REQUIRE_VEST, config.HELMET_RULE, config.CONF)
+        self.engine = ViolationEngine(config.DEBOUNCE_S, config.COOLDOWN_S, config.REQUIRE_VEST, config.HELMET_RULE, config.CONF, config.RESOLVE_S, config.REJOIN_S)
         self.alerts = AlertManager()
         self.state = {"status": "safe", "people": 0, "violators": 0}
         if ZONE_FILE.exists():
             self.engine.zone = [tuple(p) for p in json.loads(ZONE_FILE.read_text())]
         self.fps = 0.0
+        self.voice = {"seq": 0, "missing": "helmet", "zone": False}  # latest spoken warning
+        self._voice_at = 0.0
         self.jpeg = None
         self.jpeg_seq = 0
         self.frame_size = (0, 0)
@@ -130,7 +132,17 @@ class Pipeline:
             "violators": violators,
         }
         for e in events:
-            self.alerts.handle(e, frame)
+            if e.record:
+                self.alerts.handle(e, frame)
+        if events:
+            self._warn(max(events, key=lambda e: e.zone), now)
+
+    def _warn(self, event, now):
+        """Publish a voice warning for the dashboard; a fresh zone warning is not overridden."""
+        if self.voice["zone"] and not event.zone and now - self._voice_at < 1.0:
+            return
+        self._voice_at = now
+        self.voice = {"seq": self.voice["seq"] + 1, "missing": event.missing[0], "zone": event.zone}
 
     def _run(self):
         last_seq, last_log, times = 0, time.monotonic(), []

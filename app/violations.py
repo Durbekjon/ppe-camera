@@ -7,9 +7,14 @@ from dataclasses import dataclass, field
 from .detector import HELMET, NO_HELMET, PERSON, VEST
 from .tracker import PersonTracker
 
+CUT_OFF_MARGIN = 0.02  # a box ending this close to the bottom edge has its feet out of view
 MIN_PERSON_HEIGHT = 0.15  # people shorter than this fraction of the frame are too small to judge
 TRACK_MAX_AGE = 4.0  # seconds a track survives without being seen
 OK_GRACE = 0.5  # seconds of "compliant" needed to clear a pending violation (absorbs detector flicker)
+# A new ID may continue a lost person's violation if it appears close to where they were:
+REJOIN_MAX_DX = 0.75  # horizontal distance between box centres, in old box widths
+REJOIN_MAX_DY = 0.25  # vertical distance between box centres, in old box heights
+REJOIN_HEIGHT_RATIO = 1.35  # box heights may differ by at most this factor
 
 
 def point_in_polygon(x, y, poly):
@@ -23,6 +28,16 @@ def point_in_polygon(x, y, poly):
 
 def _center(box):
     return (box[0] + box[2]) / 2, (box[1] + box[3]) / 2
+
+
+def _same_place(old, new):
+    ow, oh, nh = old[2] - old[0], old[3] - old[1], new[3] - new[1]
+    (ox, oy), (nx, ny) = _center(old), _center(new)
+    return (
+        abs(nx - ox) <= REJOIN_MAX_DX * ow
+        and abs(ny - oy) <= REJOIN_MAX_DY * oh
+        and max(oh, nh) <= REJOIN_HEIGHT_RATIO * min(oh, nh)
+    )
 
 
 def _best_conf(dets, role, region):
@@ -46,7 +61,22 @@ class Track:
     ok_since: float = None
     confirmed: bool = False  # violation has persisted past the debounce
     in_zone: bool = False
-    last_alert: dict = field(default_factory=dict)  # level -> time of last alert
+    first_seen: float = 0.0
+    first_box: tuple = ()
+    episode: "Episode" = None
+
+
+@dataclass
+class Episode:
+    """One continuing violation by one worker; it may outlive several track IDs."""
+
+    owner: int  # track ID currently carrying it
+    box: tuple
+    last_seen: float
+    ok_since: float = None
+    zone_last_inside: float = None
+    zone_recorded: float = -1e9
+    last_alert: dict = field(default_factory=dict)  # level -> time of last voice warning
 
 
 @dataclass
@@ -55,10 +85,14 @@ class Event:
     missing: tuple
     zone: bool
     box: tuple
+    record: bool = True  # False: voice reminder only, no new incident
 
 
 class ViolationEngine:
-    def __init__(self, debounce=1.5, cooldown=15.0, require_vest=False, helmet_rule="missing", person_conf=0.4):
+    def __init__(self, debounce=1.5, cooldown=15.0, require_vest=False, helmet_rule="missing", person_conf=0.4,
+                 resolve=5.0, rejoin=10.0):
+        self.resolve = resolve  # seconds of compliance that end a violation episode
+        self.rejoin = rejoin  # longest disappearance after which a new ID can continue an episode
         self.person_conf = person_conf
         self.helmet_rule = helmet_rule
         self.debounce = debounce
@@ -72,31 +106,90 @@ class ViolationEngine:
         w, h = frame_size
         persons = [d for d in detections if d.role == PERSON and (d.box[3] - d.box[1]) >= MIN_PERSON_HEIGHT * h]
         visible = self._match(persons, now)
+        # Forget episodes nobody can continue any more.
+        keep = max(self.rejoin, TRACK_MAX_AGE) + self.debounce + 1
+        self._episodes = [ep for ep in self._episodes if now - ep.last_seen <= keep]
         events = []
         for t in visible:
             t.missing = self._missing(t.box, detections)
             fx, fy = (t.box[0] + t.box[2]) / 2, min(t.box[3], h - 1)  # feet point, kept inside the frame
-            t.in_zone = len(self.zone) >= 3 and point_in_polygon(fx / w, fy / h, self.zone)
+            points = [(fx, fy)]
+            if t.box[3] >= (1 - CUT_OFF_MARGIN) * h:  # feet not visible (e.g. close to the camera)
+                points.append(_center(t.box))
+            t.in_zone = len(self.zone) >= 3 and any(point_in_polygon(x / w, y / h, self.zone) for x, y in points)
             self._debounce(t, now)
-            if t.confirmed:
-                level = "zone" if t.in_zone else "normal"
-                if now - t.last_alert.get(level, -1e9) >= self.cooldown:
-                    t.last_alert[level] = now
-                    if level == "zone":  # a zone alert also covers the ordinary one
-                        t.last_alert["normal"] = now
-                    events.append(Event(t.id, t.missing or ("helmet",), t.in_zone, t.box))
+        visible_ids = {t.id for t in visible}
+        for t in visible:
+            event = self._follow_episode(t, now, visible_ids)
+            if event:
+                events.append(event)
         return visible, events
+
+    def _follow_episode(self, t, now, visible_ids):
+        """Attach the track to its violation episode and return an alert event if one is due."""
+        ep = t.episode
+        if ep and ep.owner != t.id:  # another ID took it over while this one was away
+            ep = t.episode = None
+        new = False
+        if ep is None:
+            if not t.confirmed:
+                return None
+            ep = self._rejoin(t, visible_ids)
+            if ep is None:
+                ep, new = Episode(t.id, t.box, now), True
+                self._episodes.append(ep)
+            ep.owner, t.episode = t.id, ep
+        ep.box, ep.last_seen = t.box, now
+        if t.violating_since is None:  # compliant: end the episode only if it lasts
+            if ep.ok_since is None:
+                ep.ok_since = now
+            if now - ep.ok_since >= self.resolve:
+                self._episodes.remove(ep)
+                t.episode = None
+            return None
+        if t.missing:
+            ep.ok_since = None
+        if not t.confirmed:
+            return None
+
+        entered_zone = False
+        if t.in_zone:
+            was_away = ep.zone_last_inside is None or now - ep.zone_last_inside > self.resolve
+            entered_zone = was_away and now - ep.zone_recorded >= self.cooldown
+            ep.zone_last_inside = now
+        record = new or entered_zone
+        level = "zone" if t.in_zone else "normal"
+        if not record and now - ep.last_alert.get(level, -1e9) < self.cooldown:
+            return None
+        ep.last_alert[level] = now
+        if t.in_zone:  # a zone alert also covers the ordinary one
+            ep.last_alert["normal"] = now
+            if record:
+                ep.zone_recorded = now
+        return Event(t.id, t.missing or ("helmet",), t.in_zone, t.box, record)
+
+    def _rejoin(self, t, visible_ids):
+        """Find the episode of a recently lost worker that this new ID most likely continues."""
+        candidates = [
+            ep for ep in self._episodes
+            if (ep.owner == t.id or ep.owner not in visible_ids)  # the tracker may revive an old ID
+            and 0 <= t.first_seen - ep.last_seen <= self.rejoin
+            and _same_place(ep.box, t.first_box)
+        ]
+        x = _center(t.first_box)[0]
+        return min(candidates, key=lambda ep: abs(_center(ep.box)[0] - x), default=None)
 
     def reset(self):
         """Forget everyone, e.g. after the video source changes."""
         self.tracks = []
+        self._episodes = []
         self._tracker = PersonTracker(self.person_conf)
 
     def _match(self, persons, now):
         known = {t.id: t for t in self.tracks if now - t.last_seen <= TRACK_MAX_AGE}
         visible = []
         for track_id, p in self._tracker.update(persons):
-            t = known.get(track_id) or Track(track_id, p.box, now)
+            t = known.get(track_id) or Track(track_id, p.box, now, first_seen=now, first_box=p.box)
             t.box, t.last_seen = p.box, now
             known[track_id] = t
             visible.append(t)

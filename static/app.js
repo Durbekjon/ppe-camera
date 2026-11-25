@@ -3,7 +3,7 @@ const LABEL = { helmet: 'Kaskasiz', vest: 'Jiletsiz' };
 const STATUS = { safe: 'Xavfsiz', danger: 'Xavf', zone: 'Xavfli zona', offline: 'Kamera yo\'q' };
 
 // ---------- sound ----------
-let soundOn = false, audioCtx = null, lastIncident = null;
+let soundOn = false, audioCtx = null, lastIncident = null, lastVoice = null;
 
 $('btn-sound').onclick = () => {
   soundOn = true;
@@ -25,7 +25,7 @@ function beep(freq, seconds, volume, at = 0) {
 function playAlert(incident) {
   if (!soundOn) return;
   const zone = !!incident.zone;
-  const key = zone ? 'zone' : incident.missing.split(',')[0];
+  const key = zone ? 'zone' : incident.missing;
   const audio = $('a-' + key);
   let delay = 0;
   if (zone) { for (let i = 0; i < 4; i++) beep(i % 2 ? 660 : 990, 0.2, 0.5, i * 0.22); delay = 900; }
@@ -58,13 +58,13 @@ async function poll() {
     chip('chip-people', `Ishchilar: ${s.people} · Qoidabuzarlar: ${s.violators}`, s.violators ? 'bad' : '');
     chip('chip-telegram', 'Telegram: ' + (s.telegram ? 'ulangan' : 'sozlanmagan'), s.telegram ? 'ok' : '');
     $('demo').checked = s.demo;
+    // voice warnings (including reminders) are separate from new incidents
+    if (lastVoice !== null && s.voice.seq !== lastVoice && s.voice.seq > 0) playAlert(s.voice);
+    lastVoice = s.voice.seq;
     if (lastIncident === null) { lastIncident = s.last_incident_id; loadIncidents(); loadReport(); }
     else if (s.last_incident_id > lastIncident) {
-      const list = await loadIncidents();
-      const fresh = list.filter((i) => i.id > lastIncident);
+      await loadIncidents();
       lastIncident = s.last_incident_id;
-      // one voice message at a time; a zone incident takes priority
-      if (fresh.length) playAlert(fresh.find((i) => i.zone) || fresh[0]);
       loadReport();
     }
   } catch (e) {

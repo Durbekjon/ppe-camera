@@ -133,3 +133,81 @@ def test_moving_person_keeps_one_id():
 def test_low_confidence_person_is_still_tracked():
     weak = Detection(PERSON, 0.45, P.box)
     assert len(run(ViolationEngine(), [[weak]] * 30)) == 1
+
+
+def recorded(events):
+    return [(t, e) for t, e in events if e.record]
+
+
+def test_five_minutes_without_helmet_is_one_incident_with_voice_reminders():
+    events = run(ViolationEngine(), [[P, BARE]] * 3000)
+    assert len(recorded(events)) == 1
+    assert len(events) == 20  # first warning plus a reminder every 15 s
+
+
+def moved(dx):
+    box = (400 + dx, 200, 600 + dx, 800)
+    return [Detection(PERSON, 0.9, box), Detection(NO_HELMET, 0.8, (450 + dx, 200, 550 + dx, 300))]
+
+
+def test_revived_id_after_a_gap_continues_the_incident():
+    frames = [moved(0)] * 30 + [[]] * 60 + [moved(60)] * 40  # hidden for 6 s, same ID comes back
+    assert len(recorded(run(ViolationEngine(), frames))) == 1
+
+
+def test_new_id_near_the_same_spot_continues_the_incident():
+    engine = ViolationEngine(rejoin=20)
+    frames = [moved(0)] * 30 + [[]] * 150 + [moved(60)] * 40  # long enough for the tracker to forget the ID
+    events = run(engine, frames)
+    assert len(recorded(events)) == 1
+    assert engine.tracks[0].id != events[0][1].track_id  # it really did get a new ID
+
+
+def test_return_after_rejoin_window_is_a_new_incident():
+    frames = [moved(0)] * 30 + [[]] * 150 + [moved(0)] * 40  # away 15 s
+    assert len(recorded(run(ViolationEngine(rejoin=10), frames))) == 2
+
+
+def test_worker_appearing_elsewhere_is_a_new_incident():
+    frames = [moved(-300)] * 30 + [[]] * 60 + [moved(300)] * 40
+    assert len(recorded(run(ViolationEngine(), frames))) == 2
+
+
+def test_two_visible_workers_are_never_merged():
+    both = moved(-100) + moved(100)  # close together
+    frames = [moved(-100)] * 30 + [both] * 40
+    assert len(recorded(run(ViolationEngine(), frames))) == 2
+
+
+def test_short_false_helmet_reading_does_not_create_a_second_incident():
+    frames = [[P, BARE]] * 30 + [[P, HAT]] * 20 + [[P, BARE]] * 40  # "helmet" for 2 s
+    assert len(recorded(run(ViolationEngine(), frames))) == 1
+
+
+def test_removing_helmet_again_is_a_new_incident():
+    frames = [[P, BARE]] * 30 + [[P, HAT]] * 80 + [[P, BARE]] * 40  # wore it for 8 s
+    assert len(recorded(run(ViolationEngine(), frames))) == 2
+
+
+def test_staying_in_zone_is_recorded_once_and_reentry_again():
+    engine = ViolationEngine()
+    engine.zone = SQUARE
+    assert len(recorded(run(engine, [[P, BARE]] * 400))) == 1
+    engine.zone = []  # outside for 20 s
+    assert recorded(run(engine, [[P, BARE]] * 200, start=40.0)) == []
+    engine.zone = SQUARE
+    again = recorded(run(engine, [[P, BARE]] * 20, start=60.0))
+    assert len(again) == 1 and again[0][1].zone and again[0][0] == 60.0
+
+
+def test_close_up_person_with_hidden_feet_uses_box_centre():
+    engine = ViolationEngine()
+    engine.zone = [(0.3, 0.2), (0.7, 0.2), (0.7, 0.75), (0.3, 0.75)]  # does not reach the bottom edge
+    close_up = Detection(PERSON, 0.9, (100, 10, 900, 998))
+    assert run(engine, [[close_up]] * 30)[0][1].zone
+
+
+def test_visible_feet_outside_zone_ignore_box_centre():
+    engine = ViolationEngine()
+    engine.zone = [(0.3, 0.2), (0.7, 0.2), (0.7, 0.75), (0.3, 0.75)]
+    assert not run(engine, [[P]] * 30)[0][1].zone  # centre is inside, feet (y=0.8) are not

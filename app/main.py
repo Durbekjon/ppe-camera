@@ -1,14 +1,15 @@
 """FastAPI app: live MJPEG stream, JSON API and the dashboard page."""
 import logging
+import time
 from contextlib import asynccontextmanager
 from datetime import date as date_cls
 
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import FastAPI, HTTPException, Request, Response
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import alerts, config, db, tts
+from . import alerts, auth, config, db, tts
 from .pipeline import Pipeline
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(name)-8s %(message)s", datefmt="%H:%M:%S")
@@ -21,6 +22,8 @@ pipeline: Pipeline = None
 async def lifespan(app: FastAPI):
     global pipeline
     db.init()
+    if not auth.has_users():
+        log.warning("Foydalanuvchi yo'q. Yarating: .venv/bin/python -m tools.create_user NOM --role admin")
     await tts.ensure_audio()
     pipeline = Pipeline()
     pipeline.start()
@@ -31,6 +34,64 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 STATIC = config.ROOT / "static"
+COOKIE = "session"
+# Everything else needs a login, so a newly added route is protected by default.
+PUBLIC = {"/login", "/api/login", "/static/style.css", "/static/login.js"}
+# Any request that changes something needs the admin role, except signing out.
+ANY_ROLE_POSTS = {"/api/logout"}
+
+
+@app.middleware("http")
+async def require_login(request: Request, call_next):
+    path = request.url.path
+    if path not in PUBLIC:
+        user = auth.user_for(request.cookies.get(COOKIE))
+        if not user:
+            if path == "/":
+                return RedirectResponse("/login", status_code=303)
+            return JSONResponse({"detail": "Tizimga kiring"}, status_code=401)
+        if request.method not in ("GET", "HEAD") and path not in ANY_ROLE_POSTS and user["role"] != auth.ADMIN:
+            return JSONResponse({"detail": "Bu amal faqat admin uchun"}, status_code=403)
+        request.state.user = user
+    response = await call_next(request)
+    if path.startswith(("/snapshots", "/api")):
+        response.headers["Cache-Control"] = "no-store"
+    return response
+
+
+@app.get("/login")
+def login_page():
+    return FileResponse(STATIC / "login.html", headers={"Cache-Control": "no-store"})
+
+
+class Credentials(BaseModel):
+    username: str
+    password: str
+
+
+@app.post("/api/login")
+def login(cred: Credentials, request: Request, response: Response):
+    if auth.is_locked(cred.username):
+        raise HTTPException(429, "Juda ko'p urinish. 1 daqiqadan keyin qayta urining")
+    token = auth.login(cred.username, cred.password)
+    if not token:
+        log.warning("Muvaffaqiyatsiz kirish urinishi")
+        raise HTTPException(401, "Login yoki parol noto'g'ri")
+    response.set_cookie(COOKIE, token, max_age=auth.SESSION_S, httponly=True, samesite="strict",
+                        secure=request.url.scheme == "https")
+    return {"ok": True}
+
+
+@app.post("/api/logout")
+def logout(request: Request, response: Response):
+    auth.logout(request.cookies.get(COOKIE))
+    response.delete_cookie(COOKIE)
+    return {"ok": True}
+
+
+@app.get("/api/me")
+def me(request: Request):
+    return request.state.user
 
 
 @app.get("/")
@@ -39,10 +100,16 @@ def index():
 
 
 @app.get("/video")
-def video():
+def video(request: Request):
+    token = request.cookies.get(COOKIE)
+
     def frames():
-        seq = 0
+        seq, checked = 0, time.monotonic()
         while not pipeline.stopped:
+            if time.monotonic() - checked > 2:  # stop streaming after logout or expiry
+                if not auth.user_for(token):
+                    return
+                checked = time.monotonic()
             seq, jpeg = pipeline.wait_jpeg(seq)
             if jpeg:
                 yield b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + jpeg + b"\r\n"

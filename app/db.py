@@ -23,7 +23,24 @@ def init(path=None):
             snapshot TEXT
         )"""
     )
+    _conn.execute(
+        "CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, role TEXT NOT NULL, salt BLOB NOT NULL, hash BLOB NOT NULL)"
+    )
+    _conn.execute(
+        "CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, username TEXT NOT NULL, expires REAL NOT NULL)"
+    )
     _conn.commit()
+
+
+def execute(sql, params=()):
+    with _lock:
+        _conn.execute(sql, params)
+        _conn.commit()
+
+
+def query(sql, params=()):
+    with _lock:
+        return _conn.execute(sql, params).fetchall()
 
 
 def add_incident(ts, missing, zone, track_id, snapshot):

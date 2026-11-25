@@ -110,6 +110,11 @@ def expire_snapshots():
         for folder in [p for p in dataset.EXPORTS.iterdir() if p.is_dir()]:
             if privacy.delete_old_snapshots(folder, config.RETENTION_DAYS) and not any(folder.glob("*.jpg")):
                 shutil.rmtree(folder)  # the labels file goes with the last image
+    # So do pictures that were set aside by tools/archive_data.py (their folders are nested).
+    archive_root = dataset.ARCHIVE
+    if archive_root.is_dir():
+        for folder in [archive_root, *(p for p in archive_root.rglob("*") if p.is_dir())]:
+            privacy.delete_old_snapshots(folder, config.RETENTION_DAYS)
 
 
 def format_daily_summary(rep):

@@ -7,6 +7,7 @@ from . import config, db
 
 RAW = config.DATA / "raw"  # clean (blurred, undrawn) frames, one per incident
 EXPORTS = config.DATA / "exports"
+ARCHIVE = config.DATA / "archive"  # test data set aside before a demo, see archive.py
 
 
 def export_false_alarms():

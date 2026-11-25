@@ -90,6 +90,16 @@ Qabul mezonlari:
 
 *Natija:* testlar o'tgan. Chizma kiyim ilgichi baholanmadi (0 hodisa). `data/demo.mp4`: skelet bilan va skeletsiz 9 hodisa, 22 ID. Sukut sozlamada (skelet modeli 480) joriy model topgan odam ramkalarining 97% ida (410 tadan; har 10-kadr) kamida 3 nuqtali skelet mos keldi. Apple M5 Pro: aniqlash va mantiq 19.3 → 29.0 ms; har kamerada 1 kamera 30.0, 2 — 21.4, 3 — 14.8 FPS (demo video).
 
+### PPE-008 · Demo oldidan test ma'lumotlarini arxivlash · P1 · 2 SP · Durbek (Jarayonda: haqiqiy ma'lumotda qo'llash kutilmoqda)
+
+Qabul mezonlari:
+
+- Sukut bo'yicha hech narsa o'zgarmaydi; `--apply` bilan hodisalar va suratlar arxivga ko'chadi, hech narsa o'chirilmaydi.
+- Foydalanuvchilar, zonalar va sozlamalar qoladi; arxivni qaytarish mumkin.
+- Arxivdagi suratlarga ham saqlash muddati qo'llanadi.
+
+*Natija:* `tools/archive_data.py`; testlar o'tgan.
+
 ### PPE-001 · Webcam va telefon oqimida sinov · P0 · 2 SP · O'tkirbek (Jarayonda: dastlabki sinovlar o'tkazildi)
 
 Qabul mezonlari:

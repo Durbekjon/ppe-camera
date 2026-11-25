@@ -118,6 +118,17 @@ report. `.venv/bin/python -m tools.export_false_alarms` copies their clean frame
 `data/exports/` (export before the retention period ends). Faces are blurred; where no face was found the head
 area is blurred too, which makes such frames less useful for helmet training.
 
+## Clean start before a demo
+
+Stop the app, then:
+```bash
+.venv/bin/python -m tools.archive_data            # shows what would move; changes nothing
+.venv/bin/python -m tools.archive_data --apply    # incidents and pictures move to data/archive/<time>/
+.venv/bin/python -m tools.archive_data --restore <time>
+```
+Users, zones and settings stay, and incident numbers start from 1 again. Nothing is deleted, but archived
+pictures still expire after `RETENTION_DAYS`. Unsent Telegram alerts are set aside and not sent later.
+
 ## Skeletons
 
 With `SKELETON=1` a second model finds 17 body points.

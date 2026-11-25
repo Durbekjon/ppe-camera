@@ -74,7 +74,7 @@ app = FastAPI(lifespan=lifespan)
 STATIC = config.ROOT / "static"
 COOKIE = "session"
 # Everything else needs a login, so a newly added route is protected by default.
-PUBLIC = {"/login", "/api/login", "/static/style.css", "/static/login.js", "/api/health"}
+PUBLIC = {"/login", "/landing", "/api/login", "/static/style.css", "/static/login.js", "/static/iso.js", "/api/health"}
 # Any request that changes something needs the admin role, except signing out.
 ANY_ROLE_POSTS = {"/api/logout"}
 # Reviewing alerts is the supervisor's job, so this change is open to both roles.
@@ -102,6 +102,12 @@ async def require_login(request: Request, call_next):
     if path.startswith(("/snapshots", "/api")):
         response.headers["Cache-Control"] = "no-store"
     return response
+
+
+@app.get("/landing")
+def landing_page():
+    """Public product page; it shows no data from the system."""
+    return FileResponse(STATIC / "landing.html", headers={"Cache-Control": "no-store"})
 
 
 @app.get("/login")

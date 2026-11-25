@@ -233,6 +233,7 @@ async function loadZoneFilter() {
 function today() { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
 
 async function loadReport() {
+  loadTrend();
   const r = await getJSON('/api/report?date=' + ($('report-date').value || today()));
   $('stat-total').textContent = r.total;
   $('stat-zone').textContent = r.zone;
@@ -252,6 +253,55 @@ async function loadReport() {
 }
 $('report-date').value = today();
 $('report-date').onchange = loadReport;
+
+function isoDaysAgo(n) { const d = new Date(`${today()}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - n); return d.toISOString().slice(0, 10); }
+
+function trendQuery() {
+  const choice = $('trend-days').value;
+  if (choice !== 'custom') return 'days=' + encodeURIComponent(choice);
+  const start = $('trend-start').value, end = $('trend-end').value;
+  return start && end ? `start=${start}&end=${end}` : null;
+}
+
+let trendRequest = 0;
+
+async function loadTrend() {
+  const query = trendQuery(), mine = ++trendRequest;
+  const button = $('btn-export-xlsx'), chart = $('trend-chart'), error = $('trend-error');
+  const fail = (message) => { error.textContent = message; chart.replaceChildren(); button.classList.add('disabled'); button.removeAttribute('href'); };
+  if (!query) return fail('Ikkala sanani ham tanlang.');
+  let res;
+  try { res = await getJSON('/api/trend?' + query); }
+  catch (err) { if (mine === trendRequest) fail(err.message); return; }
+  if (mine !== trendRequest) return;  // a newer choice is already loading
+  error.textContent = '';
+  button.classList.remove('disabled');
+  button.href = `/api/export.xlsx?start=${res.start}&end=${res.end}`;  // exactly the period on screen
+  chart.replaceChildren();
+  chart.style.gridTemplateColumns = `repeat(${res.days.length}, minmax(0, 1fr))`;
+  chart.style.gap = res.days.length > 60 ? '0' : '2px';
+  const max = Math.max(1, ...res.days.map((d) => d.total));
+  const step = Math.ceil(res.days.length / 10);  // keep date labels readable
+  res.days.forEach((d, i) => {
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.title = `${d.date} — ${d.total} ta (zonada: ${d.zone})`;
+    const num = document.createElement('span'); num.className = 'n'; num.textContent = res.days.length <= 31 ? d.total || '' : '';
+    const fill = document.createElement('i');
+    if (d.total) fill.style.height = Math.max(2, Math.round((d.total / max) * 140)) + 'px'; else fill.className = 'zero';
+    const label = document.createElement('span'); label.className = 'h'; label.textContent = i % step === 0 ? d.date.slice(5) : '';
+    bar.append(num, fill, label);
+    chart.append(bar);
+  });
+}
+
+$('trend-days').onchange = () => {
+  const custom = $('trend-days').value === 'custom';
+  $('trend-range').hidden = !custom;
+  if (custom && !$('trend-start').value) { $('trend-start').value = isoDaysAgo(13); $('trend-end').value = today(); }
+  loadTrend();
+};
+$('trend-start').onchange = $('trend-end').onchange = loadTrend;
 
 // ---------- danger zone drawing ----------
 const canvas = $('canvas'), ctx = canvas.getContext('2d');

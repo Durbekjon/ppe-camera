@@ -59,6 +59,7 @@ Demo mode plays `data/demo.mp4` in a loop and needs no internet.
 | `BLUR_FACES` | `1` | Blur faces in saved and Telegram snapshots (plus the head area of people on whom no face was found). The live video is not blurred |
 | `RETENTION_DAYS` | `30` | Snapshots older than this are deleted at start-up and hourly; incident rows stay. `0` keeps everything. Stored raw frames and exports follow the same two rules |
 | `SAVE_RAW` | `1` | Keep a clean, blurred frame per incident (`data/raw/`) so marked false alarms can be exported; same retention as snapshots |
+| `LOCAL_AUDIO` | `0` | Play voice warnings on the speaker of the computer running the app (needs `afplay` on macOS, or `mpg123` / `ffplay`; `paplay` only if it can read MP3). A zone warning interrupts an ordinary one. An open dashboard with sound on will also play them. Not tested on Linux or in Docker (a container needs access to the audio device) |
 | `PORT` | `8000` | Dashboard port |
 
 **Phone as camera.** iPhone: with Continuity Camera the phone appears as a webcam (try `VIDEO_SOURCE=1`).

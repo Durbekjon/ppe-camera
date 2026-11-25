@@ -5,14 +5,14 @@ import re
 import time
 from contextlib import asynccontextmanager
 from dataclasses import asdict
-from datetime import date as date_cls, datetime
+from datetime import date as date_cls, datetime, timedelta
 
 from fastapi import FastAPI, HTTPException, Request, Response
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import alerts, auth, config, db, tts
+from . import alerts, auth, config, db, export, tts
 from .hub import Hub
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(name)-8s %(message)s", datefmt="%H:%M:%S")
@@ -310,6 +310,41 @@ def telegram_test():
 def telegram_summary(date: str = ""):
     ok, msg = alerts.send_daily_summary(date or None)
     return {"ok": ok, "message": msg}
+
+
+MAX_PERIOD_DAYS = 366
+
+
+def period(days: int, start: str, end: str):
+    """(start, end) as 'YYYY-MM-DD'. Without `start`, the last `days` days up to `end` (default today)."""
+    try:
+        last = date_cls.fromisoformat(end) if end else date_cls.today()
+        first = date_cls.fromisoformat(start) if start else last - timedelta(
+            days=max(1, min(days, MAX_PERIOD_DAYS)) - 1)
+    except (ValueError, OverflowError):
+        raise HTTPException(400, "Sana YYYY-MM-DD ko'rinishida bo'lsin")
+    if first > last:
+        raise HTTPException(400, "Boshlanish sanasi tugash sanasidan keyin bo'lmasin")
+    if (last - first).days >= MAX_PERIOD_DAYS:
+        raise HTTPException(400, f"Davr {MAX_PERIOD_DAYS} kundan oshmasin")
+    return first.isoformat(), last.isoformat()
+
+
+@app.get("/api/trend")
+def api_trend(days: int = 7, start: str = "", end: str = ""):
+    first, last = period(days, start, end)
+    return {"start": first, "end": last, "days": db.trend(first, last)}
+
+
+@app.get("/api/export.xlsx")
+def api_export_xlsx(start: str = "", end: str = "", days: int = 7):
+    first, last = period(days, start, end)
+    data = export.build_xlsx(db.incidents_range(first, last))
+    return Response(
+        content=data,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="hisobot_{first}_{last}.xlsx"'},
+    )
 
 
 alerts.SNAPSHOTS.mkdir(parents=True, exist_ok=True)

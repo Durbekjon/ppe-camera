@@ -1,6 +1,7 @@
 """SQLite incident log."""
 import sqlite3
 import threading
+from datetime import date, timedelta
 
 from . import config
 
@@ -161,3 +162,30 @@ def report(date):
     for r in rows:
         by_hour[r["hour"]] = r["n"]
     return {"date": date, "total": sum(by_hour), "zone": sum(r["z"] for r in rows), "by_hour": by_hour}
+
+
+def trend(start_date, end_date):
+    """One entry per day from start_date to end_date ('YYYY-MM-DD', inclusive), zeros included; no false alarms."""
+    with _lock:
+        rows = _conn.execute(
+            "SELECT substr(ts, 1, 10) AS day, COUNT(*) AS total, COALESCE(SUM(zone), 0) AS zone "
+            "FROM incidents WHERE false_alarm = 0 AND substr(ts, 1, 10) BETWEEN ? AND ? "
+            "GROUP BY day ORDER BY day ASC",
+            (start_date, end_date),
+        ).fetchall()
+    counts = {r["day"]: (r["total"], r["zone"]) for r in rows}
+    first, last = date.fromisoformat(start_date), date.fromisoformat(end_date)
+    days = ((first + timedelta(days=i)).isoformat() for i in range((last - first).days + 1))
+    return [{"date": d, "total": counts.get(d, (0, 0))[0], "zone": counts.get(d, (0, 0))[1]} for d in days]
+
+
+def incidents_range(start_date, end_date):
+    """All non-false-alarm incidents between start_date and end_date ('YYYY-MM-DD', inclusive)."""
+    with _lock:
+        rows = _conn.execute(
+            "SELECT id, ts, missing, zone, zone_name, camera, status "
+            "FROM incidents WHERE false_alarm = 0 AND substr(ts, 1, 10) BETWEEN ? AND ? "
+            "ORDER BY id DESC",
+            (start_date, end_date),
+        ).fetchall()
+    return [dict(r) for r in rows]

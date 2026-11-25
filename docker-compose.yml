@@ -27,6 +27,8 @@ services:
       - TELEGRAM_GROUP_S=${TELEGRAM_GROUP_S:-5}
       - TELEGRAM_RETRY_HOURS=${TELEGRAM_RETRY_HOURS:-24}
       - BLUR_FACES=${BLUR_FACES:-1}
+      # Container audio also needs an audio device (e.g. /dev/snd) and a player in the image; not set up or tested.
+      - LOCAL_AUDIO=${LOCAL_AUDIO:-0}
       - RETENTION_DAYS=${RETENTION_DAYS:-30}
       - SAVE_RAW=${SAVE_RAW:-1}
     volumes:

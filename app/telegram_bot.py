@@ -7,6 +7,7 @@ numbering starts again after test data is archived.
 import json
 import logging
 import threading
+import time
 
 import requests
 
@@ -72,10 +73,14 @@ class ButtonListener:
     def __init__(self):
         self._stop = threading.Event()
         self._offset = 0
+        self.ok_at, self.error = None, ""  # outcome of the latest poll
         self._thread = threading.Thread(target=self._run, daemon=True, name="telegram-buttons")
 
     def start(self):
         self._thread.start()
+
+    def alive(self):
+        return self._thread.is_alive()
 
     def stop(self):
         self._stop.set()  # the thread is a daemon: a waiting request does not delay shutdown
@@ -120,8 +125,10 @@ class ButtonListener:
         """One long-poll round. Returns an error text, or "" if all went well."""
         updates, error = self._call("getUpdates", http_timeout=POLL_S + 10, timeout=POLL_S, offset=self._offset,
                                     allowed_updates=["callback_query"])
+        self.error = error
         if error:
             return error
+        self.ok_at = time.time()
         for update in updates:
             self._offset = update["update_id"] + 1
             try:

@@ -66,6 +66,7 @@ class Hub:
             model = SkeletonDetector(model, config.POSE_MODEL_PATH, config.POSE_IMG_SIZE)
         detector = SharedDetector(model)
         self.alerts = AlertManager()
+        self.buttons = None  # set by start() when Telegram buttons are in use
         self.voice = Voice()
         self.cameras = {}
         for index, (name, source) in enumerate(cameras, 1):
@@ -80,13 +81,12 @@ class Hub:
     def start(self):
         for p in self.cameras.values():
             p.start()
-        self.buttons = None
         if config.TELEGRAM_BUTTONS and telegram_configured():
             self.buttons = ButtonListener()
             self.buttons.start()
 
     def stop(self):
-        if getattr(self, "buttons", None):
+        if self.buttons:
             self.buttons.stop()
         for p in self.cameras.values():
             p.stop()

@@ -18,7 +18,8 @@ TLS_KEY=${TLS_KEY:-$(setting TLS_KEY)}
 PORT=${PORT:-8000}
 HOST=${HOST:-127.0.0.1}
 
-set -- app.main:app --host "$HOST" --port "$PORT" --no-access-log
+# The video stream never ends by itself: without a limit, stopping the app would wait for open dashboards forever.
+set -- app.main:app --host "$HOST" --port "$PORT" --no-access-log --timeout-graceful-shutdown 3
 if [ -n "$TLS_CERT" ] || [ -n "$TLS_KEY" ]; then
   if [ ! -f "$TLS_CERT" ] || [ ! -f "$TLS_KEY" ]; then
     echo "TLS_CERT va TLS_KEY ikkalasi ham mavjud faylni ko'rsatishi kerak (tools/make_cert.sh)." >&2

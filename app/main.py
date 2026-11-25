@@ -12,7 +12,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse, Stre
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from . import alerts, auth, config, db, export, tts
+from . import alerts, auth, config, db, export, system, tts
 from .hub import Hub
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)-7s %(name)-8s %(message)s", datefmt="%H:%M:%S")
@@ -216,6 +216,11 @@ def status(camera: str = ""):
         "reviews": db.review_count,
         "voice": hub.voice.latest,
     }
+
+
+@app.get("/api/system")
+def system_status():
+    return system.status(hub)
 
 
 @app.get("/api/incidents")

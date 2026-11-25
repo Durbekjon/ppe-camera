@@ -119,6 +119,12 @@ report. `.venv/bin/python -m tools.export_false_alarms` copies their clean frame
 `data/exports/` (export before the retention period ends). Faces are blurred; where no face was found the head
 area is blurred too, which makes such frames less useful for helmet training.
 
+## System status
+
+The **Tizim holati** card shows whether Telegram deliveries succeed (queue length, last success, last error),
+whether the buttons are being listened for, and the skeleton, face-blur, retention and speaker settings. "Sent
+since start" information resets when the app restarts. It shows no token, chat id or camera address.
+
 ## Clean start before a demo
 
 Stop the app, then:

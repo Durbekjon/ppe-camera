@@ -57,6 +57,9 @@ RETENTION_DAYS = int(os.getenv("RETENTION_DAYS", "30"))
 # Keep a clean (blurred) frame per incident so false alarms can be exported for retraining.
 SAVE_RAW = _flag("SAVE_RAW", "1")
 
+# An alert Telegram has not accepted is retried for this long.
+TELEGRAM_RETRY_HOURS = float(os.getenv("TELEGRAM_RETRY_HOURS", "24"))
+
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 

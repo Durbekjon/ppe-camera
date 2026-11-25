@@ -76,6 +76,7 @@ class Hub:
     def stop(self):
         for p in self.cameras.values():
             p.stop()
+        self.alerts.close()
 
     def set_zones(self, name, items):
         """Replace one camera's zones (raises ValueError for invalid input)."""

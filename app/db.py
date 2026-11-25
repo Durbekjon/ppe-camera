@@ -39,6 +39,11 @@ def init(path=None):
     _conn.execute(
         "CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, username TEXT NOT NULL, expires REAL NOT NULL)"
     )
+    _conn.execute(
+        "CREATE TABLE IF NOT EXISTS outbox (id INTEGER PRIMARY KEY AUTOINCREMENT, urgent INTEGER NOT NULL, "
+        "caption TEXT NOT NULL, photo TEXT NOT NULL, line TEXT NOT NULL, created REAL NOT NULL, "
+        "next_try REAL NOT NULL, attempts INTEGER NOT NULL)"
+    )
     _conn.commit()
 
 

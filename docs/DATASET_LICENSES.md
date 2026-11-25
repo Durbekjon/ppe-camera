@@ -14,6 +14,7 @@ Loyiha doirasida ishlatilayotgan barcha tashqi modellar, datasetlar, sinov tasvi
 |---|---|---|---|---|
 | **YOLOv8s PPE** (Asosiy) | `models/ppe_yolov8s.pt`<br>Manba: [`killuminati1/construction-ppe-yolov8`](https://huggingface.co/killuminati1/construction-ppe-yolov8) | **Apache-2.0** | Roboflow va GitHub ochiq datasetlari asosida | Muallif individual tasvirlar litsenziyasini ko'rsatmagan. Ultralytics talqinida AGPL-3.0 bilan to'qnashuv bo'lishi mumkin. |
 | **YOLOv8n PPE** (Alternativ) | `models/ppe_yolov8n_alt.pt`<br>Manba: [`Hansung-Cho/yolov8-ppe-detection`](https://huggingface.co/Hansung-Cho/yolov8-ppe-detection) | **MIT** | Roboflow PPE dataset | Tijoriy va ochiq loyihalar uchun ruxsat berilgan, biroq Ultralytics AGPL talablari inobatga olinishi lozim. |
+| **YuNet Face Detector** (Maxfiylik) | `models/face_yunet_2023mar.onnx`<br>Manba: [`opencv/opencv_zoo`](https://github.com/opencv/opencv_zoo) / Shiqi Yu | **Apache-2.0** | WIDER Face dataset | Yuzlarni topish va xiralashtirish (PPE-504) uchun ishlatiladi. Erkin va tijoriy foydalanish mumkin. |
 
 ---
 
@@ -36,15 +37,16 @@ Loyiha doirasida ishlatilayotgan barcha tashqi modellar, datasetlar, sinov tasvi
 |---|---|---|---|
 | `testdata/images/amsterdam_workers_cc0.jpg` | Wikimedia Commons | **CC0 (Public Domain)** | Ochiq havoda 2 ishchining kaska kiyganligini tekshirish |
 | `testdata/images/hardhat_worker_pd.jpg` | Public Domain Archive | **Public Domain (CC0)** | Yaqin masofadagi kaskali ishchi aniqligi |
-| `testdata/images/metro_shaft_group.jpg` | Wikimedia Commons | **CC BY-SA 4.0** *(Tekshirildi: quyidagi izohga qarang)* | Shaxtadagi guruh ishchilari, xira yorug'lik va masofa sinovi |
+| `testdata/images/metro_shaft_group.jpg` | Wikimedia Commons | **CC BY-SA 4.0** *(Manbadan tasdiqlandi)* | Shaxtadagi guruh ishchilari, xira yorug'lik va masofa sinovi |
 | `testdata/images/zidane.jpg` | Ultralytics namuna to'plami | Ochiq sinov uchun | Kal boshda soxta signal bermaslikni tekshirish |
 | `testdata/images/bus.jpg` | Ultralytics namuna to'plami | Ochiq sinov uchun | Ko'chadagi oddiy kiyimli odamlar va bosh kiyimsiz holatlar |
 | `testdata/stills.mp4` | Yuqoridagi tasvirlardan `make_test_video.py` orqali generatsiya qilingan | Loyihaning o'z resursi | Offline demo va avtomatik barqarorlik testlari |
 
-> ⚠️ **`metro_shaft_group.jpg` litsenziyasi bo'yicha tahlil:**
-> README.md faylida test rasmlari CC0 / public domain deb umumiy ko'rsatilgan. Biroq `metro_shaft_group.jpg` aslida Wikimedia Commons'dagi **CC BY-SA 4.0** (Creative Commons Attribution-ShareAlike) shartlariga tushishi mumkin.
-> - **Ichki test va tadqiqot:** Hozirgi sinovlar va offline demo uchun muammo yo'q.
-> - **Tijoriy / Tashqi reliz:** ShareAlike (SA) talabi loyihaning boshqa qismlariga ta'sir qilmasligi uchun, Sprint 2 dagi rasmiy relizdan oldin ushbu fayl to'liq CC0 litsenziyali yoki ob'ektda o'zimiz olgan asl surat bilan almashtirilishi tavsiya etiladi.
+> ⚠️ **`metro_shaft_group.jpg` litsenziyasi bo'yicha aniq xulosa:**
+> - **Asl manbasi:** Wikimedia Commons (erkin jamoat mulki emas).
+> - **Litsenziya turi:** **CC BY-SA 4.0** (Creative Commons Attribution-ShareAlike 4.0 International).
+> - **Cheklovlar:** Suratdan foydalanilganda muallifga havola (Attribution) ko'rsatilishi shart va undan hosil qilingan ishlar ham mos litsenziyada tarqatilishi talab etiladi. Ushbu surat Public Domain (CC0) hisoblanmaydi.
+> - **Loyiha bo'yicha qaror:** Ichki sinovlar va benchmark uchun muammo yo'q. Loyihaning tijoriy relizi yoki yopiq kodli tarqatilishida litsenziyaviy to'siq bo'lmasligi uchun, Sprint 2 davomida ushbu suratni ob'ektdagi o'zimiz olgan asl suratlar yoki sof CC0/PD litsenziyali rasm bilan almashtirish talab etiladi.
 
 ---
 

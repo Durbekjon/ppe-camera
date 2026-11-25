@@ -85,10 +85,8 @@ LOOPBACK = {"127.0.0.1", "::1"}
 @app.middleware("http")
 async def require_login(request: Request, call_next):
     path = request.url.path
-    is_https = request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
-    is_loopback = request.client is not None and request.client.host in LOOPBACK
     # Backstop for any way of starting the server: from the network, only HTTPS is served.
-    if not is_https and not is_loopback:
+    if request.url.scheme != "https" and (request.client is None or request.client.host not in LOOPBACK):
         return JSONResponse({"detail": "Tarmoq orqali faqat HTTPS bilan kiring"}, status_code=403)
     if path not in PUBLIC:
         user = auth.user_for(request.cookies.get(COOKIE))

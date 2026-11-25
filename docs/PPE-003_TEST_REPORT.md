@@ -2,7 +2,7 @@
 
 **Ijrochi:** O'tkirbek  
 **Sana:** 2026-11-25  
-**Holat:** Bajarildi ✅  
+**Holat:** Jarayonda (Test to'plamida sinov o'tkazildi, demo xonasida tirik ishchi bilan yakuniy qabul kutilmoqda)  
 
 ---
 
@@ -10,9 +10,9 @@
 
 | Qabul mezoni | Talab | Natija | Holat |
 |---|---|---|---|
-| **Yorug'lik va masofa sinovi** | Turli yorug'likda (yorug', o'rtacha, xira) va masofada (1–2 m, 3–5 m, 8+ m) sinash | 5 xil real fotosurat va 25 soniyali dinamik videoda to'liq sinovdan o'tkazildi | Bajarildi ✅ |
+| **Yorug'lik va masofa sinovi** | Turli yorug'likda (yorug', o'rtacha, xira) va masofada (1–2 m, 3–5 m, 8+ m) sinash | 5 xil real fotosurat va 25 soniyali videoda sinovdan o'tkazildi; xodimlar bilan demo xonada sinash kutilmoqda | Jarayonda 🟡 |
 | **Signallar tahlili** | Soxta (FP) va o'tkazib yuborilgan (FN) signallarni sanash | Har bir model va parametr uchun alohida hisoblandi | Bajarildi ✅ |
-| **Parametrlarni sozlash** | `CONF`, `GEAR_CONF`, `IMG_SIZE` bo'yicha tavsiyalar | Optimal qiymatlar aniqlandi va asoslandi | Bajarildi ✅ |
+| **Parametrnarni sozlash** | `CONF`, `GEAR_CONF`, `IMG_SIZE` bo'yicha tavsiyalar | Optimal qiymatlar aniqlandi va asoslandi (`CONF=0.4`, `GEAR_CONF=0.25`, `IMG_SIZE=480`) | Bajarildi ✅ |
 
 ---
 

@@ -2,7 +2,7 @@
 
 **Ijrochi:** O'tkirbek  
 **Sana:** 2026-11-25  
-**Holat:** Bajarildi ✅  
+**Holat:** Jarayonda (Reja va rozilik shabloni tayyor, kadr yig'ish kutilmoqda)  
 
 ---
 

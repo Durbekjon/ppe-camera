@@ -12,9 +12,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Install Python requirements
+# Install Python requirements (install CPU torch first to avoid downloading 3+ GB of CUDA wheels)
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --extra-index-url https://download.pytorch.org/whl/cpu torch torchvision && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy application files
 COPY app/ ./app/

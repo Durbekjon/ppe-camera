@@ -51,3 +51,16 @@ def test_opencv_does_not_print_the_password(url):
 def test_network_clients_need_https(base, host, expected):
     client = TestClient(main.app, base_url=base, client=(host, 5000))
     assert client.get("/login").status_code == expected
+
+
+def test_x_forwarded_proto_does_not_bypass_https():
+    client = TestClient(main.app, base_url="http://x", client=("192.168.1.7", 5000))
+    # An attacker must not bypass HTTPS enforcement simply by spoofing X-Forwarded-Proto
+    r = client.get("/login", headers={"X-Forwarded-Proto": "https"})
+    assert r.status_code == 403
+    assert r.json() == {"detail": "Tarmoq orqali faqat HTTPS bilan kiring"}
+
+    r = client.post("/api/login", json={"username": "admin", "password": "password"},
+                    headers={"X-Forwarded-Proto": "https"})
+    assert r.status_code == 403
+    assert r.json() == {"detail": "Tarmoq orqali faqat HTTPS bilan kiring"}

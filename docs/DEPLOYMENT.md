@@ -2,7 +2,7 @@
 
 **Ijrochi:** O'tkirbek  
 **Sana:** 2026-11-25  
-**Holat:** Bajarildi ✅  
+**Holat:** Jarayonda (Docker va systemd tayyorlandi, toza kompyuterda qayta yuklash sinovi kutilmoqda)  
 
 ---
 
@@ -23,9 +23,33 @@ docker compose up -d --build
 docker compose logs -f
 ```
 
-### 1.2. Qayta ishga tushishni tekshirish
+### 1.2. Birinchi kirish va foydalanuvchi yaratish (create_user)
+
+Tizimga kirish uchun kamida bitta admin foydalanuvchi bo'lishi shart. Konteyner ishga tushgach, quyidagi buyruq bilan foydalanuvchi yarating:
+
+```bash
+# Docker konteyneri ichida admin yaratish:
+docker compose exec ppe-camera python -m tools.create_user admin --role admin
+
+# Yoki kuzatuvchi (supervisor) roli bilan:
+docker compose exec ppe-camera python -m tools.create_user watcher --role supervisor
+```
+*(Buyruq bajarilganda parol so'raladi, parol uzunligi kamida 8 ta belgi bo'lishi lozim).*
+
+### 1.3. Veb-panelga kirish (HTTPS)
+
+Dastur avtomatik ravishda o'z-o'zidan imzolangan (self-signed) TLS sertifikatini yaratadi va faqat xavfsiz HTTPS orqali xizmat ko'rsatadi:
+
+- **Brauzerdagi manzil:** **`https://127.0.0.1:8000`** (yoki `https://localhost:8000`).
+- **Sertifikat ogohlantirishi:** Sertifikat lokal ravishda yaratilgani uchun brauzer "Your connection is not private" deb ogohlantirishi tabiiy. Brauzerda **Advanced -> Proceed to 127.0.0.1 (unsafe)** tugmasini bosib o'ting.
+- **Terminal orqali tekshirish:**
+  ```bash
+  curl -k https://127.0.0.1:8000/api/health
+  ```
+
+### 1.4. Qayta ishga tushishni tekshirish
 - Tizimni qayta yuklang (`sudo reboot`).
-- Kompyuter yoqilishi bilanoq dastur avtomatik ravishda `http://localhost:8000` da ishlayotgan bo'ladi.
+- Kompyuter yoqilishi bilanoq dastur avtomatik ravishda `https://127.0.0.1:8000` da ishlayotgan bo'ladi.
 - Ma'lumotlar bazasi va suratlar `./data` jildida saqlanib qoladi (Data Persistence).
 
 ---

@@ -7,16 +7,27 @@ services:
       - "127.0.0.1:8000:8000"
     environment:
       - VIDEO_SOURCE=${VIDEO_SOURCE:-0}
+      - CAMERAS=${CAMERAS:-}
       - DEMO_MODE=${DEMO_MODE:-0}
       - DEMO_VIDEO=${DEMO_VIDEO:-data/demo.mp4}
       - MODEL_PATH=${MODEL_PATH:-models/ppe_yolov8s.pt}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
+      - DAILY_SUMMARY_HOUR=${DAILY_SUMMARY_HOUR:-18}
       - REQUIRE_VEST=${REQUIRE_VEST:-0}
       - HELMET_RULE=${HELMET_RULE:-missing}
-      - CONF=${CONF:-0.35}
+      - CONF=${CONF:-0.4}
       - GEAR_CONF=${GEAR_CONF:-0.25}
       - IMG_SIZE=${IMG_SIZE:-480}
+      - FRAME_WIDTH=${FRAME_WIDTH:-960}
+      - DEBOUNCE_S=${DEBOUNCE_S:-1.5}
+      - COOLDOWN_S=${COOLDOWN_S:-15}
+      - RESOLVE_S=${RESOLVE_S:-5}
+      - REJOIN_S=${REJOIN_S:-10}
+      - TELEGRAM_GROUP_S=${TELEGRAM_GROUP_S:-5}
+      - BLUR_FACES=${BLUR_FACES:-1}
+      - RETENTION_DAYS=${RETENTION_DAYS:-30}
+      - SAVE_RAW=${SAVE_RAW:-1}
     volumes:
       - ./data:/app/data
     # Agar Linux USB kamera ishlatilsa:

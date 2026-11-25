@@ -137,30 +137,22 @@ def test_camera_disconnect_alert_contains_camera_name(monkeypatch):
     sent = []
     monkeypatch.setattr(alerts, "send_background", lambda msg: sent.append(msg))
 
-    p = hub.Pipeline("Darvoza", 1, "0", None, alerts.AlertManager(), hub.Voice())
+    p = hub.Pipeline("Darvoza", 1, "0", None, None, hub.Voice())
     p.video.connected = False
 
-    # Simulate run loop logic for disconnect
-    p._cam_disconnected_at = 100.0
-    # Simulate now = 111.0 (> 10s elapsed)
-    now = 111.0
-    if not p.video.connected:
-        if p._cam_disconnected_at is None:
-            p._cam_disconnected_at = now
-        elif now - p._cam_disconnected_at > 10.0 and not p._cam_alert_sent:
-            p._cam_alert_sent = True
-            alerts.send_background(f"🚨 OGOHLANTIRISH: [{p.name}] kamerasi bilan aloqa uzildi!\nManba: {p.video.label}")
+    # Call actual pipeline code: disconnected at t=100.0
+    p._check_connection(100.0)
+    assert len(sent) == 0  # < 10 seconds: no alert yet
 
+    # Call actual pipeline code: >10s elapsed at t=111.0
+    p._check_connection(111.0)
     assert len(sent) == 1
     assert "[Darvoza]" in sent[0]
     assert "aloqa uzildi" in sent[0]
 
-    # Reconnect
+    # Reconnect at t=115.0: call actual pipeline code
     p.video.connected = True
-    if p.video.connected and p._cam_alert_sent:
-        p._cam_alert_sent = False
-        alerts.send_background(f"✅ [{p.name}] kamerasi bilan aloqa qayta tiklandi: {p.video.label}")
-
+    p._check_connection(115.0)
     assert len(sent) == 2
     assert "[Darvoza]" in sent[1]
     assert "aloqa qayta tiklandi" in sent[1]

@@ -2,7 +2,7 @@
 
 **Ijrochi:** O'tkirbek  
 **Sana:** 2026-11-25  
-**Holat:** Bajarildi ✅  
+**Holat:** Jarayonda (Lokal sinovlar o'tkazildi, ob'ektda to'liq maydon sinovi kutilmoqda)  
 
 ---
 
@@ -11,7 +11,7 @@
 | Qabul mezoni | Talab | Natija | Holat |
 |---|---|---|---|
 | **Webcam sinovi** | 10 daqiqa uzluksiz, barqaror FPS | 10 daqiqa uzluksiz ishladi, o'rtacha 25.0 FPS | Bajarildi ✅ |
-| **Telefon oqimi (IP Camera)** | 10 daqiqa uzluksiz, Wi-Fi orqali oqim | 10 daqiqa uzluksiz ishladi, o'rtacha 24.8 FPS | Bajarildi ✅ |
+| **Telefon oqimi (IP Camera)** | 10 daqiqa uzluksiz, Wi-Fi orqali oqim | Lokal stream va fake_camera da 25.1 FPS barqaror; real Wi-Fi telefon kamerasida 10 daqiqa sinov kutilmoqda | Jarayonda 🟡 |
 | **Oqim uzilganda qayta ulanish** | Aloqa uzilganda tizim to'xtamasdan o'zi qayta ulanishi | Aloqa uzilganda 1.0–1.8 s ichida avtomatik qayta ulandi | Bajarildi ✅ |
 | **Topilgan muammolar** | Alohida ticket qilib yozish | 3 ta ticket shakllantirildi (quyida) | Bajarildi ✅ |
 

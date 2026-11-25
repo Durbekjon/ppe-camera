@@ -2,7 +2,7 @@
 
 **Ijrochi:** O'tkirbek  
 **Sana:** 2026-11-25  
-**Holat:** Bajarildi ✅  
+**Holat:** Jarayonda (Yo'riqnoma tayyor, kadrlar yig'ilgach belgilash kutilmoqda)  
 
 ---
 

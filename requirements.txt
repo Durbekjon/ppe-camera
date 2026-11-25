@@ -1,0 +1,7 @@
+ultralytics>=8.3
+opencv-python
+fastapi
+uvicorn[standard]
+requests
+edge-tts
+lap>=0.5.12

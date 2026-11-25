@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xavfsizlik nazorati</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header>
+  <div class="brand"><span class="logo">⛑</span><div><h1>Xavfsizlik nazorati</h1><p>Himoya vositalarini real vaqtda nazorat qilish</p></div></div>
+  <div id="status" class="status offline">Ulanmoqda…</div>
+  <div class="chips">
+    <span class="chip" id="chip-camera">Kamera: —</span>
+    <span class="chip" id="chip-fps">FPS: —</span>
+    <span class="chip" id="chip-people">Ishchilar: —</span>
+    <span class="chip" id="chip-telegram">Telegram: —</span>
+  </div>
+</header>
+
+<main>
+  <section class="card video-card">
+    <div class="toolbar">
+      <button id="btn-sound" class="primary">🔊 Ovozni yoqish</button>
+      <label class="switch"><input type="checkbox" id="demo"> Demo rejimi</label>
+      <span class="spacer"></span>
+      <button id="btn-draw">Xavfli zonani chizish</button>
+      <button id="btn-save" hidden>Saqlash</button>
+      <button id="btn-cancel" hidden>Bekor qilish</button>
+      <button id="btn-clear">Zonani o'chirish</button>
+    </div>
+    <div class="video-wrap" id="wrap">
+      <div class="stage">
+        <img id="video" src="/video" alt="Jonli video">
+        <canvas id="canvas"></canvas>
+      </div>
+      <div id="offline" hidden>Kamera uzildi. Qayta ulanmoqda…</div>
+    </div>
+    <p class="hint" id="hint"></p>
+  </section>
+
+  <section class="card incidents-card">
+    <h2>Hodisalar <span id="incident-count" class="muted"></span></h2>
+    <ul id="incidents"></ul>
+  </section>
+
+  <section class="card report-card">
+    <div class="report-head">
+      <h2>Kunlik hisobot</h2>
+      <input type="date" id="report-date">
+      <button id="btn-telegram">Telegramni tekshirish</button>
+    </div>
+    <div class="report-body">
+      <div class="stats">
+        <div class="stat"><b id="stat-total">0</b><span>Jami buzilishlar</span></div>
+        <div class="stat"><b id="stat-zone">0</b><span>Xavfli zonada</span></div>
+        <div class="stat"><b id="stat-peak">—</b><span>Eng xavfli soat</span></div>
+      </div>
+      <div class="chart-wrap">
+        <div class="chart-title">Soatlar bo'yicha buzilishlar</div>
+        <div id="chart" class="chart"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<audio id="a-helmet" src="/static/audio/helmet.mp3" preload="auto"></audio>
+<audio id="a-vest" src="/static/audio/vest.mp3" preload="auto"></audio>
+<audio id="a-zone" src="/static/audio/zone.mp3" preload="auto"></audio>
+<script src="/static/app.js"></script>
+</body>
+</html>

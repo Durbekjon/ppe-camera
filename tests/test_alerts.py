@@ -1,0 +1,88 @@
+import numpy as np
+
+from app import alerts, config, db
+from app.violations import Event
+
+
+class FakeResponse:
+    ok, status_code = True, 200
+
+    def json(self):
+        return {}
+
+
+def test_incident_saved_and_telegram_photo_sent(tmp_path, monkeypatch):
+    calls = []
+
+    def fake_post(url, data=None, files=None, timeout=None):
+        calls.append((url, data, bool(files)))
+        return FakeResponse()
+
+    monkeypatch.setattr(alerts, "SNAPSHOTS", tmp_path)
+    monkeypatch.setattr(alerts.requests, "post", fake_post)
+    monkeypatch.setattr(config, "TELEGRAM_BOT_TOKEN", "TEST")
+    monkeypatch.setattr(config, "TELEGRAM_CHAT_ID", "42")
+    monkeypatch.setattr(config, "TELEGRAM_GROUP_S", 0.1)
+    db.init(tmp_path / "t.db")
+
+    manager = alerts.AlertManager()
+    incident_id = manager.handle(Event(7, ("helmet",), True, (0, 0, 10, 10)), np.zeros((48, 64, 3), np.uint8))
+    import time
+    for _ in range(100):
+        if calls:
+            break
+        time.sleep(0.02)
+
+    row = db.list_incidents()[0]
+    assert row["id"] == incident_id and row["missing"] == "helmet" and row["zone"] == 1
+    assert (tmp_path / row["snapshot"]).exists()
+    url, data, has_photo = calls[0]
+    assert url.endswith("/botTEST/sendPhoto") and data["chat_id"] == "42" and has_photo
+    assert "XAVFLI ZONA" in data["caption"] and "kaskasiz" in data["caption"] and row["ts"] in data["caption"]
+    assert db.report(row["ts"][:10])["total"] == 1 and db.report("2000-01-01")["total"] == 0
+
+
+def test_telegram_failure_is_reported_without_leaking_token(monkeypatch):
+    def boom(*a, **k):
+        raise ConnectionError("https://api.telegram.org/botSECRET/sendMessage unreachable")
+
+    monkeypatch.setattr(alerts.requests, "post", boom)
+    monkeypatch.setattr(config, "TELEGRAM_BOT_TOKEN", "SECRET")
+    monkeypatch.setattr(config, "TELEGRAM_CHAT_ID", "42")
+    ok, err = alerts.telegram_send("x")
+    assert not ok and "SECRET" not in err
+
+
+def test_telegram_not_configured(monkeypatch):
+    monkeypatch.setattr(config, "TELEGRAM_BOT_TOKEN", "")
+    assert alerts.telegram_send("x") == (False, "Telegram sozlanmagan")
+
+
+def test_ordinary_alerts_are_grouped_and_zone_alert_is_immediate(tmp_path, monkeypatch):
+    import json
+    import time
+
+    calls = []
+
+    def fake_post(url, data=None, files=None, timeout=None):
+        calls.append((url.rsplit("/", 1)[1], data, len(files or {})))
+        return FakeResponse()
+
+    monkeypatch.setattr(alerts, "SNAPSHOTS", tmp_path)
+    monkeypatch.setattr(alerts.requests, "post", fake_post)
+    monkeypatch.setattr(config, "TELEGRAM_BOT_TOKEN", "TEST")
+    monkeypatch.setattr(config, "TELEGRAM_CHAT_ID", "42")
+    monkeypatch.setattr(config, "TELEGRAM_GROUP_S", 1.0)
+    db.init(tmp_path / "t.db")
+    manager = alerts.AlertManager()
+    frame = np.zeros((48, 64, 3), np.uint8)
+    for track_id, zone in ((1, False), (2, False), (3, True)):
+        manager.handle(Event(track_id, ("helmet",), zone, (0, 0, 10, 10)), frame)
+
+    time.sleep(0.3)  # inside the grouping window: only the zone alert is out
+    assert [c[0] for c in calls] == ["sendPhoto"] and "XAVFLI ZONA" in calls[0][1]["caption"]
+    time.sleep(1.2)
+    method, data, photos = calls[1]
+    assert len(calls) == 2 and method == "sendMediaGroup" and photos == 2
+    assert "2 ta hodisa" in json.loads(data["media"])[0]["caption"]
+    assert len(db.list_incidents()) == 3

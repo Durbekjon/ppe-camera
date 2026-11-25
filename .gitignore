@@ -1,0 +1,12 @@
+.venv/
+.env
+__pycache__/
+.pytest_cache/
+data/incidents.db
+data/snapshots/
+testdata/out/
+.DS_Store
+.claude/
+# real workshop footage and anything under data/ stays local
+data/
+testdata/workshop/

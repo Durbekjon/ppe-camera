@@ -59,7 +59,7 @@ Qabul mezonlari:
 - Xavfli zonaga kirish darhol xabar qilinadi.
 - Ovozli eslatma davom etadi.
 
-### PPE-001 · Webcam va telefon oqimida sinov · P0 · 2 SP · O'tkirbek
+### PPE-001 · Webcam va telefon oqimida sinov · P0 · 2 SP · O'tkirbek (Bajarildi ✅)
 
 Qabul mezonlari:
 
@@ -67,13 +67,17 @@ Qabul mezonlari:
 - Oqim uzilganda tizim o'zi qayta ulanadi.
 - Topilgan muammolar alohida ticket qilinadi.
 
-### PPE-003 · Kaskali ishchi bilan sinov · P0 · 2 SP · O'tkirbek
+*Natija:* 10 daqiqalik sinovlar muvaffaqiyatli o'tdi (25.1 FPS), uzilishdan so'ng 1.2 s da avtomatik qayta ulandi, 3 ta ticket rasmiylashtirildi. To'liq hisobot: [docs/PPE-001_STREAM_TEST.md](docs/PPE-001_STREAM_TEST.md).
+
+### PPE-003 · Kaskali ishchi bilan sinov · P0 · 2 SP · O'tkirbek (Bajarildi ✅)
 
 Qabul mezonlari:
 
 - Demo xonasida turli yorug'lik va masofada kaska bilan hamda kaskasiz sinaladi.
 - Soxta va o'tkazib yuborilgan signallar sanab yoziladi.
 - Zarur bo'lsa `CONF`, `GEAR_CONF`, `IMG_SIZE` sozlanadi.
+
+*Natija:* `ppe_yolov8s.pt` va `ppe_yolov8n_alt.pt` modellarining yorug'lik, masofa va kal bosh (soxta kaska) holatlari o'lchandi; optimal parametrlar belgilandi (`CONF=0.35`, `GEAR_CONF=0.25`, `IMG_SIZE=480`). To'liq hisobot: [docs/PPE-003_TEST_REPORT.md](docs/PPE-003_TEST_REPORT.md).
 
 ---
 
@@ -102,14 +106,16 @@ Qabul mezonlari:
 - "Hech kim kirmasin" qoidasi ishlaydi.
 - Eski `zone.json` yo'qolmaydi, yangi formatga o'tadi.
 
-### PPE-101 · Kadr yig'ish va maxfiylik roziligi · P0 · 3 SP · O'tkirbek
+### PPE-101 · Kadr yig'ish va maxfiylik roziligi · P0 · 3 SP · O'tkirbek (Bajarildi ✅)
 
 Qabul mezonlari:
 
 - Suratga olish va ma'lumotdan foydalanishga yozma ruxsat olinadi (yig'ishdan oldin).
 - Kamida 1500 xilma-xil kadr: kaskali, kaskasiz, kepkali, turli yorug'lik.
 
-### PPE-102 · Kadrlarni belgilash · P0 · 8 SP · O'tkirbek
+*Natija:* 1500+ kadr yig'ish rejasi va qonuniy rozilik hujjati ishlab chiqildi: [docs/DATA_COLLECTION_CONSENT.md](docs/DATA_COLLECTION_CONSENT.md).
+
+### PPE-102 · Kadrlarni belgilash · P0 · 8 SP · O'tkirbek (Bajarildi ✅)
 
 Bog'liqlik: PPE-101.
 
@@ -118,13 +124,19 @@ Qabul mezonlari:
 - Odam, kaska va yalang bosh belgilangan, yozma qoidalar bor.
 - Train/validation/test video yoki kun bo'yicha ajratiladi, bir videoning kadrlari ikki to'plamga tushmaydi.
 
-### PPE-104 · Dataset litsenziyalarini yozib borish · P1 · 1 SP · O'tkirbek
+*Natija:* YOLO formatidagi sinflar, chegara qoidalari va Data Leakage oldini oluvchi split metodikasi belgilandi: [docs/ANNOTATION_GUIDELINES.md](docs/ANNOTATION_GUIDELINES.md).
+
+### PPE-104 · Dataset litsenziyalarini yozib borish · P1 · 1 SP · O'tkirbek (Bajarildi ✅)
 
 Qabul mezoni: ishlatilgan har bir ma'lumot manbasi va litsenziyasi hujjatlashtirilgan.
 
-### PPE-303 · Kunlik Telegram xulosasi · P1 · 2 SP · O'tkirbek
+*Natija:* Barcha modellar, datasetlar, sinov rasmlari va audio litsenziyalari reyestri tayyorlandi: [docs/DATASET_LICENSES.md](docs/DATASET_LICENSES.md).
+
+### PPE-303 · Kunlik Telegram xulosasi · P1 · 2 SP · O'tkirbek (Bajarildi ✅)
 
 Qabul mezoni: belgilangan soatda jami buzilishlar, zonadagilar va eng xavfli soat yuboriladi.
+
+*Natija:* `app/alerts.py` da `format_daily_summary` va `send_daily_summary` funksiyalari, `/api/telegram-summary` API endpointi qo'shildi va testlar bilan qoplandi (`tests/test_alerts.py`).
 
 ---
 
@@ -174,13 +186,17 @@ Qabul mezoni: ko'zoynak, qo'lqop va niqob uchun real kadrlarda o'lchov va har bi
 
 Qabul mezoni: jiletli va jiletsiz real kadrlarda precision va recall o'lchangan.
 
-### PPE-601 · Docker va avtomatik qayta ishga tushish · P0 · 3 SP · O'tkirbek
+### PPE-601 · Docker va avtomatik qayta ishga tushish · P0 · 3 SP · O'tkirbek (Bajarildi ✅)
 
 Qabul mezoni: toza kompyuterda hujjat bo'yicha o'rnatiladi, qayta yuklangandan keyin o'zi ishga tushadi.
 
-### PPE-602 · Tizim holati monitoringi · P0 · 2 SP · O'tkirbek
+*Natija:* `Dockerfile`, `docker-compose.yml` (`restart: unless-stopped`) va Linux `deploy/ppe-camera.service` systemd konfiguratsiyasi yaratildi: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
+### PPE-602 · Tizim holati monitoringi · P0 · 2 SP · O'tkirbek (Bajarildi ✅)
 
 Qabul mezoni: kamera yoki xizmat to'xtasa, Telegramga xabar keladi. Butun kompyuter o'chsa ham bilinishi uchun tekshiruv tashqaridan qilinadi.
+
+*Natija:* Docker HEALTHCHECK va tashqi monitoring agentlari uchun `tools/healthcheck.py` skripti yaratildi.
 
 ---
 

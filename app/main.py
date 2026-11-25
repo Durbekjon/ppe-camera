@@ -218,8 +218,15 @@ def status(camera: str = ""):
 
 
 @app.get("/api/incidents")
-def incidents(limit: int = 30, status: str = "", date: str = "", missing: str = "", zone: str = "", camera: str = ""):
-    return db.list_incidents(min(limit, 200), status=status, date=date, missing=missing, zone=zone, camera=camera)
+def incidents(limit: int = 30, status: str = "", date: str = "", missing: str = "", zone: str = "", camera: str = "",
+              zone_name: str = ""):
+    return db.list_incidents(min(limit, 200), status=status, date=date, missing=missing, zone=zone, camera=camera,
+                             zone_name=zone_name)
+
+
+@app.get("/api/incidents/zone-names")
+def incident_zone_names():
+    return {"names": db.zone_names()}
 
 
 class IncidentStatus(BaseModel):

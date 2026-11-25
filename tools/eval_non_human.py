@@ -1,11 +1,12 @@
-"""PPE-203: Odam bo'lmagan obyektlardagi (plakatlar, logotiplar, manekenlar) soxta signallarni baholash.
+"""PPE-203: odam bo'lmagan obyektlardagi soxta signallarni o'lchash.
 
-Ushbu vosita:
-1. Sinov to'plamiga logotip, xavfsizlik plakati, stenddagi kiyim/maneken kabi odam bo'lmagan obyektlarni kiritadi.
-2. Ikkala modelda (ppe_yolov8s va ppe_yolov8n_alt) soxta signallarni o'lchaydi.
-3. Filtrlashdan oldingi (raw detection, conf=0.20) va keyingi (CONF=0.4, GEAR_CONF=0.25, MIN_PERSON_HEIGHT, debounce) holatlarni taqqoslaydi.
+Har bir rasm kamerada bir necha soniya turgandek beriladi (debounce o'tishi uchun) va ikki xil ishonch
+chegarasida yozilgan hodisalar sanaladi. Ikkala holatda ham debounce bir xil.
+Rasmlar kod bilan chizilgan sodda namunalar: real plakat yoki maneken sinovining o'rnini bosmaydi.
+
+Foydalanish: .venv/bin/python -m tools.eval_non_human            (repodagi rasmlarni o'lchaydi)
+             .venv/bin/python -m tools.eval_non_human --generate (rasmlarni qayta chizadi)
 """
-import glob
 import os
 import sys
 from pathlib import Path
@@ -69,103 +70,54 @@ def generate_test_cases():
     cv2.imwrite(str(NON_HUMAN_DIR / "poster_silhouette.jpg"), img4)
 
 
-def evaluate_model(model_path):
-    name = Path(model_path).name
-    print(f"\n=======================================================")
-    print(f"Baholanayotgan model: {name}")
-    print(f"=======================================================")
+SECONDS, FPS = 3.0, 30
+SETTINGS = (("past chegara", 0.20, 0.20), ("joriy chegara", config.CONF, config.GEAR_CONF))
 
+
+def incidents_over_time(detections, frame_size, conf, seconds=SECONDS, fps=FPS):
+    """Incidents the app would record if the same detections stayed in view for `seconds`."""
+    from app.violations import ViolationEngine
+
+    engine = ViolationEngine(debounce=config.DEBOUNCE_S, person_conf=conf)
+    total = 0
+    for i in range(int(seconds * fps)):
+        _, events = engine.update(detections, i / fps, frame_size)
+        total += sum(e.record for e in events)
+    return total
+
+
+def evaluate_model(model_path):
+    """Return {setting name: {"detections": n, "incidents": n, "images": {name: (labels, incidents)}}}."""
     images = sorted(NON_HUMAN_DIR.glob("*.jpg"))
     if not images:
-        print("Tasvirlar topilmadi!")
-        return
-
-    # 1. Boshlang'ich / Filtrsiz holat (Low conf=0.20, gear_conf=0.20, no min-size filter)
-    detector_raw = Detector(model_path, imgsz=480, conf=0.20, gear_conf=0.20)
-    # 2. Yangilangan / Filtrlangan holat (CONF=0.40, GEAR_CONF=0.25)
-    detector_tuned = Detector(model_path, imgsz=480, conf=config.CONF, gear_conf=config.GEAR_CONF)
-
-    raw_fps = 0
-    tuned_fps = 0
-
-    print(f"\n{'Tasvir':28s} | {'Oldin (conf=0.20) Dets':30s} | {'Keyin (CONF=0.40/0.25)':25s}")
-    print("-" * 92)
-
-    for p in images:
-        frame = cv2.imread(str(p))
-        h, w = frame.shape[:2]
-
-        # Raw
-        dets_raw = detector_raw.detect(frame)
-        raw_desc = [f"{d.role}:{d.conf:.2f}" for d in dets_raw]
-        # Any person or false gear on non-human is a false positive
-        raw_fp_count = len(dets_raw)
-        raw_fps += raw_fp_count
-
-        # Tuned (with confidence + minimum person height >= 0.15)
-        dets_tuned = detector_tuned.detect(frame)
-        valid_tuned = []
-        for d in dets_tuned:
-            bh = (d.box[3] - d.box[1]) / h
-            # If role is person, enforce MIN_PERSON_HEIGHT
-            if d.role == PERSON and bh < 0.15:
-                continue
-            valid_tuned.append(d)
-        tuned_desc = [f"{d.role}:{d.conf:.2f}" for d in valid_tuned]
-        tuned_fps += len(valid_tuned)
-
-        print(f"{p.name:28s} | {str(raw_desc):30s} | {str(tuned_desc):25s}")
-
-    print("-" * 92)
-    print(f"Jami soxta xom signallar (Raw Detection FPs):")
-    print(f"  • Oldin (Filtrsiz / past chegara): {raw_fps} ta")
-    print(f"  • Keyin (Tavsiya etilgan sozlamalar): {tuned_fps} ta")
-    reduction = ((raw_fps - tuned_fps) / raw_fps * 100) if raw_fps > 0 else 0
-    print(f"  • Xom soxta signallar kamayishi: {reduction:.1f}%")
-
-    # 3. Pipeline darajasida (ViolationEngine + debounce) tekshirish
-    from app.violations import ViolationEngine
-    engine_old = ViolationEngine(debounce=0.0, person_conf=0.20)
-    engine_new = ViolationEngine(debounce=1.5, person_conf=config.CONF)
-
-    pipeline_events_old = 0
-    pipeline_events_new = 0
-
-    for p in images:
-        frame = cv2.imread(str(p))
-        h, w = frame.shape[:2]
-
-        dets_raw = detector_raw.detect(frame)
-        dets_tuned = detector_tuned.detect(frame)
-
-        # 1-kadrda eski tizim (debounce yo'q, past chegara)
-        _, ev_old = engine_old.update(dets_raw, now=1.0, frame_size=(w, h), clock="12:00")
-        pipeline_events_old += len(ev_old)
-
-        # 1-kadrda yangi tizim (debounce 1.5s - hali tasdiqlanmagan)
-        _, ev_new_1 = engine_new.update(dets_tuned, now=1.0, frame_size=(w, h), clock="12:00")
-        pipeline_events_new += len(ev_new_1)
-
-    print(f"Hodisa signallari darajasida (Pipeline Incident Events):")
-    print(f"  • Oldin (Debounce yo'q, conf=0.20): {pipeline_events_old} ta hodisa")
-    print(f"  • Keyin (Debounce 1.5s, CONF={config.CONF}): {pipeline_events_new} ta hodisa (1-kadr shovqinlari to'liq bloklandi ✅)")
-
-    return {
-        "model": name,
-        "raw_fps": raw_fps,
-        "tuned_fps": tuned_fps,
-        "reduction": reduction,
-        "pipeline_old": pipeline_events_old,
-        "pipeline_new": pipeline_events_new,
-    }
+        raise FileNotFoundError(f"Rasm topilmadi: {NON_HUMAN_DIR}")
+    results = {}
+    for label, conf, gear_conf in SETTINGS:
+        detector = Detector(model_path, imgsz=config.IMG_SIZE, conf=conf, gear_conf=gear_conf)
+        row = {"conf": conf, "gear_conf": gear_conf, "detections": 0, "incidents": 0, "images": {}}
+        for path in images:
+            frame = cv2.imread(str(path))
+            found = detector.detect(frame)
+            count = incidents_over_time(found, (frame.shape[1], frame.shape[0]), conf)
+            row["detections"] += len(found)
+            row["incidents"] += count
+            row["images"][path.name] = ([f"{d.role}:{d.conf:.2f}" for d in found], count)
+        results[label] = row
+    return results
 
 
 def main():
-    generate_test_cases()
-    results = []
-    for model_name in ("models/ppe_yolov8s.pt", "models/ppe_yolov8n_alt.pt"):
-        if os.path.exists(model_name):
-            results.append(evaluate_model(model_name))
+    if "--generate" in sys.argv[1:]:
+        generate_test_cases()
+    for model_path in ("models/ppe_yolov8s.pt", "models/ppe_yolov8n_alt.pt"):
+        if not os.path.exists(model_path):
+            continue
+        print(f"\n== {Path(model_path).name} (har rasm {SECONDS:.0f} s, {FPS} FPS, debounce {config.DEBOUNCE_S} s)")
+        for label, row in evaluate_model(model_path).items():
+            print(f"-- {label}: CONF={row['conf']}, GEAR_CONF={row['gear_conf']}")
+            for name, (found, count) in row["images"].items():
+                print(f"   {name:28s} hodisa={count}  {found}")
+            print(f"   JAMI: topilgan obyekt={row['detections']}, yozilgan hodisa={row['incidents']}")
 
 
 if __name__ == "__main__":

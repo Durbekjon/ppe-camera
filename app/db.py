@@ -82,7 +82,7 @@ STATUS_ALIASES = {
 }
 
 
-def list_incidents(limit=30, status="", date="", missing="", zone="", camera=""):
+def list_incidents(limit=30, status="", date="", missing="", zone="", camera="", zone_name=""):
     clauses, params = [], []
     if status:
         st = STATUS_ALIASES.get(status.lower().strip(), status)
@@ -102,6 +102,9 @@ def list_incidents(limit=30, status="", date="", missing="", zone="", camera="")
         else:
             clauses.append("zone_name = ?")
             params.append(zone)
+    if zone_name:
+        clauses.append("zone_name = ?")
+        params.append(zone_name)
     if camera:
         clauses.append("camera = ?")
         params.append(camera)
@@ -115,6 +118,11 @@ def list_incidents(limit=30, status="", date="", missing="", zone="", camera="")
     with _lock:
         rows = _conn.execute(sql, params).fetchall()
     return [dict(r) for r in rows]
+
+
+def zone_names():
+    """Zone names that appear in the incident log, including zones deleted since."""
+    return [r["zone_name"] for r in query("SELECT DISTINCT zone_name FROM incidents WHERE zone_name <> '' ORDER BY zone_name")]
 
 
 def set_status(incident_id, status):

@@ -102,3 +102,20 @@ def test_photo_deleted_meanwhile_still_sends_the_text(env):
     (tmp / "a.jpg").unlink()
     manager.send_next(1000)
     assert sent == ["caption a\n(surat saqlanmagan)"]
+
+
+def test_camera_notice_is_text_only_and_retried_while_offline(env):
+    _, manager, answers, sent = env
+    answers.append((False, "ConnectionError"))
+    assert manager.notify("kamera uzildi\nVaqt: 10:00")
+    now = outbox.time.time()
+    manager.send_next(now)
+    assert outbox.pending() == 1
+    manager.send_next(now + 11)
+    assert sent == ["kamera uzildi\nVaqt: 10:00"] * 2 and outbox.pending() == 0  # no "photo missing" note
+
+
+def test_notice_is_skipped_without_telegram(env, monkeypatch):
+    _, manager, _, _ = env
+    monkeypatch.setattr(config, "TELEGRAM_BOT_TOKEN", "")
+    assert manager.notify("x") is False and outbox.pending() == 0

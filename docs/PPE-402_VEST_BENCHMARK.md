@@ -2,7 +2,7 @@
 
 **Ijrochi:** O'tkirbek  
 **Sana:** 2026-11-25  
-**Holat:** Bajarildi ✅  
+**Holat:** Jarayonda (dastlabki o'lchov: 5 ta surat, faqat sonlar solishtirilgan)  
 
 ---
 
@@ -15,7 +15,7 @@
 
 ## 2. Sinov metodologiyasi va vositasi
 
-Sinov uchun `tools/eval_vest.py` maxsus baholash skripti ishlab chiqildi. Ushbu vosita mavjud real fotosuratlarni yuklab, undagi haqiqiy jiletlar soni (Ground Truth) bilan modellarning chiqargan natijalarini IoU va ishonch chegaralari (`CONF=0.4`, `GEAR_CONF=0.25`, `imgsz=480`) asosida taqqoslaydi.
+Sinov uchun `tools/eval_vest.py` maxsus baholash skripti ishlab chiqildi. Ushbu vosita mavjud real fotosuratlarni yuklab, undagi haqiqiy jiletlar soni (Ground Truth) bilan modellar topgan jiletlar sonini ilovadagi ishonch chegaralarida (`CONF=0.4`, `GEAR_CONF=0.25`, `imgsz=480`) asosida taqqoslaydi.
 
 ### 2.1. Sinov kadrlari va Ground Truth
 
@@ -28,6 +28,8 @@ Sinov uchun `tools/eval_vest.py` maxsus baholash skripti ishlab chiqildi. Ushbu 
 | `testdata/images/zidane.jpg` | Kaskasiz, oddiy kostyum/sport kiyim | 2 | **0 ta** | Signal jiletsiz oddiy kiyim |
 
 ---
+
+> ⚠️ **Cheklovlar:** ramkalar joylashuvi (IoU) tekshirilmaydi, faqat har bir suratdagi jiletlar soni solishtiriladi; noto'g'ri joydagi topilma ham to'g'ri sanalishi mumkin. Barcha ijobiy misollar **bitta suratdagi 2 ta** obyekt, ulardan biri aks ettiruvchi tasmali to'q sariq kombinezon (jilet deb sanash qoidasi aniqlanishi kerak). Shuning uchun quyidagi foizlar modelning umumiy aniqligini ko'rsatmaydi. `no_vest` sinfi baholanmagan.
 
 ## 3. Sinov natijalari
 
@@ -91,8 +93,8 @@ zidane.jpg                   0               0                vest:[] no_vest:[0
 
 | Model | Hajmi | TP | FP | FN | Precision | Recall | F1-Score | Xulosa |
 |---|---|---|---|---|---|---|---|---|
-| **`ppe_yolov8s.pt`** (Asosiy) | 22.5 MB | **2** | **0** | **0** | **100.0%** | **100.0%** | **1.000** | A'lo natija, soxta signal yo'q ✅ |
-| **`ppe_yolov8n_alt.pt`** (Alternativ) | 6.2 MB | **2** | **6** | **0** | **25.0%** | **100.0%** | **0.400** | O'ta ko'p soxta signal beradi ❌ |
+| **`ppe_yolov8s.pt`** (Asosiy) | 22.5 MB | **2** | **0** | **0** | **100.0%** | **100.0%** | **1.000** | Shu 5 suratda soxta jilet topilmadi |
+| **`ppe_yolov8n_alt.pt`** (Alternativ) | 6.2 MB | **2** | **6** | **0** | **25.0%** | **100.0%** | **0.400** | Shu to'plamda 6 ta soxta jilet |
 
 ---
 
@@ -103,7 +105,7 @@ zidane.jpg                   0               0                vest:[] no_vest:[0
    - Asosiy model (`ppe_yolov8s.pt`) esa ularni aniq ajrata oldi: jilet deb topmadi, aksincha ularga `no_vest` (**0.79, 0.72, 0.69, 0.66**) yorlig'ini qo'ydi.
 
 2. **Haqiqiy jiletlarni tanish:**
-   - Har ikkala model ham ochiq havodagi haqiqiy signal jiletlarini 100% aniqlikda (Recall = 1.0) topdi (`amsterdam_workers_cc0.jpg`).
+   - Har ikkala model ham ochiq havodagi haqiqiy signal jiletlarini (shu 2 ta misolda) topdi (`amsterdam_workers_cc0.jpg`).
 
 ---
 
@@ -113,5 +115,5 @@ zidane.jpg                   0               0                vest:[] no_vest:[0
    - `REQUIRE_VEST=1` faqat va faqat **`ppe_yolov8s.pt`** modeli bilan yoqilishi lozim.
    - Agar cheklangan apparat resursi tufayli kichik `ppe_yolov8n_alt.pt` modeli ishlatilsa, **`REQUIRE_VEST=0`** holatida qoldirilishi shart, aks holda shaxta va omborlardagi ishchilar uchun soxta signallar ko'payib ketadi.
 2. **Chegara ko'rsatkichlari:**
-   - Kaska uchun tavsiya etilgan parametrlar jilet uchun ham o'zini oqladi: `CONF=0.4`, `GEAR_CONF=0.25`, `IMG_SIZE=480`.
+   - Kaska uchun tavsiya etilgan parametrlar jilet sinovida ham ishlatildi (boshqa qiymatlar bilan solishtirilmagan): `CONF=0.4`, `GEAR_CONF=0.25`, `IMG_SIZE=480`.
    - Agar ob'ektda signal jileti nazorati majburiy bo'lsa, xiralashtirilgan / xira yorug'likli kameralarda qo'shimcha yoritish yoki `ppe_yolov8s.pt` dan foydalanish qat'iy talab etiladi.

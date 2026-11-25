@@ -128,3 +128,14 @@ def test_incident_filters(env):
     # Combined filter: camera=Kirish and status=hal_qilindi
     r = client.get("/api/incidents?camera=Kirish&status=hal_qilindi").json()
     assert len(r) == 1 and r[0]["id"] == id3
+
+
+def test_zone_name_filter_and_list_of_names(env):
+    _, _, client = env
+    client.post("/api/login", json={"username": "watcher_user", "password": "password-supervisor"})
+    db.add_incident("2026-11-25 09:00:00", ("helmet",), 0, 1, "a.jpg")
+    one = db.add_incident("2026-11-25 09:01:00", ("helmet",), 1, 2, "b.jpg", zone_name="1")
+    db.add_incident("2026-11-25 09:02:00", ("helmet",), 1, 3, "c.jpg", zone_name="Kran osti")
+    assert client.get("/api/incidents/zone-names").json() == {"names": ["1", "Kran osti"]}
+    assert [r["id"] for r in client.get("/api/incidents?zone_name=1").json()] == [one]  # not "any zone"
+    assert len(client.get("/api/incidents?zone=1").json()) == 2

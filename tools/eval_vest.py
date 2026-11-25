@@ -1,4 +1,7 @@
-"""PPE-402: Evaluate safety vest detection precision and recall across test data.
+"""PPE-402: rough vest precision and recall from per-image counts.
+
+Only the number of vests per image is compared; box positions are not checked (use tools/evaluate.py with
+labelled boxes for that).
 
 Usage:
     .venv/bin/python tools/eval_vest.py [model_path]
@@ -74,8 +77,8 @@ def evaluate(model_path, imgsz=480, conf=0.4, gear_conf=0.25):
         confs_str = f"vest:{r['vest_confs']} no_vest:{r['no_vest_confs']}"
         print(f"{r['name']:28s} {r['gt_vest']:<15d} {r['pred_vest']:<16d} {confs_str}")
 
-    precision = tp / (tp + fp) if (tp + fp) > 0 else 1.0
-    recall = tp / (tp + fn) if (tp + fn) > 0 else 1.0
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0  # nothing reported earns no credit
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
     f1 = (2 * precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
 
     print("-" * 88)

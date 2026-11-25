@@ -18,14 +18,16 @@
 
 ## Sprint 0: Demoga tayyorlik (2 kun)
 
-### PPE-002 · Haqiqiy Telegram xabari · P0 · 1 SP · Durbek
+### PPE-002 · Haqiqiy Telegram xabari · P0 · 1 SP · Durbek (Bajarildi ✅)
 
 Qabul mezonlari:
 
 - Sinov xabari va suratli hodisa xabari nazoratchi telefoniga keladi.
 - Token log va repoda ko'rinmaydi.
 
-### PPE-004 · Takroriy signallarni kamaytirish · P0 · 3 SP · Durbek
+*Natija:* haqiqiy Telegram'da sinov va suratli xabar tasdiqlandi.
+
+### PPE-004 · Takroriy signallarni kamaytirish · P0 · 3 SP · Durbek (Bajarildi ✅)
 
 ByteTrack'ni sinash va bir vaqtdagi buzilishlarni bitta Telegram xabariga jamlash. Bog'liqlik: yo'q.
 
@@ -36,7 +38,9 @@ Qabul mezonlari:
 - Xavfli zona signali kechiktirilmaydi.
 - Mavjud testlar o'tadi.
 
-### PPE-005 · Bitta buzilish ko'p marta hisoblanmoqda (bug) · P0 · 5 SP · Durbek
+*Natija:* `data/demo.mp4` da ID 27 dan 22 ga, signallar 20 dan 18 ga tushdi; xabarlar guruhlanadi, zona xabari kutmaydi.
+
+### PPE-005 · Bitta buzilish ko'p marta hisoblanmoqda (bug) · P0 · 5 SP · Durbek (Bajarildi ✅)
 
 **Muammo:** bitta ishchi kaskasiz yursa, tizim uni bir necha daqiqada 16 marta qoidabuzar deb yozishi mumkin. Hisobot sonlari oshib ketadi, nazoratchiga ortiqcha Telegram xabari boradi.
 
@@ -59,7 +63,9 @@ Qabul mezonlari:
 - Xavfli zonaga kirish darhol xabar qilinadi.
 - Ovozli eslatma davom etadi.
 
-### PPE-006 · Yuborilmagan Telegram xabarini qayta yuborish (bug) · P0 · 3 SP · Durbek
+*Natija:* kamerada 5 daqiqalik sinov o'tdi; `data/demo.mp4` da hodisalar 18 dan 9 ga tushdi. Kadrdan chiqib qaytish va ikki ishchi holatlari testlar bilan tekshirilgan; to'silishning alohida yozib olingan video sinovi qayd etilmagan.
+
+### PPE-006 · Yuborilmagan Telegram xabarini qayta yuborish (bug) · P0 · 3 SP · Durbek (Bajarildi ✅)
 
 **Muammo:** kamera sinovida `ReadTimeout` chiqdi; yuborilmagan xabar qayta yuborilmas edi va yo'qolishi mumkin edi.
 
@@ -69,6 +75,8 @@ Qabul mezonlari:
 - Qayta urinishlar yangi xavfli zona xabarini uzoq kechiktirmaydi.
 - Belgilangan muddatdan keyin bekor qilinsa, logga yoziladi.
 
+*Natija:* haqiqiy ishga tushirishda Wi-Fi uzilishidan keyin yuborish tekshirildi; navbat saqlanishi va muddat tugashi testlar bilan tekshirilgan.
+
 ### PPE-001 · Webcam va telefon oqimida sinov · P0 · 2 SP · O'tkirbek (Jarayonda: dastlabki sinovlar o'tkazildi)
 
 Qabul mezonlari:
@@ -77,7 +85,7 @@ Qabul mezonlari:
 - Oqim uzilganda tizim o'zi qayta ulanadi.
 - Topilgan muammolar alohida ticket qilinadi.
 
-*Natija:* Lokal test oqimida va test muhitida sinovlar muvaffaqiyatli o'tdi (25.1 FPS), tarmoq uzilishidan so'ng 1.2 s da avtomatik qayta ulandi, 3 ta ticket rasmiylashtirildi (TICKET-001..003) va test loglari biriktirildi. To'liq hisobot: [docs/PPE-001_STREAM_TEST.md](docs/PPE-001_STREAM_TEST.md). Real ob'ekt kamerasida to'liq maydon sinovi kutilmoqda.
+*Natija:* video fayl bilan 10 soniyalik sinov logi bor (25.1 FPS); 3 ta ticket yozilgan. Webcam va telefonning 10 daqiqalik sinovi hamda qayta ulanish vaqti log bilan tasdiqlanmagan. Hisobot: [docs/PPE-001_STREAM_TEST.md](docs/PPE-001_STREAM_TEST.md).
 
 ### PPE-003 · Kaskali ishchi bilan sinov · P0 · 2 SP · O'tkirbek (Jarayonda: test to'plamida sinov o'tkazildi)
 
@@ -87,34 +95,42 @@ Qabul mezonlari:
 - Soxta va o'tkazib yuborilgan signallar sanab yoziladi.
 - Zarur bo'lsa `CONF`, `GEAR_CONF`, `IMG_SIZE` sozlanadi.
 
-*Natija:* `ppe_yolov8s.pt` va `ppe_yolov8n_alt.pt` modellarining yorug'lik, masofa va kal bosh (soxta kaska) holatlari o'lchandi. Kichik model kal boshni 0.55 bilan kaska deb xato qildi; asosiy modelda bu xato yo'q. Optimal parametrlar belgilandi (`CONF=0.4`, `GEAR_CONF=0.25`, `IMG_SIZE=480`). To'liq hisobot va CLI sinov loglari: [docs/PPE-003_TEST_REPORT.md](docs/PPE-003_TEST_REPORT.md). Demo xonasida tirik ishchi bilan yakuniy qabul sinovi kutilmoqda.
+*Natija:* `ppe_yolov8s.pt` va `ppe_yolov8n_alt.pt` modellarining yorug'lik, masofa va kal bosh (soxta kaska) holatlari o'lchandi. Kichik model kal boshni 0.55 bilan kaska deb xato qildi; asosiy modelda bu xato yo'q. Joriy parametrlar tavsiya qilindi (`CONF=0.4`, `GEAR_CONF=0.25`, `IMG_SIZE=480`). To'liq hisobot va CLI sinov loglari: [docs/PPE-003_TEST_REPORT.md](docs/PPE-003_TEST_REPORT.md). Demo xonasida tirik ishchi bilan yakuniy qabul sinovi kutilmoqda.
 
 ---
 
 ## Sprint 1: Ma'lumot, zonalar, kirish himoyasi (2 hafta)
 
-### PPE-501 · Litsenziya qarori · P0 · 2 SP · Durbek
+### PPE-501 · Litsenziya qarori · P0 · 2 SP · Durbek (Jarayonda: qaror kutilmoqda)
 
 Qabul mezoni: Ultralytics (AGPL-3.0 yoki pullik litsenziya yoki boshqa kutubxona) va model og'irliklari bo'yicha yozma qaror. Pilotdan oldin yopiladi; tijoriy mahsulot rejalansa, Sprint 2 dagi o'qitishdan oldin boshlash ma'qul.
 
-### PPE-502 · Login va rollar · P0 · 5 SP · Durbek
+*Natija:* tijoriy mahsulot bo'lish ehtimoli bor. Variantlar: [docs/LICENSE_DECISION.md](docs/LICENSE_DECISION.md).
+
+### PPE-502 · Login va rollar · P0 · 5 SP · Durbek (Bajarildi ✅)
 
 Qabul mezonlari:
 
 - Admin va nazoratchi rollari.
 - Video, API va suratlar loginsiz ochilmaydi.
 
-### PPE-503 · HTTPS va maxfiy sozlamalar · P0 · 3 SP · Durbek
+*Natija:* login, chiqqandan keyin yopilishi va nazoratchi roli qo'lda hamda testlar bilan tekshirildi.
+
+### PPE-503 · HTTPS va maxfiy sozlamalar · P0 · 3 SP · Durbek (Bajarildi ✅)
 
 Qabul mezoni: tarmoq orqali faqat HTTPS bilan kiriladi, kamera paroli va token loglarda ko'rinmaydi.
 
-### PPE-301 · Bir nechta zona va qoidalar · P1 · 5 SP · Durbek
+*Natija:* tarmoqdan HTTPS bilan kirish tekshirildi; loglarda parol va token yashirilishi testlar bilan tekshirilgan.
+
+### PPE-301 · Bir nechta zona va qoidalar · P1 · 5 SP · Durbek (Bajarildi ✅)
 
 Qabul mezonlari:
 
 - Har bir zonaning nomi, qoidasi va ish vaqti bor.
 - "Hech kim kirmasin" qoidasi ishlaydi.
 - Eski `zone.json` yo'qolmaydi, yangi formatga o'tadi.
+
+*Natija:* kamerada zona qo'shish, kirish va o'chirish tekshirildi; eski zona yangi formatga o'tdi.
 
 ### PPE-101 · Kadr yig'ish va maxfiylik roziligi · P0 · 3 SP · O'tkirbek (Jarayonda: reja va rozilik shabloni tayyor)
 
@@ -152,7 +168,7 @@ Qabul mezoni: belgilangan soatda jami buzilishlar, zonadagilar va eng xavfli soa
 
 ## Sprint 2: Model, maxfiylik, o'rnatish (2 hafta)
 
-### PPE-103 · Baholash skripti va boshlang'ich natija · P0 · 3 SP · Durbek
+### PPE-103 · Baholash skripti va boshlang'ich natija · P0 · 3 SP · Durbek (Jarayonda: skript tayyor)
 
 Bog'liqlik: PPE-102.
 
@@ -161,6 +177,8 @@ Qabul mezonlari:
 - Bitta buyruq bilan precision, recall va mAP50 chiqadi.
 - Hozirgi ikkala model natijasi yozib qo'yiladi.
 - Shu natijaga qarab qayta o'qitish uchun maqsad raqamlar belgilanadi.
+
+*Natija:* `tools/evaluate.py` tayyor. Boshlang'ich natija va maqsad raqamlar qo'lda belgilangan kadrlarni kutadi.
 
 ### PPE-201 · Modelni qayta o'qitish · P0 · 8 SP · Durbek
 
@@ -172,7 +190,7 @@ Qabul mezonlari:
 - Kepkani kaska deb olish holati alohida o'lchanadi va kamayadi.
 - Noutbuk CPU'sida kamida 15 FPS.
 
-### PPE-504 · Yuzni xiralashtirish va saqlash muddati · P0 · 5 SP · Durbek
+### PPE-504 · Yuzni xiralashtirish va saqlash muddati · P0 · 5 SP · Durbek (Bajarildi ✅)
 
 Qabul mezonlari:
 
@@ -180,29 +198,31 @@ Qabul mezonlari:
 - Belgilangan muddatdan eski suratlar avtomatik o'chiriladi.
 - PPE-202 uchun saqlanadigan asl kadrlarga ham shu qoidalar yoki alohida ruxsat qo'llanadi.
 
-### PPE-203 · Odam bo'lmagan obyektlardagi signallar · P1 · 3 SP · O'tkirbek (Bajarildi ✅)
+*Natija:* kamerada old tomondan yuz yashirilishi tasdiqlandi; saqlash muddati testlar bilan tekshirilgan. Xiralashtirish kafolatli emas, yon tomondan sinov tavsiya etiladi. Eski suratlar o'zgartirilmagan.
+
+### PPE-203 · Odam bo'lmagan obyektlardagi signallar · P1 · 3 SP · O'tkirbek (Jarayonda: chizma namunalarda o'lchandi)
 
 Qabul mezoni: logotip va plakat misollari test to'plamiga qo'shilgan, ulardagi soxta signallar soni oldin va keyin o'lchangan.
 
-*Natija:* `testdata/non_human/` to'plamiga xavfsizlik plakati, uskuna logotipi, kiyim stendi va siluet tasvirlari qo'shildi. `tools/eval_non_human.py` orqali xom signallar va pipeline hodisalari o'lchandi (soxta xom signallar 25–50% ga, 1-kadr hodisa signallari 100% ga kamaytirildi). To'liq hisobot: [docs/PPE-203_NON_HUMAN_OBJECTS.md](docs/PPE-203_NON_HUMAN_OBJECTS.md).
+*Natija:* 4 ta chizma namuna, har biri 3 s: asosiy modelda past va joriy chegarada ham 1 hodisa (ilgichdagi kiyim), kichik modelda 2 va 0. Yangi tuzatish kiritilmagan; real misollar kerak. Hisobot: [docs/PPE-203_NON_HUMAN_OBJECTS.md](docs/PPE-203_NON_HUMAN_OBJECTS.md).
 
 ### PPE-302 · Hodisa holati va filtr · P1 · 3 SP · O'tkirbek (Bajarildi ✅)
 
 Qabul mezonlari: "yangi / ko'rildi / hal qilindi" holatlari; sana, tur va zona bo'yicha filtr. Baza migratsiyasida eski hodisalar saqlanadi.
 
-*Natija:* `app/db.py` da avtomatik `status` ustuni migratsiyasi va sana, holat, yetishmayotgan vosita, zona hamda kamera bo'yicha filtrlash qo'shildi. `app/main.py` da statusni yangilash API endpointi (`POST /api/incidents/{id}/status`) yaratildi. Web interfeysida (`static/index.html`, `static/app.js`, `static/style.css`) interaktiv status nishonlari (badge) va filtr elementlari joriy etildi hamda testlar bilan to'liq qoplandi (`tests/test_incident_status.py`).
+*Natija:* holatlar, migratsiya va sana, holat, tur, zona filtrlari; testlar o'tgan, zona filtri va holat tugmasi headless Chrome'da vaqtinchalik bazada tekshirilgan. Haqiqiy foydalanishda hali sinalmagan.
 
-### PPE-401 · Qo'shimcha himoya vositalari tadqiqoti · P1 · 3 SP · O'tkirbek (Bajarildi ✅)
+### PPE-401 · Qo'shimcha himoya vositalari tadqiqoti · P1 · 3 SP · O'tkirbek (Jarayonda: real kadrlarda o'lchov yo'q)
 
 Qabul mezoni: ko'zoynak, qo'lqop va niqob uchun real kadrlarda o'lchov va har biri bo'yicha "qilamiz / qilmaymiz" qarori.
 
-*Natija:* 1080p kameralarda 5–15 m masofadagi piksellar o'lchami tahlil qilindi. Ko'zoynak va qo'lqop uchun umumiy kuzatuv kameralarida "QILMAYMIZ" qarori, niqob/respirator uchun esa zonaviy maxsus qoida sifatida "QILAMIZ" qarori qabul qilindi va texnik asoslandi: [docs/PPE-401_ADDITIONAL_PPE_RESEARCH.md](docs/PPE-401_ADDITIONAL_PPE_RESEARCH.md).
+*Natija:* faqat nazariy piksel hisobi va dastlabki mulohazalar; qaror qabul qilinmagan. [docs/PPE-401_ADDITIONAL_PPE_RESEARCH.md](docs/PPE-401_ADDITIONAL_PPE_RESEARCH.md).
 
-### PPE-402 · Jilet nazoratini sinash · P1 · 2 SP · O'tkirbek (Bajarildi ✅)
+### PPE-402 · Jilet nazoratini sinash · P1 · 2 SP · O'tkirbek (Jarayonda: dastlabki o'lchov)
 
 Qabul mezoni: jiletli va jiletsiz real kadrlarda precision va recall o'lchangan.
 
-*Natija:* `tools/eval_vest.py` skripti orqali real fotosuratlarda har ikkala model o'lchandi. `ppe_yolov8s.pt` 100% Precision va 100% Recall ko'rsatdi, `ppe_yolov8n_alt.pt` esa qorong'i kiyimlar sababli 25% Precision berdi. `REQUIRE_VEST=1` faqat asosiy model bilan yoqilishi bo'yicha texnik xulosa tayyorlandi: [docs/PPE-402_VEST_BENCHMARK.md](docs/PPE-402_VEST_BENCHMARK.md).
+*Natija:* 5 ta surat, sonlar bo'yicha (IoU'siz): asosiy model TP 2, FP 0, FN 0; kichik model TP 2, FP 6, FN 0. Ijobiy misollar bitta suratda; kengroq va ramkali baholash kerak. [docs/PPE-402_VEST_BENCHMARK.md](docs/PPE-402_VEST_BENCHMARK.md).
 
 ### PPE-601 · Docker va avtomatik qayta ishga tushish · P0 · 3 SP · O'tkirbek (Jarayonda: docker va systemd tayyorlandi)
 
@@ -220,7 +240,7 @@ Qabul mezoni: kamera yoki xizmat to'xtasa, Telegramga xabar keladi. Butun kompyu
 
 ## Sprint 3: Masshtab va pilot (2 hafta)
 
-### PPE-202 · "Noto'g'ri signal" tugmasi · P1 · 5 SP · Durbek
+### PPE-202 · "Noto'g'ri signal" tugmasi · P1 · 5 SP · Durbek (Bajarildi ✅)
 
 Qabul mezonlari:
 
@@ -228,10 +248,14 @@ Qabul mezonlari:
 - Belgi bazada saqlanadi, hisobotdan chiqariladi.
 - Belgilangan suratlarni qayta o'qitish uchun eksport qilsa bo'ladi. Buning uchun ramkasiz asl kadr ham saqlanadi.
 
-### PPE-603 · Bir nechta kamera · P1 · 8 SP · Durbek
+*Natija:* belgilash, hisobotdan chiqarish va eksport tekshirildi.
+
+### PPE-603 · Bir nechta kamera · P1 · 8 SP · Durbek (Bajarildi ✅)
 
 Bog'liqlik: PPE-301, PPE-502.
 Qabul mezonlari: kamida 2 kamera bitta panelda; zona va hodisalar kameraga bog'langan; tanlangan qurilmada FPS o'lchangan.
+
+*Natija:* ikki oqim (video fayl va soxta tarmoq kamerasi) bilan panel, zonalar va uzilish tekshirildi. FPS (Apple M5 Pro, demo video): 1 kamera 30.0; 2 — 26.9; 3 — 18.3; 4 — 13.6. Pilot qurilmasida qayta o'lchanadi.
 
 ### PPE-304 · Haftalik/oylik trend va eksport · P2 · 5 SP · O'tkirbek
 

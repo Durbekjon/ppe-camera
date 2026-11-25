@@ -1,108 +1,66 @@
-# PPE-203: Odam bo'lmagan obyektlardagi (plakat, logotip, maneken) signallar tahlili
+# PPE-203: Odam bo'lmagan obyektlardagi signallar
 
-**Ijrochi:** O'tkirbek  
-**Sana:** 2026-11-25  
-**Holat:** Bajarildi ✅  
+**Ijrochi:** O'tkirbek
+**Sana:** 2026-11-25
+**Holat:** Jarayonda (chizma namunalarda o'lchandi; real plakat yoki maneken misollari kerak)
 
----
+## Qabul mezoni
+Logotip va plakat misollari test to'plamiga qo'shilgan, ulardagi soxta signallar soni oldin va keyin o'lchangan.
 
-## 1. Qabul mezoni va maqsad
+## Namunalar
+`testdata/non_human/` dagi 4 ta rasm **kod bilan chizilgan sodda shakllar**: kaskali plakat, ogohlantirish belgisi, ilgichdagi jilet va kaska, odam silueti. Ular real suratlarning o'rnini bosmaydi.
 
-- **Qabul mezoni:** Logotip va plakat misollari test to'plamiga qo'shilgan, ulardagi soxta signallar soni oldin va keyin o'lchangan.
-- **Muammo tavsifi:** Qurilish maydonlarida ko'pincha mehnat muhofazasi bo'yicha ilingan plakatlar (kaska chizilgan belgilar, odam siluetlari), mashina va uskuna logotiplari (sariq/to'q sariq stikerlar), kiyim osilgan shtativlar yoki manekenlar mavjud bo'ladi. Detektor ularni odam yoki kaska deb xato aniqlashi (False Positive) va tizimda yolg'on ovozli/Telegram ogohlantirishlar berishi mumkin.
-
----
-
-## 2. Test to'plamiga qo'shilgan namunalar
-
-`testdata/non_human/` katalogida 4 ta standart odam bo'lmagan sinov holatlari shakllantirildi:
-
-| Fayl nomi | Tasvir tavsifi | Soxta signal xavfi |
-|---|---|---|
-| `poster_safety_helmet.jpg` | "DIQQAT: XAVFLI ZONA. Kaskasiz kirish taqiqlanadi" yozuvli sariq xavfsizlik plakati va kaska chizmasi | Kaska belgisi kaska (`helmet`) deb qabul qilinishi mumkin |
-| `logo_warning_sign.jpg` | Sariq ogohlantirish uchburchagi va "KOMATSU INDUSTRIAL CORP" logotipi | Sariq rang va shakl kaska yoki jilet bilan adashishi mumkin |
-| `jacket_stand_dummy.jpg` | Shtativga osilgan signal jileti va sariq kaska (maneken / kiyim ilgich) | Odam tanasisiz kaska va jilet, yoki odam deb o'ylash |
-| `poster_silhouette.jpg` | Mehnat muhofazasi bo'yicha odam silueti va ogohlantirish matni | Odam silueti `person` deb tanilib, kaskasiz qoidabuzar deb hisoblanishi mumkin |
-
----
-
-## 3. O'lchov vositasi va metodologiyasi
-
-Baholash `tools/eval_non_human.py` skripti orqali amalga oshirildi. Sinov 2 xil bosqichda taqqoslandi:
-1. **Oldin (Boshlang'ich tizim):** Chegaralar past (`conf=0.20`, `gear_conf=0.20`), odamning minimal bo'yi bo'yicha filtr yo'q, vaqtinchalik filtrlash (`debounce=0.0s`).
-2. **Keyin (Optimallashgan ishlab chiqarish tizimi):** Tavsiya etilgan chegaralar (`CONF=0.40`, `GEAR_CONF=0.25`), minimal odam bo'yi (`MIN_PERSON_HEIGHT=0.15`), ByteTrack orqali kuzatish va `debounce=1.5s` filtrlari.
-
----
-
-## 4. O'lchov natijalari (Oldin va Keyin)
-
-CLI skript orqali olingan haqiqiy loglar:
+## Usul
+Har bir rasm 3 soniya (30 FPS) kamerada turgandek ilovaning hodisa mantig'iga beriladi. Debounce ikkala holatda ham bir xil (1.5 s), faqat ishonch chegarasi farq qiladi. "Hodisa" bazaga yoziladigan hodisani bildiradi.
 
 ```bash
-PYTHONPATH=. .venv/bin/python tools/eval_non_human.py
+.venv/bin/python -m tools.eval_non_human
 ```
-
-### 4.1. Model `ppe_yolov8s.pt` (Asosiy)
 
 ```text
-=======================================================
-Baholanayotgan model: ppe_yolov8s.pt
-=======================================================
+== ppe_yolov8s.pt (har rasm 3 s, 30 FPS, debounce 1.5 s)
+-- past chegara: CONF=0.2, GEAR_CONF=0.2
+   jacket_stand_dummy.jpg       hodisa=1  ['person:0.73', 'vest:0.60', 'helmet:0.22']
+   logo_warning_sign.jpg        hodisa=0  []
+   poster_safety_helmet.jpg     hodisa=0  ['helmet:0.67']
+   poster_silhouette.jpg        hodisa=0  []
+   JAMI: topilgan obyekt=4, yozilgan hodisa=1
+-- joriy chegara: CONF=0.4, GEAR_CONF=0.25
+   jacket_stand_dummy.jpg       hodisa=1  ['person:0.73', 'vest:0.60']
+   logo_warning_sign.jpg        hodisa=0  []
+   poster_safety_helmet.jpg     hodisa=0  ['helmet:0.67']
+   poster_silhouette.jpg        hodisa=0  []
+   JAMI: topilgan obyekt=3, yozilgan hodisa=1
 
-Tasvir                       | Oldin (conf=0.20) Dets                       | Keyin (CONF=0.40/0.25)   
-----------------------------------------------------------------------------------------------------
-jacket_stand_dummy.jpg       | ['person:0.73', 'vest:0.60', 'helmet:0.22']  | ['person:0.73', 'vest:0.60']
-logo_warning_sign.jpg        | []                                           | []                       
-poster_safety_helmet.jpg     | ['helmet:0.67']                              | ['helmet:0.67']          
-poster_silhouette.jpg        | []                                           | []                       
-----------------------------------------------------------------------------------------------------
-Jami soxta xom signallar (Raw Detection FPs):
-  • Oldin (Filtrsiz / past chegara): 4 ta
-  • Keyin (Tavsiya etilgan sozlamalar): 3 ta
-  • Xom soxta signallar kamayishi: 25.0%
-
-Hodisa signallari darajasida (Pipeline Incident Events):
-  • Oldin (Debounce yo'q, conf=0.20): 1 ta hodisa
-  • Keyin (Debounce 1.5s, CONF=0.4): 0 ta hodisa (1-kadr shovqinlari to'liq bloklandi ✅)
+== ppe_yolov8n_alt.pt (har rasm 3 s, 30 FPS, debounce 1.5 s)
+-- past chegara: CONF=0.2, GEAR_CONF=0.2
+   jacket_stand_dummy.jpg       hodisa=1  ['helmet:0.48', 'person:0.25']
+   logo_warning_sign.jpg        hodisa=0  []
+   poster_safety_helmet.jpg     hodisa=0  ['helmet:0.28']
+   poster_silhouette.jpg        hodisa=1  ['person:0.26']
+   JAMI: topilgan obyekt=4, yozilgan hodisa=2
+-- joriy chegara: CONF=0.4, GEAR_CONF=0.25
+   jacket_stand_dummy.jpg       hodisa=0  ['helmet:0.48']
+   logo_warning_sign.jpg        hodisa=0  []
+   poster_safety_helmet.jpg     hodisa=0  ['helmet:0.28']
+   poster_silhouette.jpg        hodisa=0  []
+   JAMI: topilgan obyekt=2, yozilgan hodisa=0
 ```
 
-### 4.2. Model `ppe_yolov8n_alt.pt` (Alternativ)
+## Xulosa
 
-```text
-=======================================================
-Baholanayotgan model: ppe_yolov8n_alt.pt
-=======================================================
+| Model | Past chegara (0.20) | Joriy chegara (0.4 / 0.25) |
+|---|---|---|
+| `ppe_yolov8s.pt` (asosiy) | 1 hodisa | **1 hodisa** (ilgichdagi kiyim) |
+| `ppe_yolov8n_alt.pt` | 2 hodisa | 0 hodisa |
 
-Tasvir                       | Oldin (conf=0.20) Dets         | Keyin (CONF=0.40/0.25)   
-----------------------------------------------------------------------------------------------------
-jacket_stand_dummy.jpg       | ['helmet:0.48', 'person:0.25'] | ['helmet:0.48']          
-logo_warning_sign.jpg        | []                             | []                       
-poster_safety_helmet.jpg     | ['helmet:0.28']                | ['helmet:0.28']          
-poster_silhouette.jpg        | ['person:0.26']                | []                       
-----------------------------------------------------------------------------------------------------
-Jami soxta xom signallar (Raw Detection FPs):
-  • Oldin (Filtrsiz / past chegara): 4 ta
-  • Keyin (Tavsiya etilgan sozlamalar): 2 ta
-  • Xom soxta signallar kamayishi: 50.0%
+- **Asosiy modelda yaxshilanish yo'q:** ilgichdagi kiyim `person:0.73` deb topiladi va hodisa yoziladi.
+- Kichik modelda joriy chegara bu 4 ta namunadagi hodisalarni yo'qotdi. Bu boshqa tasvirlarga umumlashtirilmaydi.
+- "Joriy chegara" yangi tuzatish emas, ilovada avvaldan bor sozlama.
+- Odamsiz kaska rasmi hodisa bermaydi, chunki hodisa faqat odam ramkasi bo'yicha yoziladi.
+- Debounce faqat qisqa tebranishlarni to'sadi. Qo'zg'almas obyekt 1.5 s dan uzoq tursa, to'smaydi.
+- Hozirgi chora: "Noto'g'ri signal" tugmasi (PPE-202). U hodisani hisobotdan chiqaradi, lekin keyingi signallarni to'xtatmaydi.
 
-Hodisa signallari darajasida (Pipeline Incident Events):
-  • Oldin (Debounce yo'q, conf=0.20): 1 ta hodisa
-  • Keyin (Debounce 1.5s, CONF=0.4): 0 ta hodisa (1-kadr shovqinlari to'liq bloklandi ✅)
-```
-
----
-
-## 5. Tahlil va mexanizmlar
-
-1. **Plakatdagi kaska rasmi nima uchun xatolik tug'dirmaydi:**
-   - Plakatdagi kaska grafikasi `helmet:0.67` deb topilgan taqdirda ham, uning atrofida hech qanday `person` (odam) aniqlanmaydi.
-   - `app/violations.py` arxitekturasida barcha hodisalar faqat **odam treklari (`Track`)** asosida hisoblanadi. Agar odam bo'lmasa, yakka kaska hech qachon qoidabuzarlik, audio yoki Telegram signali keltirib chiqarmaydi.
-
-2. **Plakatdagi odam silueti:**
-   - Past chegarada (`conf=0.20`) siluet xira odam deb topilgan (`person:0.26`), ammo tavsiya etilgan `CONF=0.40` chegarasi ushbu soxta signallarni 100% yo'qotdi.
-
-3. **Kiyim ilgich va manekenlar (`jacket_stand_dummy.jpg`):**
-   - Agar shtativdagi kiyim odam shakliga juda o'xshash bo'lsa (0.73), tizimdagi bir nechta himoya qatlamlari ishga tushadi:
-     1. **`MIN_PERSON_HEIGHT=0.15`**: Kichik obyektlar avtomatik chiqarib tashlanadi.
-     2. **Debounce (1.5 soniya)**: Vaqtinchalik kadr tebranishlari natijasida paydo bo'ladigan xom signallar darhol signal bermaydi.
-     3. **PPE-202 ("Noto'g'ri signal" tugmasi)**: Agar statik obyekt qoidabuzar deb saqlanib qolsa, nazoratchi dashboard orqali bir marta "Noto'g'ri signal" belgisini bosadi. Obyekt hisobotlardan o'chiriladi va keyinchalik modelni qayta o'qitish uchun `data/exports` ga ajratib olinadi.
+## Qolgan ishlar
+1. Real plakat, logotip va maneken suratlarini (ruxsati va litsenziyasi aniq) qo'shish.
+2. Ularni odamsiz misol sifatida qayta o'qitishga (PPE-201) kiritish va oldin hamda keyin o'lchash.

@@ -134,10 +134,16 @@ async function loadIncidents() {
   const st = $('filter-status')?.value || '';
   const ms = $('filter-missing')?.value || '';
   const dt = $('filter-date')?.value || '';
+  await loadZoneFilter();
+  const zn = $('filter-zone').value;
   let url = '/api/incidents?limit=50';
   if (st) url += '&status=' + encodeURIComponent(st);
   if (ms) url += '&missing=' + encodeURIComponent(ms);
   if (dt) url += '&date=' + encodeURIComponent(dt);
+  // option values carry a prefix, so a zone called "1" cannot be mistaken for "any zone"
+  if (zn === 'any') url += '&zone=1';
+  else if (zn === 'none') url += '&zone=0';
+  else if (zn) url += '&zone_name=' + encodeURIComponent(zn.slice(5));
 
   const list = await getJSON(url);
   const ul = $('incidents');
@@ -211,6 +217,17 @@ async function loadIncidents() {
 $('filter-status').onchange = loadIncidents;
 $('filter-missing').onchange = loadIncidents;
 $('filter-date').onchange = loadIncidents;
+$('filter-zone').onchange = loadIncidents;
+
+async function loadZoneFilter() {
+  const { names } = await getJSON('/api/incidents/zone-names');
+  const select = $('filter-zone'), chosen = select.value;
+  const options = [['', 'Zona: Barchasi'], ['any', 'Zonada (hammasi)'], ['none', 'Zonadan tashqari'],
+    ...names.map((n) => ['name:' + n, n])];
+  if (select.options.length === options.length && options.every(([v], i) => select.options[i].value === v)) return;
+  select.replaceChildren(...options.map(([value, text]) => new Option(text, value)));
+  select.value = options.some(([v]) => v === chosen) ? chosen : '';
+}
 
 // ---------- report ----------
 function today() { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }

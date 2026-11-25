@@ -52,7 +52,27 @@
   </section>
 
   <section class="card incidents-card">
-    <h2>Hodisalar <span id="incident-count" class="muted"></span></h2>
+    <div class="incidents-head">
+      <h2>Hodisalar <span id="incident-count" class="muted"></span></h2>
+      <div class="filters">
+        <select id="filter-status" title="Holat bo'yicha filtr">
+          <option value="">Holat: Barchasi</option>
+          <option value="yangi">Yangi</option>
+          <option value="ko'rildi">Ko'rildi</option>
+          <option value="hal_qilindi">Hal qilindi</option>
+        </select>
+        <select id="filter-missing" title="Tur bo'yicha filtr">
+          <option value="">Qoida: Barchasi</option>
+          <option value="helmet">Kaskasiz</option>
+          <option value="vest">Jiletsiz</option>
+          <option value="entry">Taqiqlangan hudud</option>
+        </select>
+        <select id="filter-zone" title="Zona bo'yicha filtr">
+          <option value="">Zona: Barchasi</option>
+        </select>
+        <input type="date" id="filter-date" title="Sana bo'yicha filtr">
+      </div>
+    </div>
     <ul id="incidents"></ul>
   </section>
 

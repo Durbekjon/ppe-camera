@@ -200,21 +200,29 @@ Qabul mezonlari:
 
 *Natija:* kamerada old tomondan yuz yashirilishi tasdiqlandi; saqlash muddati testlar bilan tekshirilgan. Xiralashtirish kafolatli emas, yon tomondan sinov tavsiya etiladi. Eski suratlar o'zgartirilmagan.
 
-### PPE-203 · Odam bo'lmagan obyektlardagi signallar · P1 · 3 SP · O'tkirbek
+### PPE-203 · Odam bo'lmagan obyektlardagi signallar · P1 · 3 SP · O'tkirbek (Jarayonda: chizma namunalarda o'lchandi)
 
 Qabul mezoni: logotip va plakat misollari test to'plamiga qo'shilgan, ulardagi soxta signallar soni oldin va keyin o'lchangan.
 
-### PPE-302 · Hodisa holati va filtr · P1 · 3 SP · O'tkirbek
+*Natija:* 4 ta chizma namuna, har biri 3 s: asosiy modelda past va joriy chegarada ham 1 hodisa (ilgichdagi kiyim), kichik modelda 2 va 0. Yangi tuzatish kiritilmagan; real misollar kerak. Hisobot: [docs/PPE-203_NON_HUMAN_OBJECTS.md](docs/PPE-203_NON_HUMAN_OBJECTS.md).
+
+### PPE-302 · Hodisa holati va filtr · P1 · 3 SP · O'tkirbek (Bajarildi ✅)
 
 Qabul mezonlari: "yangi / ko'rildi / hal qilindi" holatlari; sana, tur va zona bo'yicha filtr. Baza migratsiyasida eski hodisalar saqlanadi.
 
-### PPE-401 · Qo'shimcha himoya vositalari tadqiqoti · P1 · 3 SP · O'tkirbek
+*Natija:* holatlar, migratsiya va sana, holat, tur, zona filtrlari; testlar o'tgan, zona filtri va holat tugmasi headless Chrome'da vaqtinchalik bazada tekshirilgan. Haqiqiy foydalanishda hali sinalmagan.
+
+### PPE-401 · Qo'shimcha himoya vositalari tadqiqoti · P1 · 3 SP · O'tkirbek (Jarayonda: real kadrlarda o'lchov yo'q)
 
 Qabul mezoni: ko'zoynak, qo'lqop va niqob uchun real kadrlarda o'lchov va har biri bo'yicha "qilamiz / qilmaymiz" qarori.
 
-### PPE-402 · Jilet nazoratini sinash · P1 · 2 SP · O'tkirbek
+*Natija:* faqat nazariy piksel hisobi va dastlabki mulohazalar; qaror qabul qilinmagan. [docs/PPE-401_ADDITIONAL_PPE_RESEARCH.md](docs/PPE-401_ADDITIONAL_PPE_RESEARCH.md).
+
+### PPE-402 · Jilet nazoratini sinash · P1 · 2 SP · O'tkirbek (Jarayonda: dastlabki o'lchov)
 
 Qabul mezoni: jiletli va jiletsiz real kadrlarda precision va recall o'lchangan.
+
+*Natija:* 5 ta surat, sonlar bo'yicha (IoU'siz): asosiy model TP 2, FP 0, FN 0; kichik model TP 2, FP 6, FN 0. Ijobiy misollar bitta suratda; kengroq va ramkali baholash kerak. [docs/PPE-402_VEST_BENCHMARK.md](docs/PPE-402_VEST_BENCHMARK.md).
 
 ### PPE-601 · Docker va avtomatik qayta ishga tushish · P0 · 3 SP · O'tkirbek (Jarayonda: docker va systemd tayyorlandi)
 

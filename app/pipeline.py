@@ -2,15 +2,15 @@
 import logging
 import threading
 import time
+from datetime import datetime
 
 import cv2
 
-import json
 import os
 
 import numpy as np
 
-from . import config
+from . import config, zones
 from .alerts import AlertManager, describe
 from .detector import HELMET, VEST, Detector
 from .video import VideoSource
@@ -19,7 +19,9 @@ from .violations import ViolationEngine
 log = logging.getLogger("pipeline")
 
 GREEN, AMBER, RED, WHITE = (80, 200, 60), (40, 170, 250), (40, 40, 230), (255, 255, 255)
-ZONE_FILE = config.DATA / "zone.json"
+ZONE_FILE = config.DATA / "zones.json"
+LEGACY_ZONE_FILE = config.DATA / "zone.json"
+GREY = (150, 150, 150)
 
 
 def draw_box(frame, box, color, label, thickness=2):
@@ -39,8 +41,7 @@ class Pipeline:
         self.engine = ViolationEngine(config.DEBOUNCE_S, config.COOLDOWN_S, config.REQUIRE_VEST, config.HELMET_RULE, config.CONF, config.RESOLVE_S, config.REJOIN_S)
         self.alerts = AlertManager()
         self.state = {"status": "safe", "people": 0, "violators": 0}
-        if ZONE_FILE.exists():
-            self.engine.zone = [tuple(p) for p in json.loads(ZONE_FILE.read_text())]
+        self.engine.zones = zones.load(ZONE_FILE, LEGACY_ZONE_FILE)
         self.fps = 0.0
         self.voice = {"seq": 0, "missing": "helmet", "zone": False}  # latest spoken warning
         self._voice_at = 0.0
@@ -86,30 +87,40 @@ class Pipeline:
         self.engine.reset()
         log.info("Demo rejimi: %s (manba: %s)", "yoqildi" if on else "o'chirildi", self.video.label)
 
-    def set_zone(self, points):
-        # Corners clicked within 4% of the frame border snap to the border, so a zone drawn
-        # "to the edge" also contains people whose feet are cut off by the frame.
-        def snap(v):
-            return 0.0 if v < 0.04 else 1.0 if v > 0.96 else float(v)
+    def set_zones(self, items):
+        """Replace all zones (raises ValueError for invalid input)."""
+        parsed = zones.parse(items)
+        zones.save(ZONE_FILE, parsed)
+        self.engine.zones = parsed
+        log.info("Zonalar saqlandi: %d ta", len(parsed))
 
-        self.engine.zone = [(snap(x), snap(y)) for x, y in points]
-        ZONE_FILE.parent.mkdir(exist_ok=True)
-        ZONE_FILE.write_text(json.dumps(self.engine.zone))
-        log.info("Xavfli zona %s", f"saqlandi ({len(points)} nuqta)" if points else "o'chirildi")
+    def _draw_zones(self, frame, clock, alarms):
+        h, w = frame.shape[:2]
+        for z in self.engine.zones:
+            pts = np.array([(int(x * w), int(y * h)) for x, y in z.points], np.int32)
+            color = RED if z.active(clock) else GREY
+            if z.active(clock):
+                alpha = 0.35 if z.name in alarms else 0.15
+                overlay = frame.copy()
+                cv2.fillPoly(overlay, [pts], color)
+                cv2.addWeighted(overlay, alpha, frame, 1 - alpha, 0, frame)
+            cv2.polylines(frame, [pts], True, color, 2, cv2.LINE_AA)
+            # OpenCV's built-in font is ASCII only.
+            label = z.name.replace("\u2018", "'").replace("\u2019", "'").replace("\u02bb", "'")
+            x, y = pts.min(axis=0)
+            cv2.putText(frame, label.encode("ascii", "replace").decode(), (int(x) + 4, max(int(y) + 18, 76)),  # stay below the alarm banner
+                       
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.55, WHITE, 1, cv2.LINE_AA)
 
     def process(self, frame, now):
         """Detect, update violation state, annotate the frame in place and raise alerts."""
         h, w = frame.shape[:2]
         detections = self.detector.detect(frame)
-        people, events = self.engine.update(detections, now, (w, h))
-        zone_alarm = any(t.confirmed and t.in_zone for t in people)
-
-        if len(self.engine.zone) >= 3:
-            pts = np.array([(int(x * w), int(y * h)) for x, y in self.engine.zone], np.int32)
-            overlay = frame.copy()
-            cv2.fillPoly(overlay, [pts], RED)
-            cv2.addWeighted(overlay, 0.35 if zone_alarm else 0.15, frame, 0.65 if zone_alarm else 0.85, 0, frame)
-            cv2.polylines(frame, [pts], True, RED, 2, cv2.LINE_AA)
+        clock = datetime.now().strftime("%H:%M")
+        people, events = self.engine.update(detections, now, (w, h), clock)
+        alarmed = [t for t in people if t.confirmed and t.in_zone]
+        zone_alarm = bool(alarmed)
+        self._draw_zones(frame, clock, {t.zone_name for t in alarmed})
         for d in detections:
             if d.role in (HELMET, VEST):
                 x1, y1, x2, y2 = (int(v) for v in d.box)
@@ -122,8 +133,9 @@ class Pipeline:
                 draw_box(frame, t.box, color, f"#{t.id} {describe(t.missing) or '...'}", 3 if t.confirmed else 2)
         if zone_alarm:
             cv2.rectangle(frame, (0, 0), (w, 56), RED, -1)
-            (tw, _), _ = cv2.getTextSize("XAVFLI ZONA", cv2.FONT_HERSHEY_DUPLEX, 1.4, 3)
-            cv2.putText(frame, "XAVFLI ZONA", ((w - tw) // 2, 42), cv2.FONT_HERSHEY_DUPLEX, 1.4, WHITE, 3, cv2.LINE_AA)
+            title = "KIRISH TAQIQLANGAN" if any("entry" in t.missing for t in alarmed) else "XAVFLI ZONA"
+            (tw, _), _ = cv2.getTextSize(title, cv2.FONT_HERSHEY_DUPLEX, 1.4, 3)
+            cv2.putText(frame, title, ((w - tw) // 2, 42), cv2.FONT_HERSHEY_DUPLEX, 1.4, WHITE, 3, cv2.LINE_AA)
 
         violators = sum(t.confirmed for t in people)
         self.state = {
@@ -142,7 +154,8 @@ class Pipeline:
         if self.voice["zone"] and not event.zone and now - self._voice_at < 1.0:
             return
         self._voice_at = now
-        self.voice = {"seq": self.voice["seq"] + 1, "missing": event.missing[0], "zone": event.zone}
+        self.voice = {"seq": self.voice["seq"] + 1, "missing": "entry" if "entry" in event.missing else event.missing[0],
+                      "zone": event.zone}
 
     def _run(self):
         last_seq, last_log, times = 0, time.monotonic(), []

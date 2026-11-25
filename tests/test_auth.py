@@ -20,10 +20,10 @@ def sign_in(client, name, password=PASSWORD):
 
 
 def test_video_api_and_snapshots_need_login(client):
-    for path in ("/video", "/api/status", "/api/incidents", "/api/report", "/api/zone", "/api/me",
+    for path in ("/video", "/api/status", "/api/incidents", "/api/report", "/api/zones", "/api/me",
                  "/snapshots/x.jpg", "/static/app.js", "/static/index.html", "/docs", "/openapi.json"):
         assert client.get(path).status_code == 401, path
-    for path in ("/api/zone", "/api/demo", "/api/telegram-test"):
+    for path in ("/api/zones", "/api/demo", "/api/telegram-test"):
         assert client.post(path, json={}).status_code == 401, path
     r = client.get("/", follow_redirects=False)
     assert r.status_code == 303 and r.headers["location"] == "/login"
@@ -49,7 +49,7 @@ def test_cookie_is_protected_and_logout_ends_the_session(client):
 def test_supervisor_can_watch_but_not_change(client):
     sign_in(client, "watcher")
     assert client.get("/api/incidents").status_code == 200
-    for path in ("/api/zone", "/api/demo", "/api/telegram-test"):
+    for path in ("/api/zones", "/api/demo", "/api/telegram-test"):
         assert client.post(path, json={}).status_code == 403, path
     assert client.post("/api/logout").status_code == 200
 

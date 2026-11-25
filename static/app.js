@@ -1,5 +1,5 @@
 const $ = (id) => document.getElementById(id);
-const LABEL = { helmet: 'Kaskasiz', vest: 'Jiletsiz' };
+const LABEL = { helmet: 'Kaskasiz', vest: 'Jiletsiz', entry: 'Taqiqlangan hududda' };
 const STATUS = { safe: 'Xavfsiz', danger: 'Xavf', zone: 'Xavfli zona', offline: 'Kamera yo\'q' };
 
 // ---------- sound ----------
@@ -25,7 +25,7 @@ function beep(freq, seconds, volume, at = 0) {
 function playAlert(incident) {
   if (!soundOn) return;
   const zone = !!incident.zone;
-  const key = zone ? 'zone' : incident.missing;
+  const key = incident.missing === 'entry' ? 'entry' : zone ? 'zone' : incident.missing;
   const audio = $('a-' + key);
   let delay = 0;
   if (zone) { for (let i = 0; i < 4; i++) beep(i % 2 ? 660 : 990, 0.2, 0.5, i * 0.22); delay = 900; }
@@ -97,7 +97,7 @@ async function loadIncidents() {
     const what = document.createElement('div');
     what.className = 'what';
     what.textContent = it.missing.split(',').map((m) => LABEL[m] || m).join(', ');
-    if (it.zone) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = 'XAVFLI ZONA'; what.append(b); }
+    if (it.zone) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = it.zone_name || 'XAVFLI ZONA'; what.append(b); }
     const when = document.createElement('div');
     when.className = 'when'; when.textContent = `№${it.id} · ${it.ts}`;
     div.append(what, when);
@@ -155,6 +155,8 @@ function setDrawing(on) {
   canvas.classList.toggle('drawing', on);
   $('btn-draw').classList.toggle('active', on);
   $('btn-save').hidden = $('btn-cancel').hidden = !on;
+  $('zone-form').hidden = !on;
+  if (on) { $('zone-form').reset(); $('zone-form').elements.name.value = nextName(); }
   $('hint').textContent = on ? 'Video ustiga bosib nuqtalar qo\'ying (kamida 3 ta), so\'ng "Saqlash" tugmasini bosing.' : '';
   redraw();
 }
@@ -166,17 +168,51 @@ canvas.onclick = (e) => {
 };
 $('btn-draw').onclick = () => setDrawing(!drawing);
 $('btn-cancel').onclick = () => setDrawing(false);
+let zones = [];
+
+function nextName() {
+  let n = 1;
+  while (zones.some((z) => z.name.toLowerCase() === `zona ${n}`)) n++;
+  return `Zona ${n}`;
+}
+
+function showZones() {
+  const ul = $('zones');
+  ul.replaceChildren();
+  zones.forEach((z, i) => {
+    const li = document.createElement('li');
+    const text = document.createElement('span');
+    const rule = z.rule === 'no_entry' ? 'hech kim kirmasin' : 'himoya vositasi shart';
+    text.textContent = `${z.name} · ${rule} · ${z.start ? `${z.start}–${z.end}` : 'doim'}`;
+    const del = document.createElement('button');
+    del.className = 'admin-only'; del.textContent = "O'chirish";
+    del.onclick = () => saveZones(zones.filter((_, j) => j !== i), `"${z.name}" o'chirildi.`);
+    li.append(text, del);
+    ul.append(li);
+  });
+}
+
+async function saveZones(next, message) {
+  try {
+    const r = await getJSON('/api/zones', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ zones: next }) });
+    zones = r.zones;
+    showZones();
+    $('hint').textContent = message;
+    return true;
+  } catch (err) { $('hint').textContent = err.message; return false; }
+}
+
+$('zone-form').onsubmit = (e) => { e.preventDefault(); $('btn-save').click(); };
 $('btn-save').onclick = async () => {
   if (points.length < 3) { $('hint').textContent = 'Kamida 3 ta nuqta kerak.'; return; }
-  await getJSON('/api/zone', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ points }) });
-  setDrawing(false);
-  $('hint').textContent = 'Xavfli zona saqlandi.';
+  const zone = { ...Object.fromEntries(new FormData($('zone-form'))), points };
+  if (await saveZones([...zones, zone], 'Zona saqlandi.')) {
+    const message = $('hint').textContent;
+    setDrawing(false);
+    $('hint').textContent = message;
+  }
 };
-$('btn-clear').onclick = async () => {
-  await getJSON('/api/zone', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ points: [] }) });
-  setDrawing(false);
-  $('hint').textContent = 'Xavfli zona o\'chirildi.';
-};
+getJSON('/api/zones').then((r) => { zones = r.zones; showZones(); });
 window.addEventListener('resize', redraw);
 
 // ---------- demo mode + telegram test ----------

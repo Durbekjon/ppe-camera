@@ -72,8 +72,10 @@ camera/file -> app/video.py (newest frame, auto-reconnect)
 app/main.py serves the MJPEG stream, the JSON API and static/ (dashboard)
 ```
 
-- Danger zone: **Xavfli zonani chizish**, click corners on the video, **Saqlash**. A person is "in the zone" when the
-  bottom-centre of their box is inside the polygon. If the box reaches the bottom edge (feet out of view), the centre of the box counts too. The zone is kept in `data/zone.json`.
+- Danger zones (up to 10): **Zona qo'shish**, click corners on the video, set a name, a rule (**Himoya vositasi shart**: a
+  worker without gear raises a zone alert; **Hech kim kirmasin**: anyone inside does) and optional working hours
+  (computer's local time, may run over midnight), then **Saqlash**. To change a zone, delete it and draw it again. A person is "in the zone" when the
+  bottom-centre of their box is inside the polygon. If the box reaches the bottom edge (feet out of view), the centre of the box counts too. Zones are kept in `data/zones.json`; an old `data/zone.json` is converted on first start and left in place.
 - Incidents: `data/incidents.db` (SQLite) and `data/snapshots/`.
 - Voice files are generated once with `edge-tts` (voice `uz-UZ-SardorNeural`) into `static/audio/` and reused offline.
 

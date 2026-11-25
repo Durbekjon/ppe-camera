@@ -14,7 +14,7 @@ from . import config, db
 log = logging.getLogger("alerts")
 
 SNAPSHOTS = config.DATA / "snapshots"
-LABELS = {"helmet": "kaskasiz", "vest": "jiletsiz"}
+LABELS = {"helmet": "kaskasiz", "vest": "jiletsiz", "entry": "taqiqlangan hududda"}
 
 
 def describe(missing):
@@ -95,12 +95,19 @@ class AlertManager:
         ts = now.strftime("%Y-%m-%d %H:%M:%S")
         name = f"{now.strftime('%Y%m%d_%H%M%S')}_{event.track_id}.jpg"
         cv2.imwrite(str(SNAPSHOTS / name), frame)
-        incident_id = db.add_incident(ts, event.missing, event.zone, event.track_id, name)
+        incident_id = db.add_incident(ts, event.missing, event.zone, event.track_id, name, event.zone_name)
         what = describe(event.missing)
-        log.warning("HODISA #%d: ishchi %s%s", incident_id, what, " — XAVFLI ZONA" if event.zone else "")
+        where = f" — zona: {event.zone_name}" if event.zone else ""
+        log.warning("HODISA #%d: ishchi %s%s", incident_id, what, where)
         if telegram_configured():
-            head = "🚨 XAVFLI ZONA! Ishchi himoyasiz" if event.zone else "⚠️ Xavfsizlik qoidasi buzildi"
-            caption = f"{head}\nHolat: ishchi {what}\nVaqt: {ts}\nHodisa №{incident_id}"
+            if "entry" in event.missing:
+                head = "🚨 TAQIQLANGAN HUDUDGA KIRILDI!"
+            elif event.zone:
+                head = "🚨 XAVFLI ZONA! Ishchi himoyasiz"
+            else:
+                head = "⚠️ Xavfsizlik qoidasi buzildi"
+            place = f"\nZona: {event.zone_name}" if event.zone_name else ""
+            caption = f"{head}\nHolat: ishchi {what}{place}\nVaqt: {ts}\nHodisa №{incident_id}"
             line = f"№{incident_id} — ishchi {what}, {ts}"
             try:
                 self._queue.put_nowait((event.zone, (caption, str(SNAPSHOTS / name), line)))

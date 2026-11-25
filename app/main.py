@@ -2,6 +2,7 @@
 import logging
 import time
 from contextlib import asynccontextmanager
+from dataclasses import asdict
 from datetime import date as date_cls
 
 from fastapi import FastAPI, HTTPException, Request, Response
@@ -147,21 +148,30 @@ def report(date: str = ""):
     return db.report(date or date_cls.today().isoformat())
 
 
-class Zone(BaseModel):
+class ZoneIn(BaseModel):
+    name: str
     points: list[tuple[float, float]]
+    rule: str = "helmet"
+    start: str = ""
+    end: str = ""
 
 
-@app.get("/api/zone")
-def get_zone():
-    return {"points": pipeline.engine.zone}
+class Zones(BaseModel):
+    zones: list[ZoneIn]
 
 
-@app.post("/api/zone")
-def set_zone(zone: Zone):
-    if zone.points and len(zone.points) < 3:
-        raise HTTPException(400, "Zona uchun kamida 3 ta nuqta kerak")
-    pipeline.set_zone(zone.points)
-    return {"points": pipeline.engine.zone}
+@app.get("/api/zones")
+def get_zones():
+    return {"zones": [asdict(z) for z in pipeline.engine.zones]}
+
+
+@app.post("/api/zones")
+def set_zones(body: Zones):
+    try:
+        pipeline.set_zones([z.model_dump() for z in body.zones])
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return get_zones()
 
 
 class Demo(BaseModel):

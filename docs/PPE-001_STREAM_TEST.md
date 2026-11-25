@@ -10,9 +10,9 @@
 
 | Qabul mezoni | Talab | Natija | Holat |
 |---|---|---|---|
-| **Webcam sinovi** | 10 daqiqa uzluksiz, barqaror FPS | 10 daqiqa uzluksiz ishladi, o'rtacha 25.0 FPS | Bajarildi ✅ |
+| **Webcam sinovi** | 10 daqiqa uzluksiz, barqaror FPS | 10 daqiqa va 25.0 FPS deb xabar qilingan; log biriktirilmagan | Tasdiqlanmagan 🟡 |
 | **Telefon oqimi (IP Camera)** | 10 daqiqa uzluksiz, Wi-Fi orqali oqim | Lokal stream va fake_camera da 25.1 FPS barqaror; real Wi-Fi telefon kamerasida 10 daqiqa sinov kutilmoqda | Jarayonda 🟡 |
-| **Oqim uzilganda qayta ulanish** | Aloqa uzilganda tizim to'xtamasdan o'zi qayta ulanishi | Aloqa uzilganda 1.0–1.8 s ichida avtomatik qayta ulandi | Bajarildi ✅ |
+| **Oqim uzilganda qayta ulanish** | Aloqa uzilganda tizim to'xtamasdan o'zi qayta ulanishi | 1.0–1.8 s deb xabar qilingan; log biriktirilmagan | Tasdiqlanmagan 🟡 |
 | **Topilgan muammolar** | Alohida ticket qilib yozish | 3 ta ticket shakllantirildi (quyida) | Bajarildi ✅ |
 
 ---
@@ -26,6 +26,8 @@
 - **Kadr o'lchami:** 960 px kenglikka moslashtirilgan (CPU yukini kamaytirish uchun)
 
 ### 2.2. FPS va kechikish ko'rsatkichlari
+
+> ⚠️ 2.2 va 2.3-bo'limlardagi 10 daqiqalik va qayta ulanish raqamlari uchun log biriktirilmagan. Qabul uchun ular qayta o'lchanishi kerak. 2.4-bo'limdagi log video fayl bilan 10 soniyalik sinov.
 
 | Sinov stsenariysi | Kadrlar soni | O'rtacha FPS | Kadrlar oralig'i (ms) | Xatoliklar |
 |---|---|---|---|---|

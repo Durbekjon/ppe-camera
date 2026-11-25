@@ -11,7 +11,7 @@ from dataclasses import replace
 
 import numpy as np
 
-from . import alerts, config, privacy
+from . import config, privacy
 from .alerts import describe
 from .detector import HELMET, PERSON, VEST
 from .video import VideoSource
@@ -163,14 +163,20 @@ class Pipeline:
                 self._cam_disconnected_at = now
             elif now - self._cam_disconnected_at > 10.0 and not self._cam_alert_sent:
                 self._cam_alert_sent = True
-                log.error("%s: Kamera uzildi: Telegram ogohlantirish yuborildi (%s)", self.name, video.label)
-                alerts.send_background(f"🚨 OGOHLANTIRISH: [{self.name}] kamerasi bilan aloqa uzildi!\nManba: {video.label}")
+                log.error("%s: kamera uzildi (%s)", self.name, video.label)
+                self._notify(f"🚨 OGOHLANTIRISH: [{self.name}] kamerasi bilan aloqa uzildi!\nManba: {video.label}")
         else:
             if self._cam_alert_sent:
                 self._cam_alert_sent = False
-                log.info("%s: Kamera qayta ulandi: Telegram xabari yuborildi (%s)", self.name, video.label)
-                alerts.send_background(f"✅ [{self.name}] kamerasi bilan aloqa qayta tiklandi: {video.label}")
+                log.info("%s: kamera qayta ulandi (%s)", self.name, video.label)
+                self._notify(f"✅ [{self.name}] kamerasi bilan aloqa qayta tiklandi: {video.label}")
             self._cam_disconnected_at = None
+
+    def _notify(self, text):
+        try:  # the time matters: after an outage the message may arrive much later
+            self.alerts.notify(f"{text}\nVaqt: {datetime.now():%Y-%m-%d %H:%M:%S}")
+        except Exception:  # must not stop the video loop
+            log.exception("%s: kamera xabarini navbatga qo'shib bo'lmadi", self.name)
 
     def _run(self):
         last_seq, last_log, times = 0, time.monotonic(), []

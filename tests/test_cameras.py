@@ -135,9 +135,11 @@ def test_health_checks_all_cameras(setup):
 
 def test_camera_disconnect_alert_contains_camera_name(monkeypatch):
     sent = []
-    monkeypatch.setattr(alerts, "send_background", lambda msg: sent.append(msg))
+    class Recorder:
+        def notify(self, text):
+            sent.append(text)
 
-    p = hub.Pipeline("Darvoza", 1, "0", None, None, hub.Voice())
+    p = hub.Pipeline("Darvoza", 1, "0", None, Recorder(), hub.Voice())
     p.video.connected = False
 
     # Call actual pipeline code: disconnected at t=100.0

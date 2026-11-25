@@ -167,13 +167,13 @@ class Pipeline:
                     self._cam_disconnected_at = now
                 elif now - self._cam_disconnected_at > 10.0 and not self._cam_alert_sent:
                     self._cam_alert_sent = True
-                    log.error("Kamera uzildi: Telegram ogohlantirish yuborildi (%s)", video.label)
-                    alerts.send_background(f"🚨 OGOHLANTIRISH: Kamera bilan aloqa uzildi!\nManba: {video.label}")
+                    log.error("%s: Kamera uzildi: Telegram ogohlantirish yuborildi (%s)", self.name, video.label)
+                    alerts.send_background(f"🚨 OGOHLANTIRISH: [{self.name}] kamerasi bilan aloqa uzildi!\nManba: {video.label}")
             else:
                 if self._cam_alert_sent:
                     self._cam_alert_sent = False
-                    log.info("Kamera qayta ulandi: Telegram xabari yuborildi (%s)", video.label)
-                    alerts.send_background(f"✅ Kamera bilan aloqa qayta tiklandi: {video.label}")
+                    log.info("%s: Kamera qayta ulandi: Telegram xabari yuborildi (%s)", self.name, video.label)
+                    alerts.send_background(f"✅ [{self.name}] kamerasi bilan aloqa qayta tiklandi: {video.label}")
                 self._cam_disconnected_at = None
 
             seq, frame = video.read()

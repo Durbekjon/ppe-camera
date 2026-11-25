@@ -100,3 +100,67 @@ def test_unknown_camera_and_frames(setup):
     assert client.get("/api/frame?camera=Sex").content == b"jpegbytes"
     client.cookies.clear()
     assert client.get("/api/frame?camera=Sex").status_code == 401
+
+
+def test_health_checks_all_cameras(setup):
+    _, cameras, client = setup
+    # Public endpoint: no auth needed
+    client.cookies.clear()
+    r = client.get("/api/health")
+    assert r.status_code == 200
+    data = r.json()
+    assert "people" not in data
+    assert data["status"] == "warning"
+    assert data["camera"] is False
+    assert "Kirish" in data["cameras"] and "Sex" in data["cameras"]
+    assert data["cameras"]["Kirish"]["connected"] is False
+
+    # One connected, one disconnected -> still warning
+    cameras.cameras["Kirish"].video.connected = True
+    cameras.cameras["Kirish"].fps = 12.5
+    data = client.get("/api/health").json()
+    assert data["status"] == "warning"
+    assert data["camera"] is False
+    assert data["cameras"]["Kirish"]["connected"] is True
+    assert data["cameras"]["Sex"]["connected"] is False
+
+    # Both connected -> ok
+    cameras.cameras["Sex"].video.connected = True
+    cameras.cameras["Sex"].fps = 17.5
+    data = client.get("/api/health").json()
+    assert data["status"] == "ok"
+    assert data["camera"] is True
+    assert data["fps"] == 30.0
+
+
+def test_camera_disconnect_alert_contains_camera_name(monkeypatch):
+    sent = []
+    monkeypatch.setattr(alerts, "send_background", lambda msg: sent.append(msg))
+
+    p = hub.Pipeline("Darvoza", 1, "0", None, alerts.AlertManager(), hub.Voice())
+    p.video.connected = False
+
+    # Simulate run loop logic for disconnect
+    p._cam_disconnected_at = 100.0
+    # Simulate now = 111.0 (> 10s elapsed)
+    now = 111.0
+    if not p.video.connected:
+        if p._cam_disconnected_at is None:
+            p._cam_disconnected_at = now
+        elif now - p._cam_disconnected_at > 10.0 and not p._cam_alert_sent:
+            p._cam_alert_sent = True
+            alerts.send_background(f"🚨 OGOHLANTIRISH: [{p.name}] kamerasi bilan aloqa uzildi!\nManba: {p.video.label}")
+
+    assert len(sent) == 1
+    assert "[Darvoza]" in sent[0]
+    assert "aloqa uzildi" in sent[0]
+
+    # Reconnect
+    p.video.connected = True
+    if p.video.connected and p._cam_alert_sent:
+        p._cam_alert_sent = False
+        alerts.send_background(f"✅ [{p.name}] kamerasi bilan aloqa qayta tiklandi: {p.video.label}")
+
+    assert len(sent) == 2
+    assert "[Darvoza]" in sent[1]
+    assert "aloqa qayta tiklandi" in sent[1]

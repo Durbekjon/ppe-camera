@@ -28,6 +28,15 @@ Sana: 2026-11-25. Bu yuridik maslahat emas. Tijoriy sotuvdan oldin yurist tekshi
 
 Eslatma: C tanlansa, PPE-201 bahosi (8 SP) qayta ko'riladi.
 
+## Holat (2026-11-25)
+Loyiha egasi: **tijoriy mahsulot bo'lish ehtimoli bor.** Shuning uchun yuqoridagi taklifning "tijoriy mahsulot rejalansa" yo'li dolzarb:
+- [ ] PPE-201 (qayta o'qitish) dan oldin C ni sinash: CPU tezligi va belgilangan test to'plamida aniqlik (`tools/evaluate.py`; model boshqa kutubxonada bo'lsa, skriptdagi `predict` moslanadi).
+- [ ] Nomzod modelning kod, og'irlik va o'quv ma'lumotlari litsenziyasini o'z manbasidan tekshirish.
+- [ ] C yetarli bo'lmasa, Ultralytics'dan Enterprise narxi va shartlarini so'rash.
+- [ ] Tijoriy sotuvdan oldin yurist ko'rigi.
+
+A, B yoki C hali tanlanmagan.
+
 ## Qaror
 - [ ] A  - [ ] B  - [ ] C
 - Kim va qachon:

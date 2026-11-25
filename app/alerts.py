@@ -9,11 +9,12 @@ from datetime import datetime
 import cv2
 import requests
 
-from . import config, db
+from . import config, db, privacy
 
 log = logging.getLogger("alerts")
 
 SNAPSHOTS = config.DATA / "snapshots"
+CLEANUP_EVERY_S = 3600
 LABELS = {"helmet": "kaskasiz", "vest": "jiletsiz", "entry": "taqiqlangan hududda"}
 
 
@@ -81,20 +82,39 @@ def group_caption(items):
     return "\n".join([f"⚠️ Xavfsizlik qoidasi buzildi: {len(lines)} ta hodisa", *shown])
 
 
+def expire_snapshots():
+    """Delete snapshots past the retention period and unlink them from their incidents."""
+    for name in privacy.delete_old_snapshots(SNAPSHOTS, config.RETENTION_DAYS):
+        db.execute("UPDATE incidents SET snapshot = '' WHERE snapshot = ?", (name,))
+
+
 class AlertManager:
     def __init__(self):
         SNAPSHOTS.mkdir(parents=True, exist_ok=True)
         self._queue = queue.Queue(maxsize=20)
         threading.Thread(target=self._worker, daemon=True, name="telegram").start()
+        threading.Thread(target=self._cleanup_loop, daemon=True, name="cleanup").start()
         if not telegram_configured():
             log.warning("Telegram sozlanmagan (TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID yo'q): xabarlar yuborilmaydi")
 
-    def handle(self, event, frame):
-        """Called from the pipeline thread with the annotated frame."""
+    def _cleanup_loop(self):
+        while True:
+            try:
+                expire_snapshots()
+            except Exception:
+                log.exception("Eski suratlarni tozalashda xato")
+            time.sleep(CLEANUP_EVERY_S)
+
+    def handle(self, event, frame, regions=None):
+        """Called from the pipeline thread with the annotated frame.
+
+        `regions` are the areas to blur, found on the clean frame; None means search `frame` itself.
+        """
         now = datetime.now()
         ts = now.strftime("%Y-%m-%d %H:%M:%S")
         name = f"{now.strftime('%Y%m%d_%H%M%S')}_{event.track_id}.jpg"
-        cv2.imwrite(str(SNAPSHOTS / name), frame)
+        # The same blurred file goes to the dashboard and to Telegram.
+        cv2.imwrite(str(SNAPSHOTS / name), privacy.anonymize(frame, regions))
         incident_id = db.add_incident(ts, event.missing, event.zone, event.track_id, name, event.zone_name)
         what = describe(event.missing)
         where = f" — zona: {event.zone_name}" if event.zone else ""

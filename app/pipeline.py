@@ -10,9 +10,9 @@ import os
 
 import numpy as np
 
-from . import config, zones
+from . import config, privacy, zones
 from .alerts import AlertManager, describe
-from .detector import HELMET, VEST, Detector
+from .detector import HELMET, PERSON, VEST, Detector
 from .video import VideoSource
 from .violations import ViolationEngine
 
@@ -120,6 +120,13 @@ class Pipeline:
         people, events = self.engine.update(detections, now, (w, h), clock)
         alarmed = [t for t in people if t.confirmed and t.in_zone]
         zone_alarm = bool(alarmed)
+        regions = None
+        if config.BLUR_FACES and any(e.record for e in events):
+            try:  # faces are searched before anything is drawn over them
+                regions = privacy.face_regions(frame, [d.box for d in detections if d.role == PERSON])
+            except Exception:
+                log.exception("Yuzlarni topishda xato")
+                regions = [(0, 0, w, h)]  # fail closed: blur everything
         self._draw_zones(frame, clock, {t.zone_name for t in alarmed})
         for d in detections:
             if d.role in (HELMET, VEST):
@@ -145,7 +152,7 @@ class Pipeline:
         }
         for e in events:
             if e.record:
-                self.alerts.handle(e, frame)
+                self.alerts.handle(e, frame, regions)
         if events:
             self._warn(max(events, key=lambda e: e.zone), now)
 

@@ -54,6 +54,8 @@ Demo mode plays `data/demo.mp4` in a loop and needs no internet.
 | `DEBOUNCE_S` / `COOLDOWN_S` | `1.5` / `15` | Violation must last this long / gap between voice reminders |
 | `RESOLVE_S` / `REJOIN_S` | `5` / `10` | Compliance needed to end a violation / longest disappearance after which a worker nearby with a new ID continues the same incident. `COOLDOWN_S` now only spaces voice reminders and repeat zone entries |
 | `TELEGRAM_GROUP_S` | `5` | Ordinary alerts within this window share one Telegram message; zone alerts are sent at once |
+| `BLUR_FACES` | `1` | Blur faces in saved and Telegram snapshots (plus the head area of people on whom no face was found). The live video is not blurred |
+| `RETENTION_DAYS` | `30` | Snapshots older than this are deleted at start-up and hourly; incident rows stay. `0` keeps everything. No raw frames are stored; any future feature that stores them must follow the same two rules |
 | `PORT` | `8000` | Dashboard port |
 
 **Phone as camera.** iPhone: with Continuity Camera the phone appears as a webcam (try `VIDEO_SOURCE=1`).
@@ -89,6 +91,10 @@ app/main.py serves the MJPEG stream, the JSON API and static/ (dashboard)
   (MIT, YOLOv8n, faster). Use with `MODEL_PATH=models/ppe_yolov8n_alt.pt`.
 - The Ultralytics library is **AGPL-3.0**: fine for a demo, but a closed commercial product needs their enterprise licence.
 - Test photos in `testdata/images/` are from Wikimedia Commons (CC0 / public domain) and the Ultralytics samples.
+
+Face detection uses [YuNet](https://github.com/opencv/opencv_zoo/tree/main/models/face_detection_yunet)
+(`models/face_yunet_2023mar.onnx`, MIT). Blurring is best-effort: check real snapshots before relying on it.
+Snapshots saved before this feature are not blurred (see `tools/blur_snapshots.py`).
 
 ## Testing tools
 

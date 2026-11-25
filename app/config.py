@@ -48,6 +48,10 @@ REJOIN_S = float(os.getenv("REJOIN_S", "10"))
 # Ordinary alerts raised within this many seconds share one Telegram message. Zone alerts are never delayed.
 TELEGRAM_GROUP_S = float(os.getenv("TELEGRAM_GROUP_S", "5"))
 
+# Privacy: faces in saved and sent snapshots are blurred; snapshots expire after this many days (0 = keep).
+BLUR_FACES = _flag("BLUR_FACES", "1")
+RETENTION_DAYS = int(os.getenv("RETENTION_DAYS", "30"))
+
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 

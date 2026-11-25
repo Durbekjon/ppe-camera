@@ -1,5 +1,6 @@
 """FastAPI app: live MJPEG stream, JSON API and the dashboard page."""
 import logging
+import re
 import time
 from contextlib import asynccontextmanager
 from dataclasses import asdict
@@ -40,6 +41,8 @@ COOKIE = "session"
 PUBLIC = {"/login", "/api/login", "/static/style.css", "/static/login.js"}
 # Any request that changes something needs the admin role, except signing out.
 ANY_ROLE_POSTS = {"/api/logout"}
+# Reviewing alerts is the supervisor's job, so this change is open to both roles.
+REVIEW_PATH = re.compile(r"/api/incidents/\d+/false-alarm")
 LOOPBACK = {"127.0.0.1", "::1"}
 
 
@@ -55,7 +58,8 @@ async def require_login(request: Request, call_next):
             if path == "/":
                 return RedirectResponse("/login", status_code=303)
             return JSONResponse({"detail": "Tizimga kiring"}, status_code=401)
-        if request.method not in ("GET", "HEAD") and path not in ANY_ROLE_POSTS and user["role"] != auth.ADMIN:
+        if request.method not in ("GET", "HEAD") and path not in ANY_ROLE_POSTS \
+                and not REVIEW_PATH.fullmatch(path) and user["role"] != auth.ADMIN:
             return JSONResponse({"detail": "Bu amal faqat admin uchun"}, status_code=403)
         request.state.user = user
     response = await call_next(request)
@@ -141,6 +145,19 @@ def status():
 @app.get("/api/incidents")
 def incidents(limit: int = 30):
     return db.list_incidents(min(limit, 200))
+
+
+class FalseAlarm(BaseModel):
+    value: bool
+
+
+@app.post("/api/incidents/{incident_id}/false-alarm")
+def false_alarm(incident_id: int, body: FalseAlarm, request: Request):
+    if not db.set_false_alarm(incident_id, body.value):
+        raise HTTPException(404, "Hodisa topilmadi")
+    log.info("Hodisa #%d: noto'g'ri signal belgisi %s (%s)", incident_id,
+             "qo'yildi" if body.value else "olindi", request.state.user["username"])
+    return {"id": incident_id, "false_alarm": body.value}
 
 
 @app.get("/api/report")

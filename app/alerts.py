@@ -2,6 +2,7 @@
 import json
 import logging
 import queue
+import shutil
 import threading
 import time
 from datetime import datetime
@@ -9,7 +10,7 @@ from datetime import datetime
 import cv2
 import requests
 
-from . import config, db, privacy
+from . import config, dataset, db, privacy
 
 log = logging.getLogger("alerts")
 
@@ -86,6 +87,13 @@ def expire_snapshots():
     """Delete snapshots past the retention period and unlink them from their incidents."""
     for name in privacy.delete_old_snapshots(SNAPSHOTS, config.RETENTION_DAYS):
         db.execute("UPDATE incidents SET snapshot = '' WHERE snapshot = ?", (name,))
+    # Stored clean frames and exported copies follow the same retention rule.
+    for name in privacy.delete_old_snapshots(dataset.RAW, config.RETENTION_DAYS):
+        db.execute("UPDATE incidents SET raw = '', detections = '' WHERE raw = ?", (name,))
+    if dataset.EXPORTS.is_dir():
+        for folder in [p for p in dataset.EXPORTS.iterdir() if p.is_dir()]:
+            if privacy.delete_old_snapshots(folder, config.RETENTION_DAYS) and not any(folder.glob("*.jpg")):
+                shutil.rmtree(folder)  # the labels file goes with the last image
 
 
 class AlertManager:
@@ -105,17 +113,26 @@ class AlertManager:
                 log.exception("Eski suratlarni tozalashda xato")
             time.sleep(CLEANUP_EVERY_S)
 
-    def handle(self, event, frame, regions=None):
+    def handle(self, event, frame, regions=None, clean=None, detections=()):
         """Called from the pipeline thread with the annotated frame.
 
         `regions` are the areas to blur, found on the clean frame; None means search `frame` itself.
+        `clean` is the frame before drawing; it is stored (blurred the same way) for retraining.
         """
         now = datetime.now()
         ts = now.strftime("%Y-%m-%d %H:%M:%S")
         name = f"{now.strftime('%Y%m%d_%H%M%S')}_{event.track_id}.jpg"
         # The same blurred file goes to the dashboard and to Telegram.
         cv2.imwrite(str(SNAPSHOTS / name), privacy.anonymize(frame, regions))
-        incident_id = db.add_incident(ts, event.missing, event.zone, event.track_id, name, event.zone_name)
+        raw, seen = "", ""
+        if clean is not None and config.SAVE_RAW:
+            dataset.RAW.mkdir(parents=True, exist_ok=True)
+            if cv2.imwrite(str(dataset.RAW / name), privacy.anonymize(clean, regions)):
+                raw = name
+                seen = json.dumps([
+                    {"role": d.role, "conf": round(d.conf, 3), "box": [round(v, 1) for v in d.box]} for d in detections
+                ])
+        incident_id = db.add_incident(ts, event.missing, event.zone, event.track_id, name, event.zone_name, raw, seen)
         what = describe(event.missing)
         where = f" — zona: {event.zone_name}" if event.zone else ""
         log.warning("HODISA #%d: ishchi %s%s", incident_id, what, where)

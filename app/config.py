@@ -52,6 +52,9 @@ TELEGRAM_GROUP_S = float(os.getenv("TELEGRAM_GROUP_S", "5"))
 BLUR_FACES = _flag("BLUR_FACES", "1")
 RETENTION_DAYS = int(os.getenv("RETENTION_DAYS", "30"))
 
+# Keep a clean (blurred) frame per incident so false alarms can be exported for retraining.
+SAVE_RAW = _flag("SAVE_RAW", "1")
+
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 

@@ -88,6 +88,7 @@ async function loadIncidents() {
   for (const it of list) {
     const li = document.createElement('li');
     if (it.zone) li.className = 'zone';
+    if (it.false_alarm) li.classList.add('false-alarm');
     let picture;
     if (it.snapshot) {
       picture = document.createElement('a');
@@ -106,7 +107,21 @@ async function loadIncidents() {
     if (it.zone) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = it.zone_name || 'XAVFLI ZONA'; what.append(b); }
     const when = document.createElement('div');
     when.className = 'when'; when.textContent = `№${it.id} · ${it.ts}`;
-    div.append(what, when);
+    const mark = document.createElement('button');
+    mark.className = 'mark';
+    mark.textContent = it.false_alarm ? 'Belgini olib tashlash' : "Noto'g'ri signal";
+    mark.onclick = async () => {
+      mark.disabled = true;
+      try {
+        await getJSON(`/api/incidents/${it.id}/false-alarm`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ value: !it.false_alarm }),
+        });
+        await loadIncidents();
+        loadReport();
+      } catch (err) { mark.disabled = false; $('hint').textContent = err.message; }
+    };
+    if (it.false_alarm) when.textContent += " · noto'g'ri signal (hisobotga kirmaydi)";
+    div.append(what, when, mark);
     li.append(picture, div);
     ul.append(li);
   }

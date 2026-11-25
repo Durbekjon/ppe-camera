@@ -3,7 +3,7 @@ const LABEL = { helmet: 'Kaskasiz', vest: 'Jiletsiz', entry: 'Taqiqlangan hududd
 const STATUS = { safe: 'Xavfsiz', danger: 'Xavf', zone: 'Xavfli zona', offline: 'Kamera yo\'q' };
 
 // ---------- sound ----------
-let soundOn = false, audioCtx = null, lastIncident = null, lastVoice = null;
+let soundOn = false, audioCtx = null, lastIncident = null, lastVoice = null, lastReviews = null;
 
 $('btn-sound').onclick = () => {
   soundOn = true;
@@ -113,6 +113,9 @@ async function poll() {
     // voice warnings (including reminders) are separate from new incidents
     if (lastVoice !== null && s.voice.seq !== lastVoice && s.voice.seq > 0) playAlert(s.voice);
     lastVoice = s.voice.seq;
+    // a mark made elsewhere (Telegram button, another tab)
+    if (lastReviews !== null && s.reviews !== lastReviews) { loadIncidents(); loadReport(); }
+    lastReviews = s.reviews;
     if (lastIncident === null) { lastIncident = s.last_incident_id; loadIncidents(); loadReport(); }
     else if (s.last_incident_id > lastIncident) {
       await loadIncidents();

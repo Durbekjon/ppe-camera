@@ -213,6 +213,7 @@ def status(camera: str = ""):
         "telegram": alerts.telegram_configured(),
         "require_vest": config.REQUIRE_VEST,
         "last_incident_id": db.last_id(),
+        "reviews": db.review_count,
         "voice": hub.voice.latest,
     }
 

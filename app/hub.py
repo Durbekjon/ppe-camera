@@ -3,7 +3,8 @@ import logging
 import threading
 
 from . import config, tts, zones
-from .alerts import AlertManager
+from .alerts import AlertManager, telegram_configured
+from .telegram_bot import ButtonListener
 from .cameras import parse_cameras
 from .detector import Detector
 from .pipeline import Pipeline
@@ -79,8 +80,14 @@ class Hub:
     def start(self):
         for p in self.cameras.values():
             p.start()
+        self.buttons = None
+        if config.TELEGRAM_BUTTONS and telegram_configured():
+            self.buttons = ButtonListener()
+            self.buttons.start()
 
     def stop(self):
+        if getattr(self, "buttons", None):
+            self.buttons.stop()
         for p in self.cameras.values():
             p.stop()
         self.alerts.close()

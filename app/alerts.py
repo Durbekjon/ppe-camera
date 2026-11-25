@@ -11,7 +11,7 @@ from datetime import datetime
 import cv2
 import requests
 
-from . import config, dataset, db, outbox, privacy
+from . import config, dataset, db, outbox, privacy, telegram_bot
 
 log = logging.getLogger("alerts")
 
@@ -29,22 +29,24 @@ def telegram_configured():
     return bool(config.TELEGRAM_BOT_TOKEN and config.TELEGRAM_CHAT_ID)
 
 
-def telegram_send(caption, photo_path=None):
+def telegram_send(caption, photo_path=None, reply_markup=None):
     """Send a message (with optional photo). Returns (ok, error text)."""
     if not telegram_configured():
         return False, "Telegram sozlanmagan"
     base = f"https://api.telegram.org/bot{config.TELEGRAM_BOT_TOKEN}"
+    buttons = {"reply_markup": json.dumps(reply_markup)} if reply_markup else {}
     try:
         if photo_path:
             with open(photo_path, "rb") as f:
                 r = requests.post(
                     f"{base}/sendPhoto",
-                    data={"chat_id": config.TELEGRAM_CHAT_ID, "caption": caption},
+                    data={"chat_id": config.TELEGRAM_CHAT_ID, "caption": caption, **buttons},
                     files={"photo": f},
                     timeout=10,
                 )
         else:
-            r = requests.post(f"{base}/sendMessage", data={"chat_id": config.TELEGRAM_CHAT_ID, "text": caption}, timeout=10)
+            r = requests.post(f"{base}/sendMessage", data={"chat_id": config.TELEGRAM_CHAT_ID, "text": caption, **buttons},
+                              timeout=10)
         if r.ok:
             return True, ""
         return False, f"HTTP {r.status_code}: {r.json().get('description', '')}"
@@ -84,19 +86,38 @@ def group_caption(lines):
     return "\n".join([f"⚠️ Xavfsizlik qoidasi buzildi: {len(lines)} ta hodisa", *shown])
 
 
+def _incidents(rows):
+    return [tuple(item) for row in rows if row["incidents"] for item in json.loads(row["incidents"])]
+
+
+def _send_one(text, photo, items):
+    """One message, with buttons for `items` if they are switched on."""
+    if items and config.TELEGRAM_BUTTONS:
+        markup = telegram_bot.keyboard(items, with_numbers=len(items) > 1)
+        if markup["inline_keyboard"]:
+            return telegram_send(text, photo, markup)
+    return telegram_send(text, photo) if photo else telegram_send(text)
+
+
 def deliver(rows):
     """Send one message for these outbox rows. Returns (ok, error text)."""
     photos = [row["photo"] for row in rows if row["photo"] and Path(row["photo"]).is_file()]
     if len(rows) == 1:
-        if not rows[0]["photo"]:  # a text-only notice, such as a lost camera
-            return telegram_send(rows[0]["caption"])
-        if photos:
-            return telegram_send(rows[0]["caption"], photos[0])
-        return telegram_send(rows[0]["caption"] + "\n(surat saqlanmagan)")  # expired while waiting
+        row = rows[0]
+        text = row["caption"]
+        if row["photo"] and not photos:
+            text += "\n(surat saqlanmagan)"  # expired while waiting
+        return _send_one(text, photos[0] if photos else None, _incidents(rows))
     caption = group_caption([row["line"] for row in rows])
     if len(photos) > 1:
-        return telegram_send_album(caption, photos)
-    return telegram_send(caption, photos[0] if photos else None)
+        result = telegram_send_album(caption, photos)
+        items = _incidents(rows)
+        if result[0] and items and config.TELEGRAM_BUTTONS:
+            # Telegram allows no buttons on an album: they follow in a message of their own, retried by
+            # itself so that a failure never sends the photos again.
+            outbox.add(True, "Albomdagi hodisalar uchun tugmalar:", "", "albom tugmalari", incidents=items)
+        return result
+    return _send_one(caption, photos[0] if photos else None, _incidents(rows))
 
 
 def expire_snapshots():
@@ -209,7 +230,7 @@ class AlertManager:
             place += f"\nZona: {event.zone_name}" if event.zone_name else ""
             caption = f"{head}\nHolat: ishchi {what}{place}\nVaqt: {ts}\nHodisa №{incident_id}"
             line = f"№{incident_id}{source} — ishchi {what}, {ts}"
-            outbox.add(event.zone, caption, str(SNAPSHOTS / name), line)
+            outbox.add(event.zone, caption, str(SNAPSHOTS / name), line, incidents=[(incident_id, ts)])
             self._wake.set()
         return incident_id
 

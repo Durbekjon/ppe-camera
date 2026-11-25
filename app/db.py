@@ -7,6 +7,12 @@ from . import config
 
 _lock = threading.Lock()
 _conn = None
+review_count = 0  # grows when a status or false-alarm mark changes, so open dashboards reload
+
+
+def _reviewed():
+    global review_count
+    review_count += 1
 
 
 def init(path=None):
@@ -46,6 +52,9 @@ def init(path=None):
         "caption TEXT NOT NULL, photo TEXT NOT NULL, line TEXT NOT NULL, created REAL NOT NULL, "
         "next_try REAL NOT NULL, attempts INTEGER NOT NULL)"
     )
+    if "incidents" not in {r["name"] for r in _conn.execute("PRAGMA table_info(outbox)")}:
+        # JSON [[incident id, ts], ...]: which incidents the message's buttons act on
+        _conn.execute("ALTER TABLE outbox ADD COLUMN incidents TEXT NOT NULL DEFAULT ''")
     _conn.commit()
 
 
@@ -134,6 +143,7 @@ def set_status(incident_id, status):
     with _lock:
         cur = _conn.execute("UPDATE incidents SET status = ? WHERE id = ?", (status_clean, incident_id))
         _conn.commit()
+        _reviewed()
         return cur.rowcount == 1
 
 
@@ -142,6 +152,7 @@ def set_false_alarm(incident_id, value):
     with _lock:
         cur = _conn.execute("UPDATE incidents SET false_alarm = ? WHERE id = ?", (int(value), incident_id))
         _conn.commit()
+        _reviewed()
         return cur.rowcount == 1
 
 

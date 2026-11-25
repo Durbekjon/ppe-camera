@@ -34,6 +34,7 @@ class VideoSource:
     def stop(self):
         self._stop.set()
         self._thread.join(timeout=3)
+        self.connected = False
 
     def read(self):
         """Return (sequence number, newest frame). The frame is None until the first one arrives."""

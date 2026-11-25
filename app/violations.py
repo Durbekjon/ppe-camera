@@ -6,6 +6,9 @@ from dataclasses import dataclass, field
 
 from .detector import HELMET, NO_HELMET, PERSON, VEST
 from .tracker import PersonTracker
+from .zones import NO_ENTRY_RULE
+
+ENTRY = "entry"  # "what is wrong" marker for a person inside a no-entry zone
 
 CUT_OFF_MARGIN = 0.02  # a box ending this close to the bottom edge has its feet out of view
 MIN_PERSON_HEIGHT = 0.15  # people shorter than this fraction of the frame are too small to judge
@@ -56,11 +59,12 @@ class Track:
     id: int
     box: tuple
     last_seen: float
-    missing: tuple = ()  # what is missing right now: subset of ("helmet", "vest")
+    missing: tuple = ()  # what is wrong right now: subset of ("helmet", "vest", "entry")
     violating_since: float = None
     ok_since: float = None
     confirmed: bool = False  # violation has persisted past the debounce
     in_zone: bool = False
+    zone_name: str = ""
     first_seen: float = 0.0
     first_box: tuple = ()
     episode: "Episode" = None
@@ -74,8 +78,8 @@ class Episode:
     box: tuple
     last_seen: float
     ok_since: float = None
-    zone_last_inside: float = None
-    zone_recorded: float = -1e9
+    zone_last_inside: dict = field(default_factory=dict)  # zone name -> time
+    zone_recorded: dict = field(default_factory=dict)  # zone name -> time of last recorded entry
     last_alert: dict = field(default_factory=dict)  # level -> time of last voice warning
 
 
@@ -86,6 +90,7 @@ class Event:
     zone: bool
     box: tuple
     record: bool = True  # False: voice reminder only, no new incident
+    zone_name: str = ""
 
 
 class ViolationEngine:
@@ -98,11 +103,14 @@ class ViolationEngine:
         self.debounce = debounce
         self.cooldown = cooldown
         self.require_vest = require_vest
-        self.zone = []  # polygon as [(x, y), ...] in 0..1 frame coordinates
+        self.zones = []  # list of zones.Zone
         self.reset()
 
-    def update(self, detections, now, frame_size):
-        """Return (visible tracks, new alert events) for one frame."""
+    def update(self, detections, now, frame_size, clock=None):
+        """Return (visible tracks, new alert events) for one frame.
+
+        `clock` is the wall time "HH:MM" used for zone working hours (None: every zone is active).
+        """
         w, h = frame_size
         persons = [d for d in detections if d.role == PERSON and (d.box[3] - d.box[1]) >= MIN_PERSON_HEIGHT * h]
         visible = self._match(persons, now)
@@ -116,7 +124,15 @@ class ViolationEngine:
             points = [(fx, fy)]
             if t.box[3] >= (1 - CUT_OFF_MARGIN) * h:  # feet not visible (e.g. close to the camera)
                 points.append(_center(t.box))
-            t.in_zone = len(self.zone) >= 3 and any(point_in_polygon(x / w, y / h, self.zone) for x, y in points)
+            inside = [
+                z for z in self.zones
+                if z.active(clock) and any(point_in_polygon(x / w, y / h, z.points) for x, y in points)
+            ]
+            inside.sort(key=lambda z: z.rule != NO_ENTRY_RULE)  # the stricter rule wins where zones overlap
+            t.in_zone = bool(inside)
+            t.zone_name = inside[0].name if inside else ""
+            if inside and inside[0].rule == NO_ENTRY_RULE:
+                t.missing += (ENTRY,)
             self._debounce(t, now)
         visible_ids = {t.id for t in visible}
         for t in visible:
@@ -154,9 +170,10 @@ class ViolationEngine:
 
         entered_zone = False
         if t.in_zone:
-            was_away = ep.zone_last_inside is None or now - ep.zone_last_inside > self.resolve
-            entered_zone = was_away and now - ep.zone_recorded >= self.cooldown
-            ep.zone_last_inside = now
+            last = ep.zone_last_inside.get(t.zone_name)
+            was_away = last is None or now - last > self.resolve
+            entered_zone = was_away and now - ep.zone_recorded.get(t.zone_name, -1e9) >= self.cooldown
+            ep.zone_last_inside[t.zone_name] = now
         record = new or entered_zone
         level = "zone" if t.in_zone else "normal"
         if not record and now - ep.last_alert.get(level, -1e9) < self.cooldown:
@@ -165,8 +182,8 @@ class ViolationEngine:
         if t.in_zone:  # a zone alert also covers the ordinary one
             ep.last_alert["normal"] = now
             if record:
-                ep.zone_recorded = now
-        return Event(t.id, t.missing or ("helmet",), t.in_zone, t.box, record)
+                ep.zone_recorded[t.zone_name] = now
+        return Event(t.id, t.missing or ("helmet",), t.in_zone, t.box, record, t.zone_name)
 
     def _rejoin(self, t, visible_ids):
         """Find the episode of a recently lost worker that this new ID most likely continues."""

@@ -1,4 +1,5 @@
 from app.detector import HELMET, NO_HELMET, PERSON, VEST, Detection, role_of
+from app.zones import Zone
 from app.violations import ViolationEngine, point_in_polygon
 
 SIZE = (1000, 1000)
@@ -93,7 +94,7 @@ def test_point_in_polygon():
 
 def test_zone_escalates():
     engine = ViolationEngine()
-    engine.zone = SQUARE  # feet of P are at (0.5, 0.8) -> inside
+    engine.zones = [Zone("A", SQUARE)]  # feet of P are at (0.5, 0.8) -> inside
     events = run(engine, [[P, BARE]] * 30)
     assert len(events) == 1 and events[0][1].zone
 
@@ -102,20 +103,20 @@ def test_entering_zone_during_cooldown_escalates_once():
     engine = ViolationEngine()
     events = run(engine, [[P, BARE]] * 30)
     assert not events[0][1].zone
-    engine.zone = SQUARE
+    engine.zones = [Zone("A", SQUARE)]
     events = run(engine, [[P, BARE]] * 100, start=3.0)
     assert len(events) == 1 and events[0][1].zone
 
 
 def test_helmet_in_zone_is_fine():
     engine = ViolationEngine()
-    engine.zone = SQUARE
+    engine.zones = [Zone("A", SQUARE)]
     assert run(engine, [[P, HAT]] * 30) == []
 
 
 def test_person_cut_off_by_frame_bottom_is_in_edge_zone():
     engine = ViolationEngine()
-    engine.zone = SQUARE  # reaches y = 1.0
+    engine.zones = [Zone("A", SQUARE)]  # reaches y = 1.0
     cut = Detection(PERSON, 0.9, (400, 300, 600, 1000))
     events = run(engine, [[cut]] * 30)
     assert events[0][1].zone
@@ -191,23 +192,23 @@ def test_removing_helmet_again_is_a_new_incident():
 
 def test_staying_in_zone_is_recorded_once_and_reentry_again():
     engine = ViolationEngine()
-    engine.zone = SQUARE
+    engine.zones = [Zone("A", SQUARE)]
     assert len(recorded(run(engine, [[P, BARE]] * 400))) == 1
-    engine.zone = []  # outside for 20 s
+    engine.zones = []  # outside for 20 s
     assert recorded(run(engine, [[P, BARE]] * 200, start=40.0)) == []
-    engine.zone = SQUARE
+    engine.zones = [Zone("A", SQUARE)]
     again = recorded(run(engine, [[P, BARE]] * 20, start=60.0))
     assert len(again) == 1 and again[0][1].zone and again[0][0] == 60.0
 
 
 def test_close_up_person_with_hidden_feet_uses_box_centre():
     engine = ViolationEngine()
-    engine.zone = [(0.3, 0.2), (0.7, 0.2), (0.7, 0.75), (0.3, 0.75)]  # does not reach the bottom edge
+    engine.zones = [Zone("A", [(0.3, 0.2), (0.7, 0.2), (0.7, 0.75), (0.3, 0.75)])]  # does not reach the bottom edge
     close_up = Detection(PERSON, 0.9, (100, 10, 900, 998))
     assert run(engine, [[close_up]] * 30)[0][1].zone
 
 
 def test_visible_feet_outside_zone_ignore_box_centre():
     engine = ViolationEngine()
-    engine.zone = [(0.3, 0.2), (0.7, 0.2), (0.7, 0.75), (0.3, 0.75)]
+    engine.zones = [Zone("A", [(0.3, 0.2), (0.7, 0.2), (0.7, 0.75), (0.3, 0.75)])]
     assert not run(engine, [[P]] * 30)[0][1].zone  # centre is inside, feet (y=0.8) are not

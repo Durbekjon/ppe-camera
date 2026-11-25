@@ -23,6 +23,8 @@ def init(path=None):
             snapshot TEXT
         )"""
     )
+    if "zone_name" not in {r["name"] for r in _conn.execute("PRAGMA table_info(incidents)")}:
+        _conn.execute("ALTER TABLE incidents ADD COLUMN zone_name TEXT NOT NULL DEFAULT ''")  # keeps old rows
     _conn.execute(
         "CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, role TEXT NOT NULL, salt BLOB NOT NULL, hash BLOB NOT NULL)"
     )
@@ -43,11 +45,11 @@ def query(sql, params=()):
         return _conn.execute(sql, params).fetchall()
 
 
-def add_incident(ts, missing, zone, track_id, snapshot):
+def add_incident(ts, missing, zone, track_id, snapshot, zone_name=""):
     with _lock:
         cur = _conn.execute(
-            "INSERT INTO incidents (ts, missing, zone, track_id, snapshot) VALUES (?, ?, ?, ?, ?)",
-            (ts, ",".join(missing), int(zone), track_id, snapshot),
+            "INSERT INTO incidents (ts, missing, zone, track_id, snapshot, zone_name) VALUES (?, ?, ?, ?, ?, ?)",
+            (ts, ",".join(missing), int(zone), track_id, snapshot, zone_name),
         )
         _conn.commit()
         return cur.lastrowid

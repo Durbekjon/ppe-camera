@@ -11,6 +11,7 @@ AUDIO_DIR = config.ROOT / "static" / "audio"
 PHRASES = {
     "helmet": "Kaskangizni kiying!",
     "vest": "Himoya jiletingizni kiying!",
+    "entry": "Diqqat! Bu hududga kirish taqiqlangan! Darhol chiqing!",
     "zone": "Diqqat! Xavfli zona! Darhol kaskangizni kiying!",
 }
 

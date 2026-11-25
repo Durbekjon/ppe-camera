@@ -25,11 +25,20 @@
       <button id="btn-sound" class="primary">🔊 Ovozni yoqish</button>
       <label class="switch admin-only"><input type="checkbox" id="demo"> Demo rejimi</label>
       <span class="spacer"></span>
-      <button class="admin-only" id="btn-draw">Xavfli zonani chizish</button>
+      <button class="admin-only" id="btn-draw">Zona qo'shish</button>
       <button id="btn-save" hidden>Saqlash</button>
       <button id="btn-cancel" hidden>Bekor qilish</button>
-      <button class="admin-only" id="btn-clear">Zonani o'chirish</button>
     </div>
+    <form class="zone-form admin-only" id="zone-form" hidden>
+      <input name="name" placeholder="Zona nomi" maxlength="30" required>
+      <select name="rule">
+        <option value="helmet">Himoya vositasi shart</option>
+        <option value="no_entry">Hech kim kirmasin</option>
+      </select>
+      <label>Dan <input type="time" name="start"></label>
+      <label>Gacha <input type="time" name="end"></label>
+      <span class="muted">Vaqt bo'sh = doim faol</span>
+    </form>
     <div class="video-wrap" id="wrap">
       <div class="stage">
         <img id="video" src="/video" alt="Jonli video">
@@ -38,6 +47,7 @@
       <div id="offline" hidden>Kamera uzildi. Qayta ulanmoqda…</div>
     </div>
     <p class="hint" id="hint"></p>
+    <ul id="zones"></ul>
   </section>
 
   <section class="card incidents-card">
@@ -67,6 +77,7 @@
 
 <audio id="a-helmet" src="/static/audio/helmet.mp3" preload="auto"></audio>
 <audio id="a-vest" src="/static/audio/vest.mp3" preload="auto"></audio>
+<audio id="a-entry" src="/static/audio/entry.mp3" preload="auto"></audio>
 <audio id="a-zone" src="/static/audio/zone.mp3" preload="auto"></audio>
 <script src="/static/app.js"></script>
 </body>

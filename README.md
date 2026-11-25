@@ -31,7 +31,8 @@ Demo mode plays `data/demo.mp4` in a loop and needs no internet.
 | `MODEL_PATH` | `models/ppe_yolov8s.pt` | YOLO weights with person / helmet / no-helmet classes |
 | `CONF` / `GEAR_CONF` | `0.4` / `0.25` | Minimum confidence for people / for helmets and vests |
 | `IMG_SIZE` | `480` | Model input size; `416` is faster, `640` sees small people better |
-| `DEBOUNCE_S` / `COOLDOWN_S` | `1.5` / `15` | Violation must last this long / minimum gap between alerts per person |
+| `DEBOUNCE_S` / `COOLDOWN_S` | `1.5` / `15` | Violation must last this long / gap between voice reminders |
+| `RESOLVE_S` / `REJOIN_S` | `5` / `10` | Compliance needed to end a violation / longest disappearance after which a worker nearby with a new ID continues the same incident. `COOLDOWN_S` now only spaces voice reminders and repeat zone entries |
 | `TELEGRAM_GROUP_S` | `5` | Ordinary alerts within this window share one Telegram message; zone alerts are sent at once |
 | `PORT` | `8000` | Dashboard port |
 
@@ -46,13 +47,13 @@ chat id (for example from @userinfobot), put both in `.env`, restart, and press 
 ```
 camera/file -> app/video.py (newest frame, auto-reconnect)
             -> app/detector.py (YOLOv8s PPE model, CPU)
-            -> app/violations.py (ByteTrack tracking, 1.5 s debounce, 15 s cooldown, danger zone)
+            -> app/violations.py (ByteTrack tracking, 1.5 s debounce, one incident per continuing violation, danger zone)
             -> app/alerts.py (snapshot + SQLite + Telegram)   -> dashboard plays the Uzbek voice warning
 app/main.py serves the MJPEG stream, the JSON API and static/ (dashboard)
 ```
 
 - Danger zone: **Xavfli zonani chizish**, click corners on the video, **Saqlash**. A person is "in the zone" when the
-  bottom-centre of their box is inside the polygon. The zone is kept in `data/zone.json`.
+  bottom-centre of their box is inside the polygon. If the box reaches the bottom edge (feet out of view), the centre of the box counts too. The zone is kept in `data/zone.json`.
 - Incidents: `data/incidents.db` (SQLite) and `data/snapshots/`.
 - Voice files are generated once with `edge-tts` (voice `uz-UZ-SardorNeural`) into `static/audio/` and reused offline.
 

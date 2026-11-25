@@ -11,3 +11,6 @@ document.getElementById('login').onsubmit = async (e) => {
     else error.textContent = (await r.json().catch(() => ({}))).detail || 'Kirib bo\'lmadi';
   } catch (err) { error.textContent = 'Server javob bermayapti'; }
 };
+
+
+window.buildIsoScene?.(document.getElementById('world'));

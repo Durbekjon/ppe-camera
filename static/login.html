@@ -6,14 +6,32 @@
 <title>Kirish · Xavfsizlik nazorati</title>
 <link rel="stylesheet" href="/static/style.css">
 </head>
-<body>
-<form id="login" class="card login-card">
-  <h1>⛑ Xavfsizlik nazorati</h1>
-  <label>Login<input name="username" autocomplete="username" required autofocus></label>
-  <label>Parol<input name="password" type="password" autocomplete="current-password" required></label>
-  <button class="primary">Kirish</button>
-  <p class="hint" id="error" role="alert"></p>
-</form>
+<body class="login-body">
+<main class="login-page">
+  <section class="login-side">
+    <div class="brand">
+      <span class="logo" aria-hidden="true">⛑</span>
+      <div><h1>Xavfsizlik nazorati</h1><p>Himoya vositalari monitoringi</p></div>
+    </div>
+    <form id="login" class="login-card">
+      <h2>Tizimga kirish</h2>
+      <p class="muted">Login va parolni administrator beradi.</p>
+      <label>Login<input name="username" autocomplete="username" required autofocus></label>
+      <label>Parol<input name="password" type="password" autocomplete="current-password" required></label>
+      <button class="primary">Kirish</button>
+      <p class="hint" id="error" role="alert"></p>
+    </form>
+    <p class="login-foot muted">Kaska, jilet va xavfli zonalar real vaqtda nazorat qilinadi. <a href="/landing">Loyiha haqida</a></p>
+  </section>
+  <aside class="login-art" aria-hidden="true">
+    <div class="scene login-scene"><div class="world" id="world"><div class="ground"></div></div></div>
+    <div class="login-tagline">
+      <b>Har bir kamera, bitta xaritada</b>
+      <span>Qoidabuzarlik bo'lsa, ishchi ovozli ogohlantiriladi, nazoratchiga Telegram orqali xabar boradi.</span>
+    </div>
+  </aside>
+</main>
+<script src="/static/iso.js"></script>
 <script src="/static/login.js"></script>
 </body>
 </html>

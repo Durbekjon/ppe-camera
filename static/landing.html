@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Xavfsizlik nazorati · Himoya vositalarini kamera orqali nazorat qilish</title>
+<meta name="description" content="Oddiy kamera va noutbuk bilan kaska, jilet va xavfli zonalarni real vaqtda nazorat qiluvchi tizim.">
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="landing">
+<header class="topbar" id="landing-nav">
+  <a class="brand" href="/landing">
+    <span class="logo" aria-hidden="true">⛑</span>
+    <div><h1>Xavfsizlik nazorati</h1><p>Himoya vositalari monitoringi</p></div>
+  </a>
+  <nav class="tabs" aria-label="Sahifa bo'limlari">
+    <a href="#features">Imkoniyatlar</a>
+    <a href="#how">Qanday ishlaydi</a>
+    <a href="#privacy">Maxfiylik</a>
+    <a href="#status">Holat</a>
+  </nav>
+  <div class="top-right"><a class="btn primary-link nav-cta" href="/login">Panelga kirish <span aria-hidden="true">→</span></a></div>
+</header>
+
+<main class="landing-main">
+  <section class="hero">
+    <div class="hero-copy">
+      <span class="eyebrow">Ishlab chiqarish va qurilish uchun</span>
+      <h2>Kaskasiz ishchini kamera <em>o'zi</em> sezadi va ogohlantiradi</h2>
+      <p>Oddiy kamera va noutbuk yetarli, GPU kerak emas. Tizim kaska va jiletni tekshiradi, xavfli zonalarni kuzatadi,
+        ishchini o'zbek tilida ovoz bilan ogohlantiradi va nazoratchiga Telegram orqali suratli xabar yuboradi.</p>
+      <div class="hero-cta">
+        <a class="btn big primary-link" href="/login">Panelga kirish</a>
+        <a class="btn big" href="#how">Qanday ishlaydi</a>
+      </div>
+      <ul class="facts">
+        <li><b>~1,5 s</b><span>qoidabuzarlik tasdiqlanadi</span></li>
+        <li><b>CPU</b><span>noutbukda, GPU'siz</span></li>
+        <li><b>4 tagacha</b><span>kamera bitta panelda</span></li>
+      </ul>
+    </div>
+    <div class="hero-art" aria-hidden="true">
+      <div class="scene hero-scene"><div class="world" id="world"><div class="ground"></div></div></div>
+      <div class="float-card alert-card">
+        <b>⚠️ Xavfsizlik qoidasi buzildi</b>
+        <span>Holat: ishchi kaskasiz · Kamera: Sex</span>
+        <div class="fake-buttons"><i>👁 Ko'rildi</i><i>❌ Noto'g'ri signal</i></div>
+      </div>
+      <div class="float-card state-card"><span class="dot zone"></span><div><b>Xavfli zona</b><span>Kran osti · qo'l zonada</span></div></div>
+      <p class="art-note">Namuna ko'rinish</p>
+    </div>
+  </section>
+
+  <section class="band" id="features">
+    <div class="section-head">
+      <span class="eyebrow">Imkoniyatlar</span>
+      <h2>Bitta tizim: aniqlash, ogohlantirish, hisobot</h2>
+    </div>
+    <div class="grid-3">
+      <article class="feature"><span class="ficon">⛑</span><h3>Kaska va jilet</h3><p>Har bir odam alohida kuzatiladi. Qisqa xato signal bermaydi, buzilish davom etsa bitta hodisa bo'lib yoziladi.</p></article>
+      <article class="feature"><span class="ficon">🦴</span><h3>Skelet bo'yicha tekshiruv</h3><p>Odam skeleti bo'yicha tasdiqlanadi. Xavfli zonaga oyoq emas, qo'l yoki istalgan bo'g'im kirsa ham signal beriladi.</p></article>
+      <article class="feature"><span class="ficon">🗺</span><h3>Xavfli zonalar</h3><p>Zonani sichqoncha bilan chizasiz: "himoya vositasi shart" yoki "hech kim kirmasin", ish vaqti bilan.</p></article>
+      <article class="feature"><span class="ficon">🔊</span><h3>O'zbekcha ovoz</h3><p>"Kaskangizni kiying!" ogohlantirishi brauzerda yoki kompyuter karnayida eshitiladi; zona ogohlantirishi balandroq.</p></article>
+      <article class="feature"><span class="ficon">✈️</span><h3>Telegram</h3><p>Nazoratchiga surat bilan xabar. Xabar ostidagi tugmalar bilan "ko'rildi" yoki "noto'g'ri signal" deb belgilanadi. Internet uzilsa, qayta yuboriladi.</p></article>
+      <article class="feature"><span class="ficon">📊</span><h3>Hisobot va Excel</h3><p>Kunlik va soatlik hisobot, 7/30 kunlik yoki ixtiyoriy davr trendi, Excel'ga eksport. Noto'g'ri signallar hisobotga kirmaydi.</p></article>
+    </div>
+  </section>
+
+  <section class="band alt" id="how">
+    <div class="section-head center">
+      <span class="eyebrow">Qanday ishlaydi</span>
+      <h2>Kameradan nazoratchigacha to'rt qadam</h2>
+      <p class="lead">Hammasi bitta noutbukda, bulutsiz. Odatda bir necha soniya ichida.</p>
+    </div>
+    <ol class="steps">
+      <li><div class="step-top"><span class="step-n">1</span><span class="step-ic">📷</span></div>
+        <h3>Kamera</h3><p>Webcam, telefon yoki IP kamera (RTSP/HTTP). Bir nechta kamera bitta panelda.</p></li>
+      <li><div class="step-top"><span class="step-n">2</span><span class="step-ic">🧠</span></div>
+        <h3>Tahlil</h3><p>Model odam, kaska, jilet va skeletni topadi; zonalar va qoidalar tekshiriladi.</p></li>
+      <li><div class="step-top"><span class="step-n">3</span><span class="step-ic">📣</span></div>
+        <h3>Ogohlantirish</h3><p>Ishchiga o'zbekcha ovoz, nazoratchiga suratli Telegram xabari. Hodisa bazaga yoziladi.</p></li>
+      <li><div class="step-top"><span class="step-n">4</span><span class="step-ic">📊</span></div>
+        <h3>Nazorat</h3><p>Panelda jonli video, 3D obyekt xaritasi, hodisalar, hisobot va tizim holati.</p></li>
+    </ol>
+  </section>
+
+  <section class="band privacy" id="privacy">
+    <div class="split">
+      <div>
+        <div class="section-head">
+          <span class="eyebrow">Maxfiylik va xavfsizlik</span>
+          <h2>Ma'lumot obyektda qoladi</h2>
+          <p class="lead">Tizim sizning kompyuteringizda ishlaydi. Video tashqi serverga yuborilmaydi; Telegram'ga faqat hodisa surati va matni ketadi.</p>
+        </div>
+        <div class="flow" aria-hidden="true">
+          <div class="flow-node"><span>📷</span>Kamera</div>
+          <i></i>
+          <div class="flow-node main"><span>💻</span>Obyektdagi kompyuter</div>
+          <i class="thin"></i>
+          <div class="flow-node"><span>✈️</span>Telegram<small>faqat hodisa</small></div>
+        </div>
+      </div>
+      <div class="privacy-grid">
+        <article><span class="p-ic">🙈</span><h3>Yuz xiralashtiriladi</h3><p>Saqlanadigan va Telegram'ga ketadigan suratlarda.</p></article>
+        <article><span class="p-ic">🗓</span><h3>Muddatli saqlash</h3><p>Suratlar sukut bo'yicha 30 kundan keyin o'chadi.</p></article>
+        <article><span class="p-ic">🔐</span><h3>Login va rollar</h3><p>Admin sozlaydi, nazoratchi ko'radi va belgilaydi.</p></article>
+        <article><span class="p-ic">🛡</span><h3>HTTPS</h3><p>Tarmoqdan faqat shifrlangan ulanish; parol va token loglarda ko'rinmaydi.</p></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="band" id="status">
+    <div class="cta-banner">
+      <div class="cta-copy">
+        <span class="eyebrow light">Loyiha holati</span>
+        <h2>Prototip, pilotga tayyorlanmoqda</h2>
+        <p>Tizim ishlaydi va sinovdan o'tmoqda. Aniqlik obyektda, ishchilar roziligi bilan yig'ilgan kadrlarda o'lchanadi.
+          Dastur sertifikatlangan xavfsizlik uskunalari va nazoratchi ishining o'rnini bosmaydi, ularga yordam beradi.</p>
+        <ol class="roadmap">
+          <li class="done"><span>✓</span>Prototip</li>
+          <li class="now"><span>●</span>Sinovlar</li>
+          <li><span>3</span>Obyektda pilot</li>
+          <li><span>4</span>Aniqlik o'lchovi</li>
+        </ol>
+      </div>
+      <a class="btn big cta-white" href="/login">Panelga kirish <span aria-hidden="true">→</span></a>
+    </div>
+  </section>
+</main>
+
+<footer class="landing-foot">
+  <div class="foot-brand"><span class="logo" aria-hidden="true">⛑</span>
+    <div><b>Xavfsizlik nazorati</b><span class="muted">Himoya vositalarini kamera orqali nazorat qilish</span></div></div>
+  <nav class="foot-links" aria-label="Pastki havolalar">
+    <a href="#features">Imkoniyatlar</a><a href="#how">Qanday ishlaydi</a><a href="#privacy">Maxfiylik</a><a href="/login">Panelga kirish</a>
+  </nav>
+</footer>
+<script src="/static/iso.js"></script>
+<script>
+const scene = window.buildIsoScene(document.getElementById('world'), { zoom: 0.72 }) || [];
+const calm = matchMedia('(prefers-reduced-motion: reduce)').matches;
+if (!calm) document.documentElement.classList.add('anim');
+
+// Hero: one building raises an alarm now and then, and the Telegram card appears with it (illustration).
+const art = document.querySelector('.hero-art'), alertCard = document.querySelector('.alert-card');
+const target = scene[1];
+if (target && !calm) {
+  target.prepend(Object.assign(document.createElement('div'), { className: 'halo' }));
+  art.classList.add('cycling');
+  const cycle = () => {
+    target.classList.add('danger');
+    setTimeout(() => alertCard.classList.add('show'), 900);
+    setTimeout(() => { target.classList.remove('danger'); alertCard.classList.remove('show'); }, 5200);
+  };
+  setTimeout(cycle, 1600);
+  setInterval(cycle, 8000);
+}
+// Hero: the scene leans slightly towards the pointer.
+if (!calm) {
+  art.addEventListener('pointermove', (e) => {
+    const r = art.getBoundingClientRect();
+    art.style.setProperty('--tx', ((e.clientX - r.left) / r.width - .5).toFixed(3));
+    art.style.setProperty('--ty', ((e.clientY - r.top) / r.height - .5).toFixed(3));
+  });
+  art.addEventListener('pointerleave', () => { art.style.setProperty('--tx', 0); art.style.setProperty('--ty', 0); });
+}
+// Sections rise into view one after another.
+const groups = ['.band .section-head', '.feature', '.steps', '.steps li', '.flow', '.privacy-grid article', '.cta-banner', '.landing-foot'];
+const reveal = new IntersectionObserver((entries) => entries.forEach((e) => {
+  if (e.isIntersecting) { e.target.classList.add('in'); reveal.unobserve(e.target); }
+}), { threshold: 0.15 });
+if (!calm) groups.forEach((sel) => document.querySelectorAll(sel).forEach((el) => {
+  const i = [...el.parentElement.children].filter((c) => c.matches(sel)).indexOf(el);
+  el.classList.add('reveal'); el.style.setProperty('--d', i * 90 + 'ms'); reveal.observe(el);
+}));
+// the floating bar tightens once the page is scrolled; the link of the section in view is highlighted
+const nav = document.getElementById('landing-nav');
+const onScroll = () => nav.classList.toggle('scrolled', scrollY > 12);
+addEventListener('scroll', onScroll, { passive: true }); onScroll();
+const links = [...nav.querySelectorAll('.tabs a')];
+const watch = new IntersectionObserver((entries) => entries.forEach((e) => {
+  if (e.isIntersecting) links.forEach((a) => a.classList.toggle('active', a.getAttribute('href') === '#' + e.target.id));
+}), { rootMargin: '-45% 0px -50% 0px' });
+links.forEach((a) => { const t = document.querySelector(a.getAttribute('href')); if (t) watch.observe(t); });
+</script>
+</body>
+</html>

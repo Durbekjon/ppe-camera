@@ -30,6 +30,15 @@ def test_video_api_and_snapshots_need_login(client):
     assert client.get("/login").status_code == 200
 
 
+def test_public_pages_reveal_nothing_from_the_system(client):
+    for path in ("/landing", "/static/iso.js", "/static/style.css", "/static/login.js"):
+        assert client.get(path).status_code == 200, path
+    page = client.get("/landing").text
+    assert "/api/" not in page and "/video" not in page  # the landing page reads no live data
+    for path in ("/static/landing.html", "/static/scene.js", "/static/app.js"):
+        assert client.get(path).status_code == 401, path
+
+
 def test_wrong_password_and_unknown_user_are_rejected(client):
     assert sign_in(client, "boss", "wrong-password").status_code == 401
     assert sign_in(client, "nobody").status_code == 401

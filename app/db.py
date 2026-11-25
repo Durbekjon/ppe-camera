@@ -1,6 +1,7 @@
 """SQLite incident log."""
 import sqlite3
 import threading
+from datetime import date, timedelta
 
 from . import config
 
@@ -164,7 +165,7 @@ def report(date):
 
 
 def trend(start_date, end_date):
-    """Daily incident counts between start_date and end_date ('YYYY-MM-DD', inclusive), excluding false alarms."""
+    """One entry per day from start_date to end_date ('YYYY-MM-DD', inclusive), zeros included; no false alarms."""
     with _lock:
         rows = _conn.execute(
             "SELECT substr(ts, 1, 10) AS day, COUNT(*) AS total, COALESCE(SUM(zone), 0) AS zone "
@@ -172,7 +173,10 @@ def trend(start_date, end_date):
             "GROUP BY day ORDER BY day ASC",
             (start_date, end_date),
         ).fetchall()
-    return [{"date": r["day"], "total": r["total"], "zone": r["zone"]} for r in rows]
+    counts = {r["day"]: (r["total"], r["zone"]) for r in rows}
+    first, last = date.fromisoformat(start_date), date.fromisoformat(end_date)
+    days = ((first + timedelta(days=i)).isoformat() for i in range((last - first).days + 1))
+    return [{"date": d, "total": counts.get(d, (0, 0))[0], "zone": counts.get(d, (0, 0))[1]} for d in days]
 
 
 def incidents_range(start_date, end_date):

@@ -13,14 +13,14 @@
 
 ---
 
-## 1. Model va litsenziya tanlovi
+## 1. Model nomzodlari (yakuniy tanlov emas)
 
 | Nomzod | Arxitektura | Litsenziya | Afzalligi | Kamchiligi |
 |---|---|---|---|---|
-| **D-Fire YOLOv8s** (Tavsiya etiladi) | YOLOv8s (2 sinf: `fire`, `smoke`) | Apache-2.0 (og'irliklar) / Ultralytics AGPL-3.0 | Mavjud `ppe-camera` pipeline'i bilan bir xil runtime (`ultralytics`) | Payvandlash uchquni va bug'da soxta signal berishi mumkin |
+| **D-Fire YOLOv8s** (dastlabki nomzod) | YOLOv8s (2 sinf: `fire`, `smoke`) | **Tasdiqlanmagan** (aniq og'irlik fayli va manbasi ko'rsatilmagan); Ultralytics bilan ishlatilsa AGPL-3.0 masalasi ham bor (PPE-501) | Mavjud `ppe-camera` pipeline'i bilan bir xil runtime (`ultralytics`) | Payvandlash uchquni va bug'da soxta signal berishi mumkin |
 | **OpenCV HSV + Motion** | Klassik rang/harakat | Apache-2.0 | Juda tez (<2 ms) | Quyosh nuri, sariq jilet va changni olov/tutun bilan adashtiradi |
 
-**Tanlov:** Mavjud `ultralytics` infratuzilmasiga mosligi va aniqligi sababli **YOLOv8s (fire/smoke)** modeli tanlandi.
+**Dastlabki nomzod:** mavjud `ultralytics` kodiga mosligi sababli **YOLOv8s (fire/smoke)**. Aniqligi o'lchanmagan. Yakuniy tanlov aniq og'irlik fayli, uning manba havolasi va litsenziyasi tekshirilib, test videolarida o'lchangandan keyin qilinadi.
 
 ---
 

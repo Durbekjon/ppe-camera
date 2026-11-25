@@ -261,13 +261,13 @@ Qabul mezonlari: kamida 2 kamera bitta panelda; zona va hodisalar kameraga bog'l
 
 Qabul mezonlari: trend grafigi; tanlangan davr Excel'ga eksport qilinadi.
 
-*Natija:* `app/db.py` (`trend`, `incidents_range`), `app/export.py` (`.xlsx` generator), `/api/trend`, `/api/export.xlsx` va UI trend grafigi + Excel tugmasi qo'shildi (`tests/test_sprint3.py` o'tdi). Brauzerda qo'lda tekshirish kutilmoqda.
+*Natija:* `app/db.py` (`trend`, `incidents_range`), `app/export.py` (`.xlsx` generator), `/api/trend`, `/api/export.xlsx` va UI trend grafigi + Excel tugmasi qo'shildi Davrni tanlash (7, 30 kun yoki ixtiyoriy sanalar) bor; testlar o'tgan va headless Chrome'da vaqtinchalik bazada tekshirilgan. Brauzerda qo'lda tekshirish va faylni Excel'da ochish kutilmoqda.
 
 ### PPE-404 · Olov va tutunni aniqlash (prototip) · P2 · 5 SP · O'tkirbek (Jarayonda: test videolarida o'lchov kutilmoqda)
 
 Qabul mezoni: model va litsenziyasi tanlangan, test videolarida o'lchangan. Sertifikatlangan yong'in signalizatsiyasi o'rnini bosmasligi hujjatda yoziladi.
 
-*Natija:* Model/litsenziya tanlovi va sertifikatlangan tizim o'rnini bosmasligi haqidagi ogohlantirish [docs/PPE-404_FIRE_SMOKE_PROTOTYPE.md](docs/PPE-404_FIRE_SMOKE_PROTOTYPE.md) da yozildi. Test videolarida o'lchov kutilmoqda.
+*Natija:* Dastlabki model nomzodi (litsenziyasi tasdiqlanmagan) va sertifikatlangan tizim o'rnini bosmasligi haqidagi ogohlantirish [docs/PPE-404_FIRE_SMOKE_PROTOTYPE.md](docs/PPE-404_FIRE_SMOKE_PROTOTYPE.md) da yozildi. Test videolarida o'lchov kutilmoqda.
 
 ### PPE-604 · Obyekt karnayida ovoz · P1 · 2 SP · O'tkirbek (Jarayonda: haqiqiy karnayda qo'lda tekshirish kutilmoqda)
 

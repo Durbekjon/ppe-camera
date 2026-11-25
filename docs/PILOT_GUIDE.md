@@ -16,7 +16,7 @@
 
 ## 2. Operator qo'llanmasi (Qisqa)
 
-1. **Kirish:** Brauzerda `https://<server-ip>:8443` manziliga kiring va login/parolni kiriting.
+1. **Kirish:** serverning o'zida `http://localhost:8000`. Boshqa kompyuter yoki telefondan faqat HTTPS bilan: administrator avval [README](../README.md) dagi "Access from another computer (HTTPS)" bo'yicha sozlaydi, keyin `https://<server-ip>:8000` ochiladi (sukut bo'yicha port 8000, `PORT` bilan o'zgaradi). Login va parolni kiriting.
 2. **Hodisalarni ko'rib chiqish:**
    - Yangi hodisalar ro'yxatda ko'rinadi.
    - Holatni o'zgartirish uchun nishonni bosing: `Yangi` ➔ `Ko'rildi` ➔ `Hal qilindi`.

@@ -87,3 +87,13 @@ body.role-supervisor .admin-only { display:none !important; }
 .status-korildi { background:#744210; color:#fbd38d; border:1px solid #d69e2e; }
 .status-hal_qilindi { background:#22543d; color:#9ae6b4; border:1px solid #38a169; }
 .incident-actions { display:flex; gap:6px; align-items:center; margin-top:4px; flex-wrap:wrap; }
+.trend { grid-column:1 / -1; min-width:0; }
+.trend .report-head .chart-title { margin-right:auto; }
+.trend select { background:#232b36; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:6px 10px; font:inherit; }
+.trend-range { display:inline-flex; gap:6px; align-items:center; color:var(--muted); }
+.btn { background:#232b36; color:var(--text); border:1px solid var(--line); border-radius:8px; padding:7px 12px; text-decoration:none; }
+.btn.disabled { opacity:.4; pointer-events:none; }
+#trend-chart { gap:2px; overflow:hidden; }
+#trend-chart .bar { min-width:0; }
+#trend-chart .h { white-space:nowrap; font-size:10px; }
+#trend-chart .h:empty::after { content:"\00a0"; }

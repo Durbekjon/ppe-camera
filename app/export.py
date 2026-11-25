@@ -1,5 +1,6 @@
 """Minimal pure-Python OOXML (.xlsx) spreadsheet builder with zero external dependencies."""
 import io
+import re
 import zipfile
 from xml.sax.saxutils import escape
 
@@ -27,10 +28,15 @@ _WORKBOOK_RELS = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 </Relationships>"""
 
 
+MISSING = {"helmet": "Kaskasiz", "vest": "Jiletsiz", "entry": "Taqiqlangan hududda"}
+STATUS = {"yangi": "Yangi", "ko'rildi": "Ko'rildi", "hal_qilindi": "Hal qilindi"}
+_ILLEGAL = re.compile(r"[\x00-\x08\x0b\x0c\x0e-\x1f]")
+
+
 def _cell(ref: str, value) -> str:
     if isinstance(value, (int, float)) and not isinstance(value, bool):
         return f'<c r="{ref}"><v>{value}</v></c>'
-    text = escape(str(value if value is not None else ""))
+    text = escape(_ILLEGAL.sub("", str(value if value is not None else "")))
     return f'<c r="{ref}" t="inlineStr"><is><t>{text}</t></is></c>'
 
 
@@ -48,10 +54,10 @@ def build_xlsx(rows: list[dict]) -> bytes:
         vals = [
             r.get("id", ""),
             r.get("ts", ""),
-            r.get("missing", ""),
+            ", ".join(MISSING.get(m, m) for m in str(r.get("missing", "")).split(",") if m),
             r.get("zone_name") or ("Ha" if r.get("zone") else "Yo'q"),
             r.get("camera", ""),
-            r.get("status", "yangi"),
+            STATUS.get(r.get("status", "yangi"), r.get("status", "")),
         ]
         cells = "".join(_cell(f"{cols[i]}{idx}", v) for i, v in enumerate(vals))
         xml_rows.append(f'<row r="{idx}">{cells}</row>')

@@ -312,31 +312,38 @@ def telegram_summary(date: str = ""):
     return {"ok": ok, "message": msg}
 
 
+MAX_PERIOD_DAYS = 366
+
+
+def period(days: int, start: str, end: str):
+    """(start, end) as 'YYYY-MM-DD'. Without `start`, the last `days` days up to `end` (default today)."""
+    try:
+        last = date_cls.fromisoformat(end) if end else date_cls.today()
+        first = date_cls.fromisoformat(start) if start else last - timedelta(
+            days=max(1, min(days, MAX_PERIOD_DAYS)) - 1)
+    except (ValueError, OverflowError):
+        raise HTTPException(400, "Sana YYYY-MM-DD ko'rinishida bo'lsin")
+    if first > last:
+        raise HTTPException(400, "Boshlanish sanasi tugash sanasidan keyin bo'lmasin")
+    if (last - first).days >= MAX_PERIOD_DAYS:
+        raise HTTPException(400, f"Davr {MAX_PERIOD_DAYS} kundan oshmasin")
+    return first.isoformat(), last.isoformat()
+
+
 @app.get("/api/trend")
 def api_trend(days: int = 7, start: str = "", end: str = ""):
-    end_d = end or date_cls.today().isoformat()
-    if not start:
-        n = max(1, min(days, 90))
-        start_d = (date_cls.fromisoformat(end_d) - timedelta(days=n - 1)).isoformat()
-    else:
-        start_d = start
-    return {"start": start_d, "end": end_d, "days": db.trend(start_d, end_d)}
+    first, last = period(days, start, end)
+    return {"start": first, "end": last, "days": db.trend(first, last)}
 
 
 @app.get("/api/export.xlsx")
 def api_export_xlsx(start: str = "", end: str = "", days: int = 7):
-    end_d = end or date_cls.today().isoformat()
-    if not start:
-        n = max(1, min(days, 365))
-        start_d = (date_cls.fromisoformat(end_d) - timedelta(days=n - 1)).isoformat()
-    else:
-        start_d = start
-    rows = db.incidents_range(start_d, end_d)
-    data = export.build_xlsx(rows)
+    first, last = period(days, start, end)
+    data = export.build_xlsx(db.incidents_range(first, last))
     return Response(
         content=data,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f'attachment; filename="hisobot_{start_d}_{end_d}.xlsx"'},
+        headers={"Content-Disposition": f'attachment; filename="hisobot_{first}_{last}.xlsx"'},
     )
 
 

@@ -61,6 +61,7 @@ Demo mode plays `data/demo.mp4` in a loop and needs no internet.
 | `RETENTION_DAYS` | `30` | Snapshots older than this are deleted at start-up and hourly; incident rows stay. `0` keeps everything. Stored raw frames and exports follow the same two rules |
 | `SAVE_RAW` | `1` | Keep a clean, blurred frame per incident (`data/raw/`) so marked false alarms can be exported; same retention as snapshots |
 | `LOCAL_AUDIO` | `0` | Play voice warnings on the speaker of the computer running the app (needs `afplay` on macOS, or `mpg123` / `ffplay`; `paplay` only if it can read MP3). A zone warning interrupts an ordinary one. An open dashboard with sound on will also play them. Not tested on Linux or in Docker (a container needs access to the audio device) |
+| `TAMPER_CHECK` | `0` | `1`: a Telegram notice and a "To'silgan" state when a running camera shows nothing useful for 3 s (covered, black, uniform, badly out of focus; a very dark room counts too). Limits measured on the project's videos only |
 | `SKELETON` / `POSE_IMG_SIZE` | `1` / `480` | Skeleton model (`models/yolo11n-pose.pt`, Ultralytics, AGPL-3.0): see **Skeletons**. `0` uses boxes only |
 | `PORT` | `8000` | Dashboard port |
 
@@ -124,6 +125,14 @@ area is blurred too, which makes such frames less useful for helmet training.
 The **Tizim holati** card shows whether Telegram deliveries succeed (queue length, last success, last error),
 whether the buttons are being listened for, and the skeleton, face-blur, retention and speaker settings. "Sent
 since start" information resets when the app restarts. It shows no token, chat id or camera address.
+
+## Before a demo
+
+```bash
+.venv/bin/python -m tools.precheck     # models, users, settings, port, disk, cameras, Telegram (no message sent)
+```
+Run it with the app stopped so the cameras are free. On macOS `run.sh` keeps the computer and display awake
+while the app runs (`NO_CAFFEINATE=1` turns that off).
 
 ## Clean start before a demo
 

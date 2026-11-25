@@ -119,6 +119,16 @@ Qabul mezonlari:
 
 *Natija:* testlar o'tgan. Qo'shimcha tuzatish: ochiq video oqimi ilovaning to'xtashiga xalaqit berardi (ishlayotgan va o'chiq kamerada 10 s dan keyin ham to'xtamagan); uvicorn'ga 3 s chegara qo'yilgach, sinovda 3.2–3.5 s da to'xtadi.
 
+### PPE-011 · Demo oldidan tekshiruv va kamera to'silishini aniqlash · P1 · 3 SP · Durbek (Jarayonda: haqiqiy webcam bilan sinov kutilmoqda)
+
+Qabul mezonlari:
+
+- `tools/precheck.py` modellar, foydalanuvchilar, sozlamalar, port, disk, kameralar va Telegram'ni hech narsani o'zgartirmasdan tekshiradi.
+- `run.sh` ishlayotganda macOS uxlamaydi.
+- `TAMPER_CHECK=1`: 3 soniyadan uzoq to'silgan yoki ko'rinmayotgan kamera "To'silgan" holatiga o'tadi va Telegram xabari keladi; tiklansa ham xabar keladi.
+
+*Natija:* testlar o'tgan; chegaralar loyiha videolari va sun'iy to'silgan kadrlarda o'lchangan; pipeline orqali sinovda 2 s to'silish e'tiborsiz qoldi, 4 s da bitta xabar, tiklanganda bitta xabar.
+
 ### PPE-001 · Webcam va telefon oqimida sinov · P0 · 2 SP · O'tkirbek (Jarayonda: dastlabki sinovlar o'tkazildi)
 
 Qabul mezonlari:

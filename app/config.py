@@ -37,6 +37,8 @@ _default_model = ROOT / "models" / "ppe_yolov8s.pt"
 if not _default_model.exists() and (ROOT / "models" / "ppe_yolov8n_alt.pt").exists():
     _default_model = ROOT / "models" / "ppe_yolov8n_alt.pt"
 MODEL_PATH = os.getenv("MODEL_PATH", str(_default_model))
+# Warn when a running camera shows nothing useful (covered, black, blank wall, out of focus). Off by default.
+TAMPER_CHECK = _flag("TAMPER_CHECK", "0")
 # Skeleton model: only people with a skeleton are judged, and any body part in a zone counts as inside it.
 SKELETON = _flag("SKELETON", "1")
 POSE_MODEL_PATH = os.getenv("POSE_MODEL_PATH", str(ROOT / "models" / "yolo11n-pose.pt"))

@@ -94,3 +94,9 @@ def test_endpoint_needs_login_and_shows_no_secrets(env, monkeypatch):
 def test_every_launcher_limits_the_shutdown_wait(launcher):
     # an open video stream would otherwise keep the server from stopping
     assert "--timeout-graceful-shutdown 3" in (config.ROOT / launcher).read_text()
+
+
+def test_run_sh_keeps_the_mac_awake_only_while_the_app_runs():
+    text = (config.ROOT / "run.sh").read_text()
+    # -w $$ ties caffeinate to this process, which `exec` turns into the server
+    assert "caffeinate -dimsu -w $$ &" in text and text.index("caffeinate") < text.index("exec .venv/bin/uvicorn")

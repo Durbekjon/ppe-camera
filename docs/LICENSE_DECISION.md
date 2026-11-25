@@ -63,6 +63,9 @@ A, B yoki C hali tanlanmagan.
 
 **C ga o'tish uchun qolgan ishlar:** kaska sinflari bilan o'qitish (belgilangan kadrlar va GPU), `tools/evaluate.py` ni YOLOX ga moslab solishtirish, hamda Ultralytics'ga bog'liq qolgan qismlarni almashtirish: `app/detector.py`, `app/tracker.py` (ByteTrack), `tools/evaluate.py`. Hozirgi YOLOv8 og'irliklari repodan olib tashlanadi.
 
+## Qo'shimcha bog'liqlik: skelet modeli (PPE-007)
+`models/yolo11n-pose.pt` ham Ultralytics modeli (AGPL-3.0 yoki Enterprise). C variantiga o'tilsa, uni ham ruxsat beruvchi litsenziyali skelet modeli bilan almashtirish kerak (nomzodlar tekshirilmagan). `SKELETON=0` uni o'chiradi, lekin Ultralytics kutubxonasiga bog'liqlik qoladi.
+
 ## Qaror
 - [ ] A  - [ ] B  - [ ] C
 - Kim va qachon:

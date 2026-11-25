@@ -14,6 +14,7 @@ import numpy as np
 from . import config, privacy
 from .alerts import describe
 from .detector import HELMET, PERSON, VEST
+from .pose import BONES, POINT_CONF
 from .video import VideoSource
 from .violations import ViolationEngine
 
@@ -32,6 +33,16 @@ def draw_box(frame, box, color, label, thickness=2):
     cv2.putText(frame, label, (x1 + 3, y - 4), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 1, cv2.LINE_AA)
 
 
+def draw_skeleton(frame, points, color):
+    for a, b in BONES:
+        if points[a][2] >= POINT_CONF and points[b][2] >= POINT_CONF:
+            cv2.line(frame, (int(points[a][0]), int(points[a][1])), (int(points[b][0]), int(points[b][1])),
+                     color, 2, cv2.LINE_AA)
+    for x, y, confidence in points:
+        if confidence >= POINT_CONF:
+            cv2.circle(frame, (int(x), int(y)), 3, WHITE, -1, cv2.LINE_AA)
+
+
 class Pipeline:
     def __init__(self, name, index, source, detector, alerts, voice):
         """One camera. `detector`, `alerts` and `voice` are shared by all cameras."""
@@ -39,7 +50,7 @@ class Pipeline:
         self.demo = config.DEMO_MODE
         self.video = VideoSource(self._source(), config.FRAME_WIDTH)
         self.detector = detector
-        self.engine = ViolationEngine(config.DEBOUNCE_S, config.COOLDOWN_S, config.REQUIRE_VEST, config.HELMET_RULE, config.CONF, config.RESOLVE_S, config.REJOIN_S)
+        self.engine = ViolationEngine(config.DEBOUNCE_S, config.COOLDOWN_S, config.REQUIRE_VEST, config.HELMET_RULE, config.CONF, config.RESOLVE_S, config.REJOIN_S, config.SKELETON)
         self.alerts = alerts
         self.voice = voice
         self.state = {"status": "safe", "people": 0, "violators": 0}
@@ -133,6 +144,8 @@ class Pipeline:
                 x1, y1, x2, y2 = (int(v) for v in d.box)
                 cv2.rectangle(frame, (x1, y1), (x2, y2), GREEN, 1)
         for t in people:
+            if t.keypoints:
+                draw_skeleton(frame, t.keypoints, RED if t.confirmed else GREEN)
             if not t.missing and t.violating_since is None:
                 draw_box(frame, t.box, GREEN, f"#{t.id} xavfsiz")
             else:

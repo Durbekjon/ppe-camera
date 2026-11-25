@@ -20,6 +20,7 @@ class FakeDetector:
 @pytest.fixture
 def setup(tmp_path, monkeypatch):
     monkeypatch.setattr(hub, "Detector", FakeDetector)
+    monkeypatch.setattr(config, "SKELETON", False)  # the fake people have no skeletons; see test_pose.py
     monkeypatch.setattr(hub, "ZONE_FILE", tmp_path / "zones.json")
     monkeypatch.setattr(hub, "LEGACY_ZONE_FILE", tmp_path / "zone.json")
     monkeypatch.setattr(alerts, "SNAPSHOTS", tmp_path / "snapshots")

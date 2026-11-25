@@ -7,6 +7,7 @@ from .alerts import AlertManager
 from .cameras import parse_cameras
 from .detector import Detector
 from .pipeline import Pipeline
+from .pose import SkeletonDetector
 
 log = logging.getLogger("hub")
 
@@ -59,7 +60,10 @@ class Hub:
         orphaned = [n for n in self._zones if n not in names]
         if orphaned:
             log.warning("Sozlamada yo'q kameralarning zonalari saqlanib turibdi: %s", ", ".join(orphaned))
-        detector = SharedDetector(Detector(config.MODEL_PATH, config.IMG_SIZE, config.CONF, config.GEAR_CONF))
+        model = Detector(config.MODEL_PATH, config.IMG_SIZE, config.CONF, config.GEAR_CONF)
+        if config.SKELETON:
+            model = SkeletonDetector(model, config.POSE_MODEL_PATH, config.POSE_IMG_SIZE)
+        detector = SharedDetector(model)
         self.alerts = AlertManager()
         self.voice = Voice()
         self.cameras = {}

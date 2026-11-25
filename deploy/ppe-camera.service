@@ -1,0 +1,15 @@
+[Unit]
+Description=Worker Safety Monitor (PPE Camera)
+After=network.target
+
+[Service]
+Type=simple
+User=ppe
+WorkingDirectory=/opt/ppe-camera
+EnvironmentFile=/opt/ppe-camera/.env
+ExecStart=/opt/ppe-camera/.venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 --no-access-log
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

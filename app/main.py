@@ -306,7 +306,7 @@ class Demo(BaseModel):
 def set_demo(demo: Demo, camera: str = ""):
     pipeline = camera_or_404(camera)
     try:
-        pipeline.set_demo(demo.on)
+        hub.set_demo(pipeline.name, demo.on)
     except FileNotFoundError:
         raise HTTPException(400, f"Demo video topilmadi: {config.DEMO_VIDEO}")
     return {"demo": pipeline.demo}

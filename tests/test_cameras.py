@@ -70,6 +70,20 @@ def test_zones_of_a_removed_camera_are_not_lost(setup):
     assert hub.Hub([("Sex", "b.mp4")]).get("Sex").engine.zones[0].name == "A"
 
 
+def test_demo_mode_zones_do_not_guard_the_real_camera(setup, monkeypatch):
+    _, cameras, client = setup
+    sex = cameras.get("Sex")
+    monkeypatch.setattr(type(sex), "set_demo", lambda self, on: setattr(self, "demo", on))  # no video threads
+    assert client.post("/api/demo?camera=Sex", json={"on": True}).json() == {"demo": True}
+    assert client.post("/api/zones?camera=Sex", json={"zones": [ZONE]}).status_code == 200
+    assert [z.name for z in sex.engine.zones] == ["A"]
+    client.post("/api/demo?camera=Sex", json={"on": False})
+    assert sex.engine.zones == [] and client.get("/api/zones?camera=Sex").json() == {"zones": []}
+    client.post("/api/demo?camera=Sex", json={"on": True})  # the demo zone comes back, also after a restart
+    assert [z.name for z in sex.engine.zones] == ["A"]
+    assert hub.Hub([("Kirish", "a.mp4"), ("Sex", "b.mp4")]).get("Sex").engine.zones == []
+
+
 def test_incidents_carry_their_camera_and_files_do_not_collide(setup):
     _, cameras, client = setup
     for p in cameras.cameras.values():

@@ -15,6 +15,12 @@ log = logging.getLogger("hub")
 ZONE_FILE = config.DATA / "zones.json"
 LEGACY_ZONE_FILE = config.DATA / "zone.json"
 SEVERITY = ("zone", "danger", "blocked", "offline", "safe")  # worst first
+DEMO_SUFFIX = " (demo)"  # zones drawn in demo mode are stored as "<camera> (demo)"
+
+
+def zone_key(pipeline):
+    """Where a camera's zones are stored: live and demo video each have their own."""
+    return pipeline.name + DEMO_SUFFIX if pipeline.demo else pipeline.name
 
 
 class SharedDetector:
@@ -58,7 +64,7 @@ class Hub:
         names = [name for name, _ in cameras]
         self._zone_lock = threading.Lock()
         self._zones = zones.load_all(ZONE_FILE, LEGACY_ZONE_FILE, names[0])
-        orphaned = [n for n in self._zones if n not in names]
+        orphaned = [n for n in self._zones if n.removesuffix(DEMO_SUFFIX) not in names]
         if orphaned:
             log.warning("Sozlamada yo'q kameralarning zonalari saqlanib turibdi: %s", ", ".join(orphaned))
         model = Detector(config.MODEL_PATH, config.IMG_SIZE, config.CONF, config.GEAR_CONF)
@@ -71,7 +77,7 @@ class Hub:
         self.cameras = {}
         for index, (name, source) in enumerate(cameras, 1):
             pipeline = Pipeline(name, index, source, detector, self.alerts, self.voice)
-            pipeline.engine.zones = self._zones.get(name, [])
+            pipeline.engine.zones = self._zones.get(zone_key(pipeline), [])
             self.cameras[name] = pipeline
 
     def get(self, name=""):
@@ -93,14 +99,26 @@ class Hub:
         self.alerts.close()
 
     def set_zones(self, name, items):
-        """Replace one camera's zones (raises ValueError for invalid input)."""
+        """Replace the zones of one camera in its current mode (raises ValueError for invalid input)."""
         pipeline, parsed = self.get(name), zones.parse(items)
         with self._zone_lock:
-            updated = {**self._zones, pipeline.name: parsed}
+            updated = {**self._zones, zone_key(pipeline): parsed}
             zones.save_all(ZONE_FILE, updated)
             self._zones = updated
             pipeline.engine.zones = parsed
-        log.info("%s: zonalar saqlandi: %d ta", pipeline.name, len(parsed))
+        log.info("%s: zonalar saqlandi (%s): %d ta", pipeline.name, "demo" if pipeline.demo else "real", len(parsed))
+
+    def set_demo(self, name, on):
+        """Switch a camera between live and demo video, with the zones drawn for that mode.
+
+        The demo video shows a different scene, so a zone drawn on it must not guard the real camera.
+        Raises FileNotFoundError when the demo video is missing.
+        """
+        pipeline = self.get(name)
+        with self._zone_lock:
+            pipeline.set_demo(on)
+            pipeline.engine.zones = self._zones.get(zone_key(pipeline), [])
+        return pipeline
 
     def summary(self):
         """Short status per camera, and the most serious one for the page header."""

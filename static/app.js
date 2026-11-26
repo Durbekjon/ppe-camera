@@ -395,7 +395,11 @@ window.addEventListener('resize', redraw);
 
 // ---------- demo mode + telegram test ----------
 $('demo').onchange = async (e) => {
-  try { await getJSON(withCamera('/api/demo'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: e.target.checked }) }); }
+  try {
+    await getJSON(withCamera('/api/demo'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: e.target.checked }) });
+    await loadZones();  // demo video and live camera each keep their own zones
+    $('hint').textContent = e.target.checked ? 'Demo rejimi: demo videoning zonalari.' : 'Real kamera: real kameraning zonalari.';
+  }
   catch (err) { e.target.checked = !e.target.checked; $('hint').textContent = err.message; }
 };
 $('btn-telegram').onclick = async () => {

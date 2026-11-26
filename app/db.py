@@ -169,10 +169,12 @@ def report(date):
             "FROM incidents WHERE substr(ts, 1, 10) = ? AND false_alarm = 0 GROUP BY hour",
             (date,),
         ).fetchall()
-    by_hour = [0] * 24
+    by_hour, zone_by_hour = [0] * 24, [0] * 24
     for r in rows:
         by_hour[r["hour"]] = r["n"]
-    return {"date": date, "total": sum(by_hour), "zone": sum(r["z"] for r in rows), "by_hour": by_hour}
+        zone_by_hour[r["hour"]] = r["z"] or 0
+    return {"date": date, "total": sum(by_hour), "zone": sum(zone_by_hour), "by_hour": by_hour,
+            "zone_by_hour": zone_by_hour}
 
 
 def trend(start_date, end_date):

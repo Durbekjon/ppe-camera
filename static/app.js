@@ -36,16 +36,46 @@ function playAlert(incident) {
 
 // ---------- cameras ----------
 let selected = '', cameraNames = [];  // '' = the first camera
+let liveOpen = false;  // the live video opens only after a camera is picked on the 3D map
 const withCamera = (url) => selected ? `${url}${url.includes('?') ? '&' : '?'}camera=${encodeURIComponent(selected)}` : url;
 
-function selectCamera(name) {
-  if (name === selected) return;
-  selected = name;
-  setDrawing(false);
-  zones = []; showZones();
-  $('video').src = withCamera('/video?t=' + Date.now());
-  loadZones();
+// Called by the 3D map (scroll = true) and by the small camera tiles inside the live card (scroll = false).
+function selectCamera(name, scroll = true) {
+  const changed = name !== selected;
+  if (changed || !liveOpen) {
+    selected = name;
+    setDrawing(false);
+    zones = []; showZones();
+    $('video').src = withCamera('/video?t=' + Date.now());
+    loadZones();
+  }
+  liveOpen = true;
+  $('live').hidden = false;
+  $('pick-hint').hidden = true;
+  document.body.classList.add('live-open');
+  redraw();
+  if (scroll) $('live').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
+
+function closeLive() {
+  liveOpen = false;
+  setDrawing(false);
+  $('video').removeAttribute('src');  // stop the stream while nobody watches it
+  $('live').hidden = true;
+  $('pick-hint').hidden = false;
+  document.body.classList.remove('live-open');
+  $('map').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+$('btn-close-live').onclick = closeLive;
+
+// "Jonli video" in the top menu: without a chosen camera, point at the map instead.
+document.querySelector('.tabs a[href="#live"]').addEventListener('click', (e) => {
+  if (liveOpen) return;
+  e.preventDefault();
+  $('map').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  const hint = $('pick-hint');
+  hint.classList.remove('flash'); void hint.offsetWidth; hint.classList.add('flash');
+});
 
 function showCameras(list, current) {
   cameraNames = list.map((c) => c.name);
@@ -58,7 +88,7 @@ function showCameras(list, current) {
       const img = document.createElement('img'); img.alt = '';
       const label = document.createElement('span');
       tile.append(img, label);
-      tile.onclick = () => selectCamera(c.name);
+      tile.onclick = () => selectCamera(c.name, false);
       return tile;
     }));
   }
@@ -70,7 +100,7 @@ function showCameras(list, current) {
 }
 
 setInterval(() => {  // refresh the small pictures once a second
-  if ($('cameras').hidden) return;
+  if ($('cameras').hidden || !liveOpen) return;
   [...$('cameras').children].forEach((tile, i) => {
     const img = tile.querySelector('img');
     if (img.dataset.busy) return;
@@ -97,7 +127,10 @@ async function poll() {
     const asked = selected;
     const s = await getJSON(withCamera('/api/status'));
     if (asked !== selected) return;  // another camera was picked meanwhile
-    if (serverDown) { serverDown = false; $('video').src = withCamera('/video?t=' + Date.now()); }  // stream dies with the server
+    if (serverDown) {  // the stream dies with the server
+      serverDown = false;
+      if (liveOpen) $('video').src = withCamera('/video?t=' + Date.now());
+    }
     // the header shows the most serious camera, so danger elsewhere is not missed
     const many = s.cameras.length > 1;
     $('status').textContent = STATUS[s.overall.status] + (many && s.overall.status !== 'safe' ? ` · ${s.overall.camera}` : '');
@@ -171,11 +204,15 @@ async function loadIncidents() {
       picture = document.createElement('span');
       picture.className = 'no-photo'; picture.textContent = "Surat o'chirilgan";
     }
+    picture.classList.add('thumb');
     const div = document.createElement('div');
+    div.className = 'body';
     const what = document.createElement('div');
     what.className = 'what';
-    what.textContent = it.missing.split(',').map((m) => LABEL[m] || m).join(', ');
-    if (it.zone) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = it.zone_name || 'XAVFLI ZONA'; what.append(b); }
+    const title = document.createElement('b');
+    title.textContent = it.missing.split(',').map((m) => LABEL[m] || m).join(', ');
+    what.append(title);
+    if (it.zone) { const b = document.createElement('span'); b.className = 'badge'; b.textContent = it.zone_name || 'Xavfli zona'; what.append(b); }
 
     const stBadge = document.createElement('span');
     const curSt = it.status || 'yangi';
@@ -194,7 +231,8 @@ async function loadIncidents() {
     what.append(stBadge);
 
     const when = document.createElement('div');
-    when.className = 'when'; when.textContent = `№${it.id} · ${it.ts}` + (cameraNames.length > 1 && it.camera ? ` · ${it.camera}` : '');
+    when.className = 'when'; when.title = it.ts;
+    when.textContent = `№${it.id} · ${shortTime(it.ts)}` + (cameraNames.length > 1 && it.camera ? ` · ${it.camera}` : '');
     const mark = document.createElement('button');
     mark.className = 'mark';
     mark.textContent = it.false_alarm ? 'Belgini olib tashlash' : "Noto'g'ri signal";
@@ -208,24 +246,33 @@ async function loadIncidents() {
         loadReport();
       } catch (err) { mark.disabled = false; $('hint').textContent = err.message; }
     };
-    if (it.false_alarm) when.textContent += " · noto'g'ri signal (hisobotga kirmaydi)";
+    if (it.false_alarm) when.textContent += " · hisobotga kirmaydi";
     div.append(what, when, mark);
     li.append(picture, div);
     ul.append(li);
   }
-  $('incident-count').textContent = list.length ? `(oxirgi ${list.length} ta)` : '';
+  const count = $('incident-count');
+  count.hidden = !list.length;
+  count.textContent = list.length >= 50 ? 'oxirgi 50' : `${list.length} ta`;
+  $('filters-clear').hidden = !FILTERS.some((id) => $(id).value);
   return list;
 }
 
-$('filter-status').onchange = loadIncidents;
-$('filter-missing').onchange = loadIncidents;
-$('filter-date').onchange = loadIncidents;
-$('filter-zone').onchange = loadIncidents;
+// "2026-11-26 10:56:44" -> "10:56" today, "25.11 10:56" on other days
+function shortTime(ts) {
+  const [day, time = ''] = ts.split(' ');
+  const hm = time.slice(0, 5);
+  return day === today() ? `bugun ${hm}` : `${day.slice(8, 10)}.${day.slice(5, 7)} ${hm}`;
+}
+
+const FILTERS = ['filter-status', 'filter-missing', 'filter-zone', 'filter-date'];
+FILTERS.forEach((id) => { $(id).onchange = loadIncidents; });
+$('filters-clear').onclick = () => { FILTERS.forEach((id) => { $(id).value = ''; }); loadIncidents(); };
 
 async function loadZoneFilter() {
   const { names } = await getJSON('/api/incidents/zone-names');
   const select = $('filter-zone'), chosen = select.value;
-  const options = [['', 'Zona: Barchasi'], ['any', 'Zonada (hammasi)'], ['none', 'Zonadan tashqari'],
+  const options = [['', 'Barchasi'], ['any', 'Zonada (hammasi)'], ['none', 'Zonadan tashqari'],
     ...names.map((n) => ['name:' + n, n])];
   if (select.options.length === options.length && options.every(([v], i) => select.options[i].value === v)) return;
   select.replaceChildren(...options.map(([value, text]) => new Option(text, value)));
@@ -235,24 +282,64 @@ async function loadZoneFilter() {
 // ---------- report ----------
 function today() { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10); }
 
+const PLOT_H = 150;  // px height of the tallest bar
+
+// One stacked bar per item: { n, z (part in a zone), label, title, cls }. Writes into `chart`.
+function drawBars(chart, items, emptyText) {
+  const max = Math.max(1, ...items.map((d) => d.n));
+  chart.replaceChildren();
+  chart.style.gridTemplateColumns = `repeat(${items.length}, minmax(0, 1fr))`;
+  chart.classList.toggle('dense', items.length > 31);
+  for (const d of items) {
+    const col = document.createElement('div');
+    col.className = 'col' + (d.cls ? ' ' + d.cls : '');
+    col.title = d.title;
+    const plot = document.createElement('div'); plot.className = 'plot';
+    const num = document.createElement('span'); num.className = 'n';
+    num.textContent = d.n && items.length <= 31 ? d.n : '';
+    const stack = document.createElement('div'); stack.className = 'stack';
+    if (d.n) {
+      const h = Math.max(4, Math.round((d.n / max) * PLOT_H));
+      stack.style.height = h + 'px';
+      const base = document.createElement('i'); base.className = 'b';
+      const zone = document.createElement('i'); zone.className = 'z';
+      zone.style.height = Math.round((d.z / d.n) * h) + 'px';
+      stack.append(base, zone);
+    } else stack.classList.add('zero');
+    plot.append(num, stack);
+    const label = document.createElement('span'); label.className = 'h'; label.textContent = d.label;
+    col.append(plot, label);
+    chart.append(col);
+  }
+  if (emptyText && !items.some((d) => d.n)) {
+    const empty = document.createElement('div'); empty.className = 'chart-empty'; empty.textContent = emptyText;
+    chart.append(empty);
+  }
+}
+
+function dayBefore(iso) { const d = new Date(`${iso}T00:00:00Z`); d.setUTCDate(d.getUTCDate() - 1); return d.toISOString().slice(0, 10); }
+
 async function loadReport() {
   loadTrend();
-  const r = await getJSON('/api/report?date=' + ($('report-date').value || today()));
+  const day = $('report-date').value || today();
+  const [r, prev] = await Promise.all([getJSON('/api/report?date=' + day), getJSON('/api/report?date=' + dayBefore(day))]);
+  const isToday = day === today();
   $('stat-total').textContent = r.total;
+  const diff = r.total - prev.total, delta = $('stat-delta');
+  delta.textContent = `${isToday ? 'kechaga' : 'oldingi kunga'} nisbatan ${diff > 0 ? '+' : ''}${diff}`;
+  delta.className = 'delta ' + (diff > 0 ? 'up' : diff < 0 ? 'down' : '');
   $('stat-zone').textContent = r.zone;
-  const max = Math.max(...r.by_hour);
-  $('stat-peak').textContent = max ? String(r.by_hour.indexOf(max)).padStart(2, '0') + ':00' : '—';
-  const chart = $('chart');
-  chart.replaceChildren();
-  r.by_hour.forEach((n, h) => {
-    const bar = document.createElement('div'); bar.className = 'bar'; bar.title = `${h}:00 — ${n} ta`;
-    const num = document.createElement('span'); num.className = 'n'; num.textContent = n || '';
-    const fill = document.createElement('i');
-    if (n) fill.style.height = Math.round((n / max) * 140) + 'px'; else fill.className = 'zero';
-    const label = document.createElement('span'); label.className = 'h'; label.textContent = String(h).padStart(2, '0');
-    bar.append(num, fill, label);
-    chart.append(bar);
-  });
+  $('stat-zone-share').textContent = r.total ? `jamining ${Math.round((r.zone / r.total) * 100)}%` : '';
+  const max = Math.max(...r.by_hour), peak = r.by_hour.indexOf(max);
+  $('stat-peak').textContent = max ? String(peak).padStart(2, '0') + ':00' : '—';
+  $('stat-peak-n').textContent = max ? `${max} ta buzilish` : 'buzilish yo\'q';
+  const nowHour = new Date().getHours();
+  drawBars($('chart'), r.by_hour.map((n, h) => ({
+    n, z: (r.zone_by_hour || [])[h] || 0,
+    label: h % 3 === 0 ? String(h).padStart(2, '0') : '',
+    title: `${String(h).padStart(2, '0')}:00–${String(h).padStart(2, '0')}:59 — ${n} ta` + (n ? ` (zonada: ${(r.zone_by_hour || [])[h] || 0})` : ''),
+    cls: [max && n === max ? 'peak' : '', isToday && h === nowHour ? 'now' : ''].join(' ').trim(),
+  })), isToday ? 'Bugun hali buzilish yo\'q' : 'Bu kunda buzilish yo\'q');
 }
 $('report-date').value = today();
 $('report-date').onchange = loadReport;
@@ -280,22 +367,16 @@ async function loadTrend() {
   error.textContent = '';
   button.classList.remove('disabled');
   button.href = `/api/export.xlsx?start=${res.start}&end=${res.end}`;  // exactly the period on screen
-  chart.replaceChildren();
-  chart.style.gridTemplateColumns = `repeat(${res.days.length}, minmax(0, 1fr))`;
-  chart.style.gap = res.days.length > 60 ? '0' : '2px';
-  const max = Math.max(1, ...res.days.map((d) => d.total));
   const step = Math.ceil(res.days.length / 10);  // keep date labels readable
-  res.days.forEach((d, i) => {
-    const bar = document.createElement('div');
-    bar.className = 'bar';
-    bar.title = `${d.date} — ${d.total} ta (zonada: ${d.zone})`;
-    const num = document.createElement('span'); num.className = 'n'; num.textContent = res.days.length <= 31 ? d.total || '' : '';
-    const fill = document.createElement('i');
-    if (d.total) fill.style.height = Math.max(2, Math.round((d.total / max) * 140)) + 'px'; else fill.className = 'zero';
-    const label = document.createElement('span'); label.className = 'h'; label.textContent = i % step === 0 ? d.date.slice(5) : '';
-    bar.append(num, fill, label);
-    chart.append(bar);
-  });
+  const now = today(), total = res.days.reduce((s, d) => s + d.total, 0);
+  drawBars(chart, res.days.map((d, i) => ({
+    n: d.total, z: d.zone,
+    label: d.date === now && res.days.length <= 14 ? 'Bugun' : i % step === 0 ? `${d.date.slice(8, 10)}.${d.date.slice(5, 7)}` : '',
+    title: `${d.date} — ${d.total} ta (zonada: ${d.zone})`,
+    cls: d.date === $('report-date').value ? 'now' : '',
+  })), 'Bu davrda buzilish yo\'q');
+  $('stat-period').textContent = total;
+  $('stat-period-sub').textContent = `${res.days.length} kun · kuniga o'rtacha ${(total / res.days.length).toFixed(1)}`;
 }
 
 $('trend-days').onchange = () => {
@@ -404,7 +485,7 @@ $('demo').onchange = async (e) => {
 };
 $('btn-telegram').onclick = async () => {
   const r = await getJSON('/api/telegram-test', { method: 'POST' });
-  $('hint').textContent = r.ok ? 'Telegram: sinov xabari yuborildi.' : 'Telegram xatosi: ' + r.error;
+  $('system-hint').textContent = r.ok ? 'Telegram: sinov xabari yuborildi.' : 'Telegram xatosi: ' + r.error;
 };
 
 // ---------- user ----------

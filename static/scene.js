@@ -98,7 +98,8 @@
     for (const cam of cams) {
       const entry = buildings.get(cam.name);
       if (!entry) continue;
-      entry.el.className = `obj building ${cam.status}${cam.name === s.name ? ' selected' : ''}`;
+      const open = document.body.classList.contains('live-open');
+      entry.el.className = `obj building ${cam.status}${open && cam.name === s.name ? ' selected' : ''}`;
       entry.label.innerHTML = '';
       const b = document.createElement('b'); b.textContent = cam.name;
       const st = document.createElement('span'); st.className = 'st';

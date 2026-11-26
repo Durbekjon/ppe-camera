@@ -29,7 +29,7 @@ Quyidagilarni demo xonasida, o'sha yorug'lik va masofada bir marta o'tkazing. Bi
    ./run.sh
    ```
    Buni **mashqdan keyin** qiling, shunda mashq hodisalari hisobotda qolmaydi.
-5. http://localhost:8000 ga **admin** bo'lib kiring (`HOST`/TLS yoqilgan bo'lsa, `https://`). **🔊 Ovozni yoqish** ni bosing.
+5. http://localhost:8000 ga **admin** bo'lib kiring (`HOST`/TLS yoqilgan bo'lsa, `https://`). Tepadagi **🔊 Ovozni yoqish** ni bosing, so'ng 3D xaritada kamera binosini bosing: jonli video shundan keyin ochiladi.
 6. **Zona qo'shish:** polda belgilangan joyni chizing, qoida **Himoya vositasi shart**, ish vaqtini bo'sh qoldiring, **Saqlash**. Zonani xavfli obyekt atrofiga zich chizing va siz oddiy turadigan joyni unga kiritmang.
 7. **Telegramni tekshirish** ni bosing va xabar telefonga kelganini ko'ring (bu sinov xabari hisobotga tushmaydi). Bundan keyin demo boshlanguncha kamera oldiga kaskasiz o'tmang: har bir tasdiqlangan buzilish hisobotga yoziladi.
 8. Kamera oldida oyoqlaringiz va pol ko'rinadigan joyni belgilang (taxminan 2–3 m).
@@ -38,7 +38,7 @@ Quyidagilarni demo xonasida, o'sha yorug'lik va masofada bir marta o'tkazing. Bi
 
 | Vaqt | Harakat | Gap |
 |---|---|---|
-| 0:00–0:20 | Dashboard, holat **Xavfsiz**. | "Kaska kiyilmaganini nazoratchi hamma joyda ko'rib turolmaydi. Bizning tizim oddiy kamera va noutbukda, GPU'siz ishlaydi." |
+| 0:00–0:20 | 3D xarita, binoni bosib jonli videoni oching, holat **Xavfsiz**. | "Kaska kiyilmaganini nazoratchi hamma joyda ko'rib turolmaydi. Bizning tizim oddiy kamera va noutbukda, GPU'siz ishlaydi." |
 | 0:20–0:40 | **Kaska bilan** kadrga kiring. Yashil ramka va skelet. | "Tizim odamni skeleti bo'yicha tasdiqlaydi va kaskasini tekshiradi." |
 | 0:40–1:10 | **Kaskani yeching.** Taxminan 1,5 soniyadan keyin qizil ramka va "Kaskangizni kiying!". | "Qisqa tasodif signal bermaydi. Tasdiqlangach, ishchining o'zi o'zbek tilida ogohlantiriladi." |
 | 1:10–1:40 | Telefonni ko'rsating: surat, vaqt, tugmalar. **Ko'rildi** ni bosing va dashboard'da holat o'zgarganini ko'rsating. | "Nazoratchi Telegram'dan javob beradi. Saqlangan suratda yuz xiralashtiriladi. Xato signal bo'lsa, bitta tugma bilan hisobotdan chiqadi." |

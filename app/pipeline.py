@@ -49,6 +49,7 @@ class Pipeline:
         """One camera. `detector`, `alerts` and `voice` are shared by all cameras."""
         self.name, self.index, self.source = name, index, source
         self.demo = config.DEMO_MODE
+        self.running = True  # False after "To'xtatish": the camera is released until "Boshlash"
         self.video = VideoSource(self._source(), config.FRAME_WIDTH)
         self.detector = detector
         self.engine = ViolationEngine(config.DEBOUNCE_S, config.COOLDOWN_S, config.REQUIRE_VEST, config.HELMET_RULE, config.CONF, config.RESOLVE_S, config.REJOIN_S, config.SKELETON)
@@ -67,11 +68,13 @@ class Pipeline:
         self._thread = threading.Thread(target=self._run, daemon=True, name=f"pipeline-{index}")
 
     def summary(self):
+        if not self.running:
+            return {"status": "stopped", "people": 0, "violators": 0, "connected": False, "fps": 0, "running": False}
         connected = self.video.connected
         state = self.state if connected else {"status": "offline", "people": 0, "violators": 0}
         if connected and self.view and self.view.blocked:
             state = {**state, "status": "blocked"}
-        return {**state, "connected": connected, "fps": round(self.fps, 1) if connected else 0}
+        return {**state, "connected": connected, "fps": round(self.fps, 1) if connected else 0, "running": True}
 
     def start(self):
         self.video.start()
@@ -94,6 +97,27 @@ class Pipeline:
             self._cond.wait_for(lambda: self.jpeg_seq != last_seq or self.stopped, timeout)
             return self.jpeg_seq, self.jpeg
 
+    def set_running(self, on: bool):
+        """Stop the camera (the device is released, no detection, no alerts) or start it again."""
+        if on == self.running:
+            return
+        if on:
+            self.video = VideoSource(self._source(), config.FRAME_WIDTH)
+            self.video.start()
+            self.running = True
+        else:
+            self.running = False
+            self.video.stop()
+            self.engine.reset()
+            self.state = {"status": "safe", "people": 0, "violators": 0}
+            self.fps = 0.0
+            self._cam_disconnected_at, self._cam_alert_sent = None, False  # stopping is not an outage
+            with self._cond:
+                self.jpeg = None
+                self.jpeg_seq += 1
+                self._cond.notify_all()
+        log.info("%s: kamera %s", self.name, "ishga tushirildi" if on else "to'xtatildi")
+
     def _source(self):
         return config.DEMO_VIDEO if self.demo else self.source
 
@@ -103,7 +127,8 @@ class Pipeline:
             raise FileNotFoundError(config.DEMO_VIDEO)
         old, self.demo = self.video, on
         self.video = VideoSource(self._source(), config.FRAME_WIDTH)
-        self.video.start()
+        if self.running:  # a stopped camera stays stopped; "Boshlash" opens the new source
+            self.video.start()
         old.stop()
         self.engine.reset()
         log.info("%s: demo rejimi %s (manba: %s)", self.name, "yoqildi" if on else "o'chirildi", self.video.label)
@@ -182,6 +207,8 @@ class Pipeline:
             self.voice.warn(replace(max(events, key=lambda e: e.zone), camera=self.name), now)
 
     def _check_connection(self, now):
+        if not self.running:  # stopped on purpose: no "camera lost" alert
+            return
         video = self.video
         if not video.connected:
             if self._cam_disconnected_at is None:
@@ -206,6 +233,9 @@ class Pipeline:
     def _run(self):
         last_seq, last_log, times = 0, time.monotonic(), []
         while not self._stop.is_set():
+            if not self.running:
+                self._stop.wait(0.1)
+                continue
             video = self.video
             now = time.monotonic()
             self._check_connection(now)
@@ -226,6 +256,8 @@ class Pipeline:
             times = [t for t in times if now - t < 2.0] + [now]
             if len(times) > 1:
                 self.fps = (len(times) - 1) / (times[-1] - times[0])
+            if not self.running or video is not self.video:  # stopped while this frame was processed
+                continue
             with self._cond:
                 self.jpeg = buf.tobytes()
                 self.jpeg_seq += 1

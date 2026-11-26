@@ -3,7 +3,7 @@
   const scene = document.getElementById('scene'), world = document.getElementById('world');
   const VIEW = { rx: 58, rz: -42, zoom: 1 };
   let view = { ...VIEW };
-  const STATE_TEXT = { safe: 'Xavfsiz', danger: 'Xavf', zone: 'Xavfli zona', offline: 'Uzilgan', blocked: "To'silgan" };
+  const STATE_TEXT = { safe: 'Xavfsiz', danger: 'Xavf', zone: 'Xavfli zona', offline: 'Uzilgan', blocked: "To'silgan", stopped: "To'xtatilgan" };
   const B = { w: 190, d: 130, h: 72 };  // building size in ground pixels
 
   function apply() {
@@ -114,7 +114,9 @@
     setText('kpi-people', people);
     setText('kpi-violators', `qoidabuzar: ${violators}`);
     setText('kpi-cameras', `${online}/${cams.length}`);
-    setText('kpi-cameras-sub', online === cams.length ? 'hammasi onlayn' : `${cams.length - online} ta uzilgan`);
+    const stopped = cams.filter((c) => c.status === 'stopped').length, lost = cams.length - online - stopped;
+    setText('kpi-cameras-sub', online === cams.length ? 'hammasi onlayn'
+      : [lost && `${lost} ta uzilgan`, stopped && `${stopped} ta to'xtatilgan`].filter(Boolean).join(' · '));
     setText('live-name', s.name || '');
     if (s.last_incident_id !== lastIncident) { lastIncident = s.last_incident_id; loadToday(); }
   };

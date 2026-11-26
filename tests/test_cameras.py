@@ -173,3 +173,32 @@ def test_camera_disconnect_alert_contains_camera_name(monkeypatch):
     assert len(sent) == 2
     assert "[Darvoza]" in sent[1]
     assert "aloqa qayta tiklandi" in sent[1]
+
+
+def test_a_stopped_camera_releases_the_source_and_starts_again(setup, monkeypatch):
+    _, cameras, client = setup
+    started = []
+    monkeypatch.setattr(hub.Pipeline, "_source", lambda self: "c.mp4")
+    monkeypatch.setattr("app.pipeline.VideoSource.start", lambda self: started.append(self))
+    sex = cameras.get("Sex")
+    sex.video.connected, sex.jpeg = True, b"old"
+
+    r = client.post("/api/camera/run?camera=Sex", json={"on": False})
+    assert r.json() == {"running": False}
+    assert sex.video.connected is False and sex.jpeg is None
+    s = client.get("/api/status?camera=Sex").json()
+    assert s["running"] is False and s["status"] == "stopped"
+    assert s["overall"]["status"] != "stopped" or all(c["status"] == "stopped" for c in s["cameras"])
+    assert client.get("/api/frame?camera=Sex").status_code == 503
+    assert client.get("/api/health").json()["cameras"]["Sex"]["running"] is False
+
+    sex._check_connection(100.0)
+    sex._check_connection(200.0)
+    assert sex._cam_alert_sent is False  # a stop is deliberate, not an outage
+
+    sex.set_demo(False)  # switching mode while stopped must not open the camera
+    assert started == []
+
+    assert client.post("/api/camera/run?camera=Sex", json={"on": True}).json() == {"running": True}
+    assert started == [sex.video] and cameras.get("Kirish").running is True
+    assert client.post("/api/camera/run?camera=x", json={"on": True}).status_code == 404

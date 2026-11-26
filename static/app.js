@@ -1,6 +1,6 @@
 const $ = (id) => document.getElementById(id);
 const LABEL = { helmet: 'Kaskasiz', vest: 'Jiletsiz', entry: 'Taqiqlangan hududda' };
-const STATUS = { safe: 'Xavfsiz', danger: 'Xavf', zone: 'Xavfli zona', offline: 'Kamera yo\'q' , blocked: 'Kamera to\'silgan' };
+const STATUS = { safe: 'Xavfsiz', danger: 'Xavf', zone: 'Xavfli zona', offline: 'Kamera yo\'q' , blocked: 'Kamera to\'silgan', stopped: 'Kamera to\'xtatilgan' };
 
 // ---------- sound ----------
 let soundOn = false, audioCtx = null, lastIncident = null, lastVoice = null, lastReviews = null;
@@ -139,7 +139,8 @@ async function poll() {
     if (window.sceneUpdate) window.sceneUpdate(s);  // 3D site map (scene.js)
     $('wrap').classList.toggle('alarm', s.status === 'zone');
     $('offline').hidden = s.camera;
-    chip('chip-camera', 'Kamera: ' + (s.camera ? 'ulangan' : 'uzilgan'), s.camera ? 'ok' : 'bad');
+    showRunning(s.running);
+    chip('chip-camera', 'Kamera: ' + (!s.running ? "to'xtatilgan" : s.camera ? 'ulangan' : 'uzilgan'), s.camera ? 'ok' : s.running ? 'bad' : '');
     chip('chip-fps', 'FPS: ' + s.fps);
     chip('chip-people', `Ishchilar: ${s.people} · Qoidabuzarlar: ${s.violators}`, s.violators ? 'bad' : '');
     $('demo').checked = s.demo;
@@ -473,6 +474,37 @@ async function loadZones() {
 }
 loadZones();
 window.addEventListener('resize', redraw);
+
+// ---------- start / stop the camera ----------
+let running = true;
+function showRunning(on) {
+  running = on;
+  const b = $('btn-run');
+  b.textContent = on ? "⏹ To'xtatish" : '▶ Boshlash';
+  b.classList.toggle('stopped', !on);
+  $('offline-text').textContent = on ? 'Kamera uzildi. Qayta ulanmoqda…' : "Kamera to'xtatilgan: tahlil va ogohlantirishlar o'chiq.";
+  $('btn-start-big').hidden = on;
+  $('wrap').classList.toggle('stopped', !on);
+}
+async function setRunning(on) {
+  const b = $('btn-run');
+  b.disabled = $('btn-start-big').disabled = true;
+  try {
+    const r = await getJSON(withCamera('/api/camera/run'), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on }) });
+    showRunning(r.running);
+    if (r.running && liveOpen) $('video').src = withCamera('/video?t=' + Date.now());
+    $('hint').textContent = r.running ? 'Kamera ishga tushdi. Rasm bir necha soniyada chiqadi.' : "Kamera to'xtatildi. Qayta yoqish uchun ▶ Boshlash.";
+  } catch (e) {
+    $('hint').textContent = 'Bajarilmadi: ' + e.message;
+  } finally {
+    b.disabled = $('btn-start-big').disabled = false;
+  }
+}
+$('btn-run').onclick = () => {
+  if (running && !confirm(`"${selected || 'Kamera'}" to'xtatilsinmi? To'xtatilganda buzilishlar aniqlanmaydi.`)) return;
+  setRunning(!running);
+};
+$('btn-start-big').onclick = () => setRunning(true);
 
 // ---------- demo mode + telegram test ----------
 $('demo').onchange = async (e) => {

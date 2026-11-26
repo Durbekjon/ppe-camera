@@ -34,7 +34,8 @@ class VideoSource:
 
     def stop(self):
         self._stop.set()
-        self._thread.join(timeout=3)
+        if self._thread.is_alive():  # a source made while the camera was stopped never started
+            self._thread.join(timeout=3)
         self.connected = False
 
     def read(self):

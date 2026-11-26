@@ -1,5 +1,6 @@
 """All settings come from environment variables (optionally via a .env file)."""
 import os
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -13,7 +14,10 @@ def _load_dotenv(path: Path) -> None:
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             key, value = line.split("=", 1)
-            os.environ.setdefault(key.strip(), value.strip().strip("\"'"))
+            value = value.strip()
+            if value[:1] not in ("'", '"'):  # "KEY=1   # note": the note is not part of the value
+                value = re.split(r"\s+#", value, maxsplit=1)[0]
+            os.environ.setdefault(key.strip(), value.strip("\"'"))
 
 
 _load_dotenv(ROOT / ".env")

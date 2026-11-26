@@ -1,6 +1,6 @@
 import pytest
 
-from app import alerts, dataset
+from app import alerts, config, dataset
 
 
 @pytest.fixture(autouse=True)
@@ -9,6 +9,12 @@ def _keep_tests_away_from_real_data(tmp_path, monkeypatch):
     monkeypatch.setattr(dataset, "RAW", tmp_path / "raw")
     monkeypatch.setattr(dataset, "EXPORTS", tmp_path / "exports")
     monkeypatch.setattr(dataset, "ARCHIVE", tmp_path / "archive")
+
+
+@pytest.fixture(autouse=True)
+def _ignore_local_demo_setting(monkeypatch):
+    # A developer's .env may start cameras on the demo video; tests expect the live source.
+    monkeypatch.setattr(config, "DEMO_MODE", False)
 
 
 @pytest.fixture(autouse=True)

@@ -157,6 +157,7 @@ async function poll() {
       loadReport();
     }
   } catch (e) {
+    if (e.message === NO_CAMERA && selected) { forgetCamera(); return; }
     serverDown = true;
     $('status').textContent = 'Server javob bermayapti';
     $('status').className = 'status offline';
@@ -475,6 +476,14 @@ async function loadZones() {
 loadZones();
 window.addEventListener('resize', redraw);
 
+// The server was restarted with other cameras: the chosen name is gone, so use the first camera.
+const NO_CAMERA = "Bunday kamera yo'q";
+function forgetCamera() {
+  selected = '';
+  $('cameras').replaceChildren();
+  if (liveOpen) { $('video').src = withCamera('/video?t=' + Date.now()); loadZones(); }
+}
+
 // ---------- start / stop the camera ----------
 let running = true;
 function showRunning(on) {
@@ -495,7 +504,10 @@ async function setRunning(on) {
     if (r.running && liveOpen) $('video').src = withCamera('/video?t=' + Date.now());
     $('hint').textContent = r.running ? 'Kamera ishga tushdi. Rasm bir necha soniyada chiqadi.' : "Kamera to'xtatildi. Qayta yoqish uchun ▶ Boshlash.";
   } catch (e) {
-    $('hint').textContent = 'Bajarilmadi: ' + e.message;
+    if (e.message === NO_CAMERA) {
+      forgetCamera();
+      $('hint').textContent = "Kameralar ro'yxati o'zgargan (server qayta ishga tushgan). Yana bir marta bosing.";
+    } else $('hint').textContent = 'Bajarilmadi: ' + e.message;
   } finally {
     b.disabled = $('btn-start-big').disabled = false;
   }

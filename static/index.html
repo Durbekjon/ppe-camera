@@ -20,6 +20,7 @@
     <a href="#health">Tizim</a>
   </nav>
   <div class="top-right">
+    <button id="btn-sound" class="primary">🔊 Ovozni yoqish</button>
     <div id="status" class="status offline">Ulanmoqda…</div>
     <div class="user-box"><span id="user-name"></span><button id="btn-logout" class="ghost">Chiqish</button></div>
   </div>
@@ -48,6 +49,7 @@
       <button class="icon" id="map-zoom-out" title="Kichiklashtirish">−</button>
       <button class="icon" id="map-reset" title="Boshlang'ich ko'rinish">⟲</button>
     </div>
+    <div class="pick-hint" id="pick-hint"><span class="pulse-dot"></span>Jonli videoni ko'rish uchun binoni (kamerani) tanlang</div>
     <div class="map-legend">
       <span><i class="dot safe"></i>Xavfsiz</span><span><i class="dot danger"></i>Xavf</span>
       <span><i class="dot zone"></i>Xavfli zona</span><span><i class="dot offline"></i>Uzilgan</span><span><i class="dot blocked"></i>To'silgan</span>
@@ -55,11 +57,14 @@
     </div>
   </section>
 
-  <section class="card video-card" id="live">
-    <div class="card-head"><h2>Jonli video</h2><span class="muted" id="live-name"></span></div>
+  <section class="card video-card" id="live" hidden>
+    <div class="card-head">
+      <h2>Jonli video</h2><span class="live-pill" id="live-name"></span>
+      <span class="spacer"></span>
+      <button class="ghost" id="btn-close-live" title="Videoni yopish va xaritaga qaytish">✕ Yopish</button>
+    </div>
     <div class="cameras" id="cameras" hidden></div>
     <div class="toolbar">
-      <button id="btn-sound" class="primary">🔊 Ovozni yoqish</button>
       <label class="switch admin-only"><input type="checkbox" id="demo"> Demo rejimi</label>
       <span class="spacer"></span>
       <button class="admin-only" id="btn-draw">Zona qo'shish</button>
@@ -78,7 +83,7 @@
     </form>
     <div class="video-wrap" id="wrap">
       <div class="stage">
-        <img id="video" src="/video" alt="Jonli video">
+        <img id="video" alt="Jonli video">
         <canvas id="canvas"></canvas>
       </div>
       <div id="offline" hidden>Kamera uzildi. Qayta ulanmoqda…</div>
@@ -89,68 +94,84 @@
 
   <section class="card incidents-card" id="events">
     <div class="incidents-head">
-      <h2>Hodisalar <span id="incident-count" class="muted"></span></h2>
-      <div class="filters">
-        <select id="filter-status" title="Holat bo'yicha filtr">
-          <option value="">Holat: Barchasi</option>
+      <h2>Hodisalar <span id="incident-count" class="count-pill" hidden></span></h2>
+      <button class="link-btn" id="filters-clear" hidden>Filtrlarni tozalash</button>
+    </div>
+    <div class="filters">
+      <label class="field"><span>Holat</span>
+        <select id="filter-status">
+          <option value="">Barchasi</option>
           <option value="yangi">Yangi</option>
           <option value="ko'rildi">Ko'rildi</option>
           <option value="hal_qilindi">Hal qilindi</option>
         </select>
-        <select id="filter-missing" title="Tur bo'yicha filtr">
-          <option value="">Qoida: Barchasi</option>
+      </label>
+      <label class="field"><span>Qoida</span>
+        <select id="filter-missing">
+          <option value="">Barchasi</option>
           <option value="helmet">Kaskasiz</option>
           <option value="vest">Jiletsiz</option>
           <option value="entry">Taqiqlangan hudud</option>
         </select>
-        <select id="filter-zone" title="Zona bo'yicha filtr">
-          <option value="">Zona: Barchasi</option>
+      </label>
+      <label class="field"><span>Zona</span>
+        <select id="filter-zone">
+          <option value="">Barchasi</option>
         </select>
-        <input type="date" id="filter-date" title="Sana bo'yicha filtr">
-      </div>
+      </label>
+      <label class="field"><span>Sana</span>
+        <input type="date" id="filter-date">
+      </label>
     </div>
     <ul id="incidents"></ul>
   </section>
 
   <section class="card report-card" id="report">
     <div class="report-head">
-      <h2>Kunlik hisobot</h2>
-      <input type="date" id="report-date">
-      <button class="admin-only" id="btn-telegram">Telegramni tekshirish</button>
+      <div><h2>Kunlik hisobot</h2><p class="muted sub" id="report-sub">Noto'g'ri signallar hisobga kirmaydi</p></div>
+      <input type="date" id="report-date" aria-label="Hisobot sanasi">
     </div>
-    <div class="report-body">
-      <div class="stats">
-        <div class="stat"><b id="stat-total">0</b><span>Jami buzilishlar</span></div>
-        <div class="stat"><b id="stat-zone">0</b><span>Xavfli zonada</span></div>
-        <div class="stat"><b id="stat-peak">—</b><span>Eng xavfli soat</span></div>
+    <div class="stats">
+      <div class="stat"><span class="stat-label">Jami buzilishlar</span><b id="stat-total">0</b><small id="stat-delta" class="delta"></small></div>
+      <div class="stat zone"><span class="stat-label">Xavfli zonada</span><b id="stat-zone">0</b><small id="stat-zone-share" class="muted"></small></div>
+      <div class="stat"><span class="stat-label">Eng xavfli soat</span><b id="stat-peak">—</b><small id="stat-peak-n" class="muted"></small></div>
+      <div class="stat"><span class="stat-label">Davr bo'yicha jami</span><b id="stat-period">0</b><small id="stat-period-sub" class="muted"></small></div>
+    </div>
+    <div class="charts">
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Soatlar bo'yicha</h3>
+          <span class="legend"><i class="sw base"></i>Buzilish <i class="sw zone"></i>Zonada</span>
+        </div>
+        <div id="chart" class="chart hours"></div>
       </div>
-      <div class="chart-wrap">
-        <div class="chart-title">Soatlar bo'yicha buzilishlar</div>
-        <div id="chart" class="chart"></div>
-      </div>
-      <div class="chart-wrap trend">
-        <div class="report-head">
-          <div class="chart-title">Trend grafigi</div>
-          <select id="trend-days">
+      <div class="panel">
+        <div class="panel-head">
+          <h3>Kunlar bo'yicha</h3>
+          <select id="trend-days" aria-label="Davr">
             <option value="7">Oxirgi 7 kun</option>
             <option value="30">Oxirgi 30 kun</option>
             <option value="custom">Boshqa davr</option>
           </select>
-          <span id="trend-range" class="trend-range" hidden>
-            <input type="date" id="trend-start" aria-label="Boshlanish sanasi"> –
-            <input type="date" id="trend-end" aria-label="Tugash sanasi">
-          </span>
-          <a id="btn-export-xlsx" class="btn" href="/api/export.xlsx?days=7" download>Excel (.xlsx)</a>
+          <a id="btn-export-xlsx" class="btn small" href="/api/export.xlsx?days=7" download>⤓ Excel</a>
         </div>
+        <span id="trend-range" class="trend-range" hidden>
+          <input type="date" id="trend-start" aria-label="Boshlanish sanasi"> –
+          <input type="date" id="trend-end" aria-label="Tugash sanasi">
+        </span>
         <p class="hint" id="trend-error" role="alert"></p>
-        <div id="trend-chart" class="chart"></div>
+        <div id="trend-chart" class="chart days"></div>
       </div>
     </div>
   </section>
 
   <section class="card system-card" id="health">
-    <h2>Tizim holati <span class="muted" id="system-age"></span></h2>
+    <div class="report-head">
+      <h2>Tizim holati <span class="muted" id="system-age"></span></h2>
+      <button class="admin-only" id="btn-telegram">Telegramni tekshirish</button>
+    </div>
     <ul id="system"></ul>
+    <p class="hint" id="system-hint"></p>
   </section>
 </main>
 

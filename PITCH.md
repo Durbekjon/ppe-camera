@@ -85,5 +85,5 @@ Bilmagan savolga "aniq bilmaymiz, tekshirib aytamiz" deyish o'ylab topilgan raqa
 - [ ] Zaxira video ikki joyda, internetsiz ochiladi.
 - [ ] `.venv/bin/python -m tools.precheck` toza.
 - [ ] Mashqdan keyin `tools.archive_data --apply` → bo'sh hisobot.
-- [ ] Panel ochiq, **Ovozni yoqish** bosilgan, Telegram tekshirilgan.
+- [ ] Panel ochiq, tepadagi **Ovozni yoqish** bosilgan, xaritadan kamera tanlangan (jonli video ochiq), Telegram tekshirilgan.
 - [ ] Slaydlardagi `[__]` va jamoa nomi to'ldirilgan.

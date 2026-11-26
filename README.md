@@ -158,6 +158,14 @@ With `SKELETON=1` a second model finds 17 body points.
 
 ## Model evaluation
 
+**Quick check in the demo room** (people in the video must agree; `datasets/` is never committed):
+```bash
+.venv/bin/python -m tools.make_testset 0 --seconds 120 --name demo-room   # record from webcam 0 (or pass a video file)
+.venv/bin/python -m tools.label datasets/demo-room                  # draw boxes: 1 person, 2 helmet, 3 no_helmet
+.venv/bin/python -m tools.evaluate datasets/demo-room/data.yaml
+```
+Report the result as "a small test in the demo room, N frames", not as the system's accuracy.
+
 ```bash
 .venv/bin/python -m tools.evaluate datasets/site/data.yaml --out docs/EVALUATION.md
 ```

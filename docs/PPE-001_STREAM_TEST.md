@@ -36,7 +36,7 @@
 | Simulyatsiya qilingan MJPEG | 15,000 | 25.2 FPS | 39.7 ms | 0 ta xato |
 
 ### 2.3. Aloqa uzilishi va qayta ulanish testi
-1. `fake_camera.py` orqali oqim berildi va `tools/test_stream_stability.py` ishga tushirildi.
+1. `fake_camera.py` orqali oqim berildi va `tools/stream_stability.py` ishga tushirildi.
 2. 5-daqiqada oqim sun'iy to'xtatildi (server o'chirildi).
 3. `VideoSource` darhol xavfsiz rejimga o'tdi (`self.connected = False`), kutubxona qotib qolmadi.
 4. Server qayta yoqilgach, tizim **1.2 soniya** ichida yangi oqimni ushlab, videoni uzluksiz davom ettirdi.
@@ -45,7 +45,7 @@
 ### 2.4. Haqiqiy sinov loglari (CLI test output)
 
 ```text
-$ PYTHONPATH=. .venv/bin/python tools/test_stream_stability.py testdata/stills.mp4 --duration 10
+$ PYTHONPATH=. .venv/bin/python tools/stream_stability.py testdata/stills.mp4 --duration 10
 === Stream sinovi: testdata/stills.mp4 (davomiyligi: 10.0 s) ===
 ✅ Ulandi: stills.mp4 (kechikish: 0.05 s)
 📊 Natijalar:

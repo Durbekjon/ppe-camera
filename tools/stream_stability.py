@@ -12,7 +12,7 @@ import threading
 from app.video import VideoSource
 
 
-def test_stream(source: str, duration: float = 15.0, test_reconnect: bool = False):
+def measure_stream(source: str, duration: float = 15.0, test_reconnect: bool = False):
     print(f"=== Stream sinovi: {source} (davomiyligi: {duration:.1f} s) ===")
     vs = VideoSource(source, width=960)
     vs.start()
@@ -71,5 +71,5 @@ if __name__ == "__main__":
     parser.add_argument("--duration", type=float, default=5.0, help="Duration in seconds")
     args = parser.parse_args()
     
-    ok, fps, count = test_stream(args.source, args.duration)
+    ok, fps, count = measure_stream(args.source, args.duration)
     sys.exit(0 if ok and count > 0 else 1)

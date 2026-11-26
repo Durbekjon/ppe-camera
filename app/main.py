@@ -188,7 +188,7 @@ def health():
     for name, p in hub.cameras.items():
         conn = bool(p.video and p.video.connected)
         fps = round(p.fps, 1) if conn else 0.0
-        cams[name] = {"connected": conn, "fps": fps}
+        cams[name] = {"connected": conn, "fps": fps, "running": p.running}
         if conn:
             total_fps += fps
         else:
@@ -214,6 +214,7 @@ def status(camera: str = ""):
         "fps": summary["fps"],
         "name": pipeline.name,
         "demo": pipeline.demo,
+        "running": pipeline.running,
         "cameras": cameras,
         "overall": overall,
         "telegram": alerts.telegram_configured(),
@@ -310,6 +311,18 @@ def set_demo(demo: Demo, camera: str = ""):
     except FileNotFoundError:
         raise HTTPException(400, f"Demo video topilmadi: {config.DEMO_VIDEO}")
     return {"demo": pipeline.demo}
+
+
+class Run(BaseModel):
+    on: bool
+
+
+@app.post("/api/camera/run")
+def set_running(run: Run, camera: str = ""):
+    """Start or stop one camera from the dashboard (admin only, like every change)."""
+    pipeline = camera_or_404(camera)
+    pipeline.set_running(run.on)
+    return {"running": pipeline.running}
 
 
 @app.post("/api/telegram-test")

@@ -14,7 +14,7 @@ log = logging.getLogger("hub")
 
 ZONE_FILE = config.DATA / "zones.json"
 LEGACY_ZONE_FILE = config.DATA / "zone.json"
-SEVERITY = ("zone", "danger", "blocked", "offline", "safe")  # worst first
+SEVERITY = ("zone", "danger", "blocked", "offline", "stopped", "safe")  # worst first
 DEMO_SUFFIX = " (demo)"  # zones drawn in demo mode are stored as "<camera> (demo)"
 
 
